@@ -1,0 +1,2 @@
+database: sqlite:///example.db
+amqp: amqp://test-worker:test-worker@srv-4.yottos.com:5672/test-worker
