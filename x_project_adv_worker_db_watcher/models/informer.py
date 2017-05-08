@@ -1,7 +1,38 @@
-from sqlalchemy import (Column, Integer)
+from sqlalchemy import (Column, Integer, String, Boolean, SmallInteger, Index, ForeignKey)
 from .meta import Base
 
 
-class Accounts(Base):
-    __tablename__ = 'accounts'
-    id = Column(Integer, primary_key=True, autoincrement=True)
+class Informer(Base):
+    __tablename__ = 'informer'
+    id = Column(Integer, primary_key=True, unique=True)
+    guid = Column(String(length=64), unique=True, index=True)
+    title = Column(String(length=100))
+    domain = Column(Integer, ForeignKey('domains.id'))
+    account = Column(Integer, ForeignKey('accounts.id'))
+    teasersCss = Column(String, default='')
+    headerHtml = Column(String, default='')
+    footerHtml = Column(String, default='')
+    nonrelevant = Column(String(length=64))
+    user_code = Column(String, default='')
+    auto_reload = Column(SmallInteger)
+    blinking = Column(SmallInteger)
+    shake = Column(SmallInteger)
+    blinking_reload = Column(SmallInteger)
+    shake_reload = Column(SmallInteger)
+    shake_mouse = Column(SmallInteger)
+    capacity = Column(SmallInteger)
+    valid = Column(Boolean)
+    html_notification = Column(Boolean)
+    place_branch = Column(SmallInteger)
+    retargeting_branch = Column(SmallInteger)
+    social_branch = Column(SmallInteger)
+    height = Column(SmallInteger)
+    width = Column(SmallInteger)
+    height_banner = Column(SmallInteger)
+    width_banner = Column(SmallInteger)
+    range_short_term = Column(SmallInteger)
+    range_long_term = Column(SmallInteger)
+    range_context = Column(SmallInteger)
+    range_search = Column(SmallInteger)
+    retargeting_capacity = Column(SmallInteger)
+    rating_division = Column(Integer, default=1000)

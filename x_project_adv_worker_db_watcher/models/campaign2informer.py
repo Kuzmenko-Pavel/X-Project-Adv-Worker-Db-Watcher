@@ -1,7 +1,10 @@
-from sqlalchemy import (Column, Integer)
+from sqlalchemy import (Column, Integer, SmallInteger, ForeignKey)
 from .meta import Base
 
 
-class Accounts(Base):
-    __tablename__ = 'accounts'
+class Campaign2Informer(Base):
+    __tablename__ = 'campaign2informer'
     id = Column(Integer, primary_key=True, autoincrement=True)
+    id_cam = Column(Integer, ForeignKey('campaign.id'))
+    id_inf = Column(Integer, ForeignKey('informer.id'))
+    allowed = Column(SmallInteger)

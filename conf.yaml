@@ -1,2 +1,2 @@
-database: sqlite:///example.db
+database: postgresql://dev:dev@localhost:5432/test
 amqp: amqp://test-worker:test-worker@srv-4.yottos.com:5672/test-worker

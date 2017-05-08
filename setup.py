@@ -21,6 +21,7 @@ def read_version():
 install_requires = ['daemonize',
                     'pika',
                     'sqlalchemy',
+                    'psycopg2',
                     'zope.sqlalchemy',
                     'trafaret-config',
                     'transaction'
