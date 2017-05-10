@@ -3,6 +3,7 @@
 import pika
 from uuid import uuid4
 from x_project_adv_worker_db_watcher.logger import logger
+from x_project_adv_worker_db_watcher.parent_db.loader import Loader
 
 
 class Watcher(object):
@@ -13,14 +14,20 @@ class Watcher(object):
     QUEUES = [x % uuid4() for x in ['campaign:%s', 'informer:%s', 'account:%s']]
     ROUTING_KEYS = ['campaign.#', 'informer.#', 'account.#']
 
-    def __init__(self, config, DBSession):
+    def __init__(self, config, DBSession, ParentDBSession):
 
-        self.session = DBSession
+        self.__session = DBSession
+        self.__parent_session = ParentDBSession
+        self.loader = Loader(DBSession, ParentDBSession)
         self._connection = None
         self._channel = None
         self._closing = False
         self._consumer_tag = None
         self._url = config['amqp']
+        try:
+            self.loader.all()
+        except Exception as e:
+            logger.error(e)
 
     def connect(self):
 

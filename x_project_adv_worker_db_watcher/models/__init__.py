@@ -9,6 +9,7 @@ import csv
 from x_project_adv_worker_db_watcher.logger import logger
 from .meta import DBSession, metadata
 
+from .categories2domain import Categories2Domain
 from .informer import Informer
 from .accounts import Accounts
 from .campaign import Campaign
@@ -26,7 +27,7 @@ from .campaign2informer import Campaign2Informer
 
 
 def get_engine(config):
-    engine = create_engine(config['database'], echo=True)
+    engine = create_engine(config['postgres']['uri'], echo=True)
     DBSession.configure(bind=engine)
     metadata.bind = engine
     return engine

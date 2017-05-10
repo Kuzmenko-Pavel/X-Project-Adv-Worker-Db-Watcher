@@ -15,28 +15,7 @@ metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
 
 class ClsBase(object):
-
-    def __json__(self, request):
-        json_exclude = getattr(self, '__json_exclude__', set())
-        result = {}
-        for key, value in self.__dict__.items():
-            if not key.startswith('_') and key not in json_exclude:
-                result[key] = value
-        return result
-
-    def __iter__(self):
-        for key, value in self.__dict__.items():
-            if not key.startswith('_'):
-                yield (key, value)
-
-    def __repr__(self):
-        rep = u"<" + self.__class__.__name__ + u">"
-        return rep.encode('utf-8')
-
-    def __str__(self):
-        rep = u"<" + self.__class__.__name__ + u">"
-        return rep.encode('utf-8')
-
+    pass
 
 Base = declarative_base(cls=ClsBase, metadata=metadata)
 

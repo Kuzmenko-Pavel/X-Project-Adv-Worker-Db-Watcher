@@ -1,10 +1,12 @@
-from sqlalchemy import (Column, Integer, String, Boolean, SmallInteger, Index)
+from sqlalchemy import (Column, Integer, BigInteger, String, Boolean, SmallInteger, Index)
+from sqlalchemy.dialects.postgresql import insert
+from zope.sqlalchemy import mark_changed
 from .meta import Base
 
 
 class Campaign(Base):
     __tablename__ = 'campaign'
-    id = Column(Integer, primary_key=True, unique=True)
+    id = Column(BigInteger, primary_key=True, unique=True)
     guid = Column(String(length=64), unique=True)
     title = Column(String(length=100))
     project = Column(String(length=70))
@@ -27,3 +29,81 @@ class Campaign(Base):
     disabled_recomendet_style = Column(Boolean, default=False)
 
     __table_args__ = (Index('idx_Campaign_query', 'id', 'gender', 'cost', 'retargeting', 'social'),)
+
+    @classmethod
+    def upsert(cls, session, data):
+        acc = session.execute(
+            insert(cls.__table__).on_conflict_do_update(
+                index_elements=['id'],
+                set_=dict(
+                    guid=data['guid'],
+                    title=data['title'],
+                    project=data['project'],
+                    social=data['social'],
+                    impressions_per_day_limit=data['impressions_per_day_limit'],
+                    showCoverage=data['showCoverage'],
+                    retargeting=data['retargeting'],
+                    cost=data['cost'],
+                    gender=data['gender'],
+                    retargeting_type=data['retargeting_type'],
+                    brending=data['brending'],
+                    recomendet_type=data['recomendet_type'],
+                    recomendet_count=data['recomendet_count'],
+                    account=data['account'],
+                    target=data['target'],
+                    offer_by_campaign_unique=data['offer_by_campaign_unique'],
+                    unique_impression_lot=data['unique_impression_lot'],
+                    html_notification=data['html_notification'],
+                    disabled_retargiting_style=data['disabled_retargiting_style'],
+                    disabled_recomendet_style=data['disabled_recomendet_style']
+                )
+            ).values(dict(
+                id=data['id'],
+                guid=data['guid'],
+                title=data['title'],
+                project=data['project'],
+                social=data['social'],
+                impressions_per_day_limit=data['impressions_per_day_limit'],
+                showCoverage=data['showCoverage'],
+                retargeting=data['retargeting'],
+                cost=data['cost'],
+                gender=data['gender'],
+                retargeting_type=data['retargeting_type'],
+                brending=data['brending'],
+                recomendet_type=data['recomendet_type'],
+                recomendet_count=data['recomendet_count'],
+                account=data['account'],
+                target=data['target'],
+                offer_by_campaign_unique=data['offer_by_campaign_unique'],
+                unique_impression_lot=data['unique_impression_lot'],
+                html_notification=data['html_notification'],
+                disabled_retargiting_style=data['disabled_retargiting_style'],
+                disabled_recomendet_style=data['disabled_recomendet_style']
+
+            )).returning()
+        )
+        mark_changed(session)
+        session.flush()
+        return dict(
+            id=acc.inserted_primary_key[0],
+            guid=data['guid'],
+            title=data['title'],
+            project=data['project'],
+            social=data['social'],
+            impressions_per_day_limit=data['impressions_per_day_limit'],
+            showCoverage=data['showCoverage'],
+            retargeting=data['retargeting'],
+            cost=data['cost'],
+            gender=data['gender'],
+            retargeting_type=data['retargeting_type'],
+            brending=data['brending'],
+            recomendet_type=data['recomendet_type'],
+            recomendet_count=data['recomendet_count'],
+            account=data['account'],
+            target=data['target'],
+            offer_by_campaign_unique=data['offer_by_campaign_unique'],
+            unique_impression_lot=data['unique_impression_lot'],
+            html_notification=data['html_notification'],
+            disabled_retargiting_style=data['disabled_retargiting_style'],
+            disabled_recomendet_style=data['disabled_recomendet_style']
+        )

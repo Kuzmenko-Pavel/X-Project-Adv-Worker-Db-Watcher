@@ -1,2 +1,7 @@
-database: postgresql://dev:dev@localhost:5432/test
+postgres:
+  uri: postgresql://dev:dev@localhost:5432/test
+
+mongo:
+  uri: mongodb://srv-5.yottos.com:27018,srv-5.yottos.com:27019,srv-5.yottos.com:27020/getmyad_db?replicaSet=vsrv
+
 amqp: amqp://test-worker:test-worker@srv-4.yottos.com:5672/test-worker

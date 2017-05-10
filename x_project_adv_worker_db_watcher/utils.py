@@ -4,7 +4,12 @@ import sys
 import trafaret as T
 
 TRAFARET_CONF = T.Dict({
-    T.Key('database'): T.String(),
+    T.Key('postgres'): T.Dict({
+        T.Key('uri'): T.String(),
+    }),
+    T.Key('mongo'): T.Dict({
+        T.Key('uri'): T.String(),
+    }),
     T.Key('amqp'): T.String(),
 })
 

@@ -22,6 +22,8 @@ install_requires = ['daemonize',
                     'pika',
                     'sqlalchemy',
                     'psycopg2',
+                    'pymongo',
+                    'mongodbproxy',
                     'zope.sqlalchemy',
                     'trafaret-config',
                     'transaction'
