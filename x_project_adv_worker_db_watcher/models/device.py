@@ -1,5 +1,6 @@
 from sqlalchemy import (Column, Integer, String, Boolean)
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.orm import relationship
 from zope.sqlalchemy import mark_changed
 from .meta import Base
 
@@ -9,6 +10,7 @@ class Device(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(length=2), unique=True)
     flag = Column(Boolean, default=False)
+    campaigns = relationship('Campaign', secondary='campaign2device', back_populates="devices")
 
     @classmethod
     def upsert(cls, session, data):

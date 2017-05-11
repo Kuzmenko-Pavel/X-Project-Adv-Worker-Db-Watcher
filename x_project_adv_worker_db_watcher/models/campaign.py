@@ -1,5 +1,6 @@
 from sqlalchemy import (Column, Integer, BigInteger, String, Boolean, SmallInteger, Index)
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.orm import relationship
 from zope.sqlalchemy import mark_changed
 from .meta import Base
 
@@ -27,6 +28,9 @@ class Campaign(Base):
     html_notification = Column(Boolean, default=True)
     disabled_retargiting_style = Column(Boolean, default=False)
     disabled_recomendet_style = Column(Boolean, default=False)
+    geos = relationship('GeoLiteCity', secondary='geo', back_populates="campaigns")
+    devices = relationship('Device', secondary='campaign2device', back_populates="campaigns")
+    cron = relationship('Cron', back_populates="campaign")
 
     __table_args__ = (Index('idx_Campaign_query', 'id', 'gender', 'cost', 'retargeting', 'social'),)
 
