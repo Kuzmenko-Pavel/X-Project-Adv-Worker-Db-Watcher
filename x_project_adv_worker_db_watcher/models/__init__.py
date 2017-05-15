@@ -9,7 +9,6 @@ import csv
 from x_project_adv_worker_db_watcher.logger import logger
 from .meta import DBSession, metadata
 
-from .categories2domain import Categories2Domain
 from .informer import Informer
 from .accounts import Accounts
 from .campaign import Campaign
@@ -19,6 +18,7 @@ from .domains import Domains
 from .cron import Cron
 from .geo import Geo
 from .geo_lite_city import GeoLiteCity
+from .categories2domain import Categories2Domain
 from .campaign2accounts import Campaign2Accounts
 from .campaign2categories import Campaign2Categories
 from .campaign2device import Campaign2Device

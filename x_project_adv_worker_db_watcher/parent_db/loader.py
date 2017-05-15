@@ -1,7 +1,8 @@
 import transaction
 from x_project_adv_worker_db_watcher.logger import logger
 from x_project_adv_worker_db_watcher.models import (Accounts, Device, Domains, Categories, Informer, Campaign,
-                                                    GeoLiteCity, Cron)
+                                                    GeoLiteCity, Cron, Campaign2Accounts, Campaign2Informer,
+                                                    Campaign2Domains)
 
 
 class Loader(object):
@@ -132,7 +133,7 @@ class Loader(object):
                 data['project'] = campaign.get('project')
                 data['social'] = campaign.get('social')
                 data['impressions_per_day_limit'] = campaign.get('impressionsPerDayLimit')
-                data['showCoverage'] = 0
+                data['showCoverage'] = conditions.get('showCoverage')
                 data['retargeting'] = conditions.get('retargeting')
                 data['cost'] = conditions.get('cost')
                 data['gender'] = conditions.get('gender')
@@ -154,7 +155,7 @@ class Loader(object):
                     self.session.flush()
                     result.append(new_campaign)
 
-                    # ------------------------regionTargeting - ----------------------
+                    # ------------------------regionTargeting-----------------------
                     country_targeting = conditions.get('geoTargeting', ['*'])
                     region_targeting = conditions.get('regionTargeting', ['*'])
                     geos = list()
@@ -164,11 +165,80 @@ class Loader(object):
 
                     new_campaign.geos = geos
 
-                    #------------------------deviceTargeting - ----------------------
+                    #------------------------deviceTargeting-----------------------
                     device = conditions.get('device', ['**'])
                     new_campaign.devices = self.session.query(Device).filter(Device.name.in_(device)).all()
 
                     #------------------------sites----------------------
+                    categories = conditions.get('categories', [])
+                    allowed_domains = conditions.get('allowed', {'domains': []}).get('domains', [])
+                    allowed_informers = conditions.get('allowed', {'informers': []}).get('informers', [])
+                    allowed_accounts = conditions.get('allowed', {'accounts': []}).get('accounts', [])
+                    ignored_domains = conditions.get('ignored', {'domains': []}).get('domains', [])
+                    ignored_informers = conditions.get('ignored', {'informers': []}).get('informers', [])
+                    ignored_accounts = conditions.get('ignored', {'accounts': []}).get('accounts', [])
+                    all_allowed_domains = []
+                    all_allowed_informer = []
+                    all_allowed_accounts = []
+                    all_ignored_domains = []
+                    all_ignored_informer = []
+                    all_ignored_accounts = []
+                    if new_campaign.showCoverage == 'thematic':
+                        new_campaign.categories = self.session.query(Categories).filter(
+                            Categories.guid.in_(categories)).all()
+
+                        for dom in self.session.query(Domains).filter(Domains.name.in_(allowed_domains)).all():
+                            all_allowed_domains.append(Campaign2Domains(id_cam=new_campaign.id,
+                                                                        id_dom=dom.id, allowed=True))
+                        for inf in self.session.query(Informer).filter(Informer.guid.in_(allowed_informers)).all():
+                            all_allowed_informer.append(Campaign2Informer(id_cam=new_campaign.id,
+                                                                          id_inf=inf.id, allowed=True))
+
+                        for acc in self.session.query(Accounts).filter(Accounts.name.in_(allowed_accounts)).all():
+                            all_allowed_accounts.append(Campaign2Accounts(id_cam=new_campaign.id,
+                                                                          id_acc=acc.id, allowed=True))
+                        for dom in self.session.query(Domains).filter(Domains.name.in_(ignored_domains)).all():
+                            all_ignored_domains.append(Campaign2Domains(id_cam=new_campaign.id,
+                                                                        id_dom=dom.id, allowed=False))
+                        for inf in self.session.query(Informer).filter(Informer.guid.in_(ignored_informers)).all():
+                            all_ignored_informer.append(Campaign2Informer(id_cam=new_campaign.id,
+                                                                          id_inf=inf.id, allowed=False))
+
+                        for acc in self.session.query(Accounts).filter(Accounts.name.in_(ignored_accounts)).all():
+                            all_ignored_accounts.append(Campaign2Accounts(id_cam=new_campaign.id,
+                                                                          id_acc=acc.id, allowed=False))
+                    elif new_campaign.showCoverage == 'allowed':
+                        for dom in self.session.query(Domains).filter(Domains.name.in_(allowed_domains)).all():
+                            all_allowed_domains.append(Campaign2Domains(id_cam=new_campaign.id,
+                                                                        id_dom=dom.id, allowed=True))
+                        for inf in self.session.query(Informer).filter(Informer.guid.in_(allowed_informers)).all():
+                            all_allowed_informer.append(Campaign2Informer(id_cam=new_campaign.id,
+                                                                          id_inf=inf.id, allowed=True))
+
+                        for acc in self.session.query(Accounts).filter(Accounts.name.in_(allowed_accounts)).all():
+                            all_allowed_accounts.append(Campaign2Accounts(id_cam=new_campaign.id,
+                                                                          id_acc=acc.id, allowed=True))
+                    else:
+                        all_allowed_accounts.append(Campaign2Accounts(id_cam=new_campaign.id, id_acc=1, allowed=True))
+
+                        for dom in self.session.query(Domains).filter(Domains.name.in_(ignored_domains)).all():
+                            all_ignored_domains.append(Campaign2Domains(id_cam=new_campaign.id,
+                                                                        id_dom=dom.id, allowed=False))
+                        for inf in self.session.query(Informer).filter(Informer.guid.in_(ignored_informers)).all():
+                            all_ignored_informer.append(Campaign2Informer(id_cam=new_campaign.id,
+                                                                          id_inf=inf.id, allowed=False))
+
+                        for acc in self.session.query(Accounts).filter(Accounts.name.in_(ignored_accounts)).all():
+                            all_ignored_accounts.append(Campaign2Accounts(id_cam=new_campaign.id,
+                                                                          id_acc=acc.id, allowed=False))
+                    self.session.add_all(all_allowed_domains)
+                    self.session.add_all(all_allowed_informer)
+                    self.session.add_all(all_allowed_accounts)
+                    self.session.add_all(all_ignored_domains)
+                    self.session.add_all(all_ignored_informer)
+                    self.session.add_all(all_ignored_accounts)
+
+
 
                     #------------------------cron-----------------------
                     startShowTimeHours = int(conditions.get('startShowTime', {'hours': 0}).get('hours', 0))

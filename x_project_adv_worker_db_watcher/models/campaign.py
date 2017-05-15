@@ -13,7 +13,7 @@ class Campaign(Base):
     project = Column(String(length=70))
     social = Column(Boolean, default=False)
     impressions_per_day_limit = Column(SmallInteger)
-    showCoverage = Column(SmallInteger)
+    showCoverage = Column(String(length=70))
     retargeting = Column(Boolean, default=False)
     cost = Column(SmallInteger, default=0)
     gender = Column(SmallInteger, default=0)
@@ -31,6 +31,8 @@ class Campaign(Base):
     geos = relationship('GeoLiteCity', secondary='geo', back_populates="campaigns")
     devices = relationship('Device', secondary='campaign2device', back_populates="campaigns")
     cron = relationship('Cron', back_populates="campaign")
+    accounts = relationship('Accounts', secondary='campaign2accounts', back_populates="campaigns")
+    categories = relationship('Categories', secondary='campaign2categories', back_populates="campaigns")
 
     __table_args__ = (Index('idx_Campaign_query', 'id', 'gender', 'cost', 'retargeting', 'social'),)
 
