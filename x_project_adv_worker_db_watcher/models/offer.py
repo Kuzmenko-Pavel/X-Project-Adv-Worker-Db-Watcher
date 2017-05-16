@@ -1,20 +1,18 @@
-from sqlalchemy import (Column, Integer, String, Boolean, SmallInteger, Float)
+from sqlalchemy import (Column, BigInteger, Integer, String, Boolean, SmallInteger, Float, ForeignKey)
+from sqlalchemy.orm import relationship
 from .meta import Base
 
 
 class Offer(Base):
     __tablename__ = 'offer'
-    id = Column(Integer, primary_key=True, unique=True)
+    id = Column(BigInteger, primary_key=True, unique=True)
     guid = Column(String(length=64), unique=True, index=True)
-    campaignId = Column(Integer)
+    retid = Column(String, default='')
+    id_cam = Column(BigInteger, ForeignKey('campaign.id'), nullable=False)
     image = Column(String)
-    uniqueHits = Column(SmallInteger)
     description = (String(length=70))
     url = Column(String)
     title = Column(String(length=35))
-    campaign_guid = Column(String(length=64))
-    social = Column(Boolean)
-    offer_by_campaign_unique = Column(SmallInteger)
-    UnicImpressionLot = Column(SmallInteger)
-    html_notification = Column(Boolean)
     rating = Column(Float)
+    recommended = Column(String)
+    campaign = relationship('Campaign', back_populates="offers")

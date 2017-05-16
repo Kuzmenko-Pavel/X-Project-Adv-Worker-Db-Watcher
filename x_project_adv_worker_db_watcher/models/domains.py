@@ -10,8 +10,7 @@ class Domains(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(length=2048), unique=True)
     flag = Column(Boolean, default=False)
-    categories = relationship('Categories', secondary='categories2domain',
-                              back_populates="domains")
+    categories = relationship('Categories', secondary='categories2domain', back_populates="domains")
 
     @classmethod
     def upsert(cls, session, data):

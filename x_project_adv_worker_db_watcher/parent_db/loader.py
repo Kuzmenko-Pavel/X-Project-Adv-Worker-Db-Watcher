@@ -2,7 +2,7 @@ import transaction
 from x_project_adv_worker_db_watcher.logger import logger
 from x_project_adv_worker_db_watcher.models import (Accounts, Device, Domains, Categories, Informer, Campaign,
                                                     GeoLiteCity, Cron, Campaign2Accounts, Campaign2Informer,
-                                                    Campaign2Domains)
+                                                    Campaign2Domains, Offer)
 
 
 class Loader(object):
@@ -153,11 +153,15 @@ class Loader(object):
                     new_campaign = Campaign(**data)
                     self.session.add(new_campaign)
                     self.session.flush()
-                    result.append(new_campaign)
+                    result.append(new_campaign.guid)
 
                     # ------------------------regionTargeting-----------------------
-                    country_targeting = conditions.get('geoTargeting', ['*'])
-                    region_targeting = conditions.get('regionTargeting', ['*'])
+                    country_targeting = conditions.get('geoTargeting', [])
+                    region_targeting = conditions.get('regionTargeting', [])
+                    if len(country_targeting) <= 0:
+                        country_targeting.append('*')
+                    if len(region_targeting) <= 0:
+                        region_targeting.append('*')
                     geos = list()
                     for country in country_targeting:
                         geos = geos + self.session.query(GeoLiteCity).filter(
@@ -166,7 +170,9 @@ class Loader(object):
                     new_campaign.geos = geos
 
                     #------------------------deviceTargeting-----------------------
-                    device = conditions.get('device', ['**'])
+                    device = conditions.get('device', [])
+                    if len(device) <= 0:
+                        device.append('**')
                     new_campaign.devices = self.session.query(Device).filter(Device.name.in_(device)).all()
 
                     #------------------------sites----------------------
@@ -254,11 +260,36 @@ class Loader(object):
 
                     cron = list()
                     for x in daysOfWeek:
-                        cron.append(Cron(day=x, hour=startShowTimeHours, min=startShowTimeMinutes, startStop=True))
-                        cron.append(Cron(day=x, hour=endShowTimeHours, min=endShowTimeMinutes, startStop=False))
+                        cron.append(Cron(day=x, hour=startShowTimeHours, min=startShowTimeMinutes, start_stop=True))
+                        cron.append(Cron(day=x, hour=endShowTimeHours, min=endShowTimeMinutes, start_stop=False))
 
                     new_campaign.cron = cron
                     self.session.flush()
+                    # for guid in result:
+                    #     self.load_offer(query={'campaignId': guid})
+
+    def load_offer(self, query=None):
+        result = []
+        if query is None:
+            query = {}
+        offers = self.parent_session['offer'].find(query)
+        for offer in offers:
+            data = dict()
+            data['id'] = offer.get('guid_int')
+            data['guid'] = offer.get('guid', '')
+            data['id_cam'] = offer.get('campaignId_int')
+            data['retid'] = offer.get('RetargetingID', '')
+            data['image'] = offer.get('image')
+            data['description'] = offer.get('description')
+            data['url'] = offer.get('url')
+            data['title'] = offer.get('title')
+            data['rating'] = offer.get('full_rating', 0)
+            data['recommended'] = offer.get('Recommended', '')
+            if len(data['image']) > 0:
+                result.append(Offer(**data))
+        with transaction.manager:
+            self.session.add_all(result)
+        return result
 
     def load_device(self, query=None):
         result = []

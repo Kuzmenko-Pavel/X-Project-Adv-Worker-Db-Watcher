@@ -10,6 +10,7 @@ from x_project_adv_worker_db_watcher.logger import logger
 from .meta import DBSession, metadata
 
 from .informer import Informer
+from .offer import Offer
 from .accounts import Accounts
 from .campaign import Campaign
 from .categories import Categories
@@ -18,6 +19,7 @@ from .domains import Domains
 from .cron import Cron
 from .geo import Geo
 from .geo_lite_city import GeoLiteCity
+from .offer2informer import Offer2Informer
 from .categories2domain import Categories2Domain
 from .campaign2accounts import Campaign2Accounts
 from .campaign2categories import Campaign2Categories

@@ -4,6 +4,5 @@ from .meta import Base
 
 class Campaign2Device(Base):
     __tablename__ = 'campaign2device'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    id_cam = Column(BigInteger, ForeignKey('campaign.id'))
-    id_dev = Column(Integer, ForeignKey('device.id'))
+    id_cam = Column(BigInteger, ForeignKey('campaign.id'), primary_key=True, nullable=False)
+    id_dev = Column(Integer, ForeignKey('device.id'), primary_key=True, nullable=False)

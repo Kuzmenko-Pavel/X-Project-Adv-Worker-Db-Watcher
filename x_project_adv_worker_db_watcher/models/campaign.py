@@ -33,6 +33,7 @@ class Campaign(Base):
     cron = relationship('Cron', back_populates="campaign")
     accounts = relationship('Accounts', secondary='campaign2accounts', back_populates="campaigns")
     categories = relationship('Categories', secondary='campaign2categories', back_populates="campaigns")
+    offers = relationship('Offer', back_populates="campaign")
 
     __table_args__ = (Index('idx_Campaign_query', 'id', 'gender', 'cost', 'retargeting', 'social'),)
 

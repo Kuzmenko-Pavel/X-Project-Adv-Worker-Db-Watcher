@@ -1,6 +1,5 @@
 from sqlalchemy import (Column, Integer, Boolean, String)
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import relationship
 from zope.sqlalchemy import mark_changed
 from .meta import Base
