@@ -9,5 +9,5 @@ class GeoLiteCity(Base):
     country = Column(String(length=9))
     region = Column(String(length=2))
     city = Column(String(length=50))
-    campaigns = relationship('Campaign', secondary='geo', back_populates="geos")
+    campaigns = relationship('Campaign', secondary='geo', back_populates="geos", passive_deletes=True)
     __table_args__ = (UniqueConstraint('country', 'region', 'city',  name='country_region_city_uc'),)

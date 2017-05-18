@@ -10,7 +10,7 @@ from x_project_adv_worker_db_watcher.logger import logger
 from .meta import DBSession, metadata
 
 from .informer import Informer
-from .offer import Offer
+from .offer import OfferPlace, OfferSocial, OfferAccountRetargeting, OfferDynamicRetargeting
 from .accounts import Accounts
 from .campaign import Campaign
 from .categories import Categories

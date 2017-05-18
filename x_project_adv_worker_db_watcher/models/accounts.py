@@ -10,7 +10,7 @@ class Accounts(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(length=2048), unique=True)
     blocked = Column(Boolean, default=False)
-    campaigns = relationship('Campaign', secondary='campaign2accounts', back_populates="accounts")
+    campaigns = relationship('Campaign', secondary='campaign2accounts', back_populates="accounts", passive_deletes=True)
 
     @classmethod
     def upsert(cls, session, data):

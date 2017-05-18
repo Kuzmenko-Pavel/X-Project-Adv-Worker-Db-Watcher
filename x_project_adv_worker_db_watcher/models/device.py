@@ -10,7 +10,7 @@ class Device(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(length=2), unique=True)
     flag = Column(Boolean, default=False)
-    campaigns = relationship('Campaign', secondary='campaign2device', back_populates="devices")
+    campaigns = relationship('Campaign', secondary='campaign2device', back_populates="devices", passive_deletes=True)
 
     @classmethod
     def upsert(cls, session, data):

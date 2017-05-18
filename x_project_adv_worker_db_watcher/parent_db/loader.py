@@ -2,7 +2,8 @@ import transaction
 from x_project_adv_worker_db_watcher.logger import logger
 from x_project_adv_worker_db_watcher.models import (Accounts, Device, Domains, Categories, Informer, Campaign,
                                                     GeoLiteCity, Cron, Campaign2Accounts, Campaign2Informer,
-                                                    Campaign2Domains, Offer)
+                                                    Campaign2Domains, OfferPlace, OfferSocial, OfferAccountRetargeting,
+                                                    OfferDynamicRetargeting)
 
 
 class Loader(object):
@@ -115,9 +116,11 @@ class Loader(object):
         result = []
         if query is None:
             query = {'status': 'working'}
+        print(query)
         campaigns = self.parent_session['campaign'].find(query)
         with transaction.manager:
             for campaign in campaigns:
+                print(campaign)
                 id = campaign.get('guid_int')
                 conditions = campaign.get('showConditions')
                 old_campaign = self.session.query(Campaign).get(id)
@@ -153,7 +156,7 @@ class Loader(object):
                     new_campaign = Campaign(**data)
                     self.session.add(new_campaign)
                     self.session.flush()
-                    result.append(new_campaign.guid)
+                    result.append(new_campaign.id)
 
                     # ------------------------regionTargeting-----------------------
                     country_targeting = conditions.get('geoTargeting', [])
@@ -265,28 +268,50 @@ class Loader(object):
 
                     new_campaign.cron = cron
                     self.session.flush()
-                    # for guid in result:
-                    #     self.load_offer(query={'campaignId': guid})
+
+        for camp_id in result:
+            self.load_offer(query={'campaignId_int': camp_id})
 
     def load_offer(self, query=None):
         result = []
         if query is None:
-            query = {}
-        offers = self.parent_session['offer'].find(query)
-        for offer in offers:
-            data = dict()
-            data['id'] = offer.get('guid_int')
-            data['guid'] = offer.get('guid', '')
-            data['id_cam'] = offer.get('campaignId_int')
-            data['retid'] = offer.get('RetargetingID', '')
-            data['image'] = offer.get('image')
-            data['description'] = offer.get('description')
-            data['url'] = offer.get('url')
-            data['title'] = offer.get('title')
-            data['rating'] = offer.get('full_rating', 0)
-            data['recommended'] = offer.get('Recommended', '')
-            if len(data['image']) > 0:
-                result.append(Offer(**data))
+            return result
+        social = None
+        retargeting = None
+        retargeting_type = None
+        with transaction.manager:
+            campaign = self.session.query(Campaign).get(query['campaignId_int'])
+            if campaign is not None:
+                social = campaign.social
+                retargeting = campaign.retargeting
+                retargeting_type = campaign.retargeting_type
+
+        if social is not None and retargeting is not None and retargeting_type is not None:
+            offers = self.parent_session['offer'].find(query)
+            for offer in offers:
+                data = dict()
+                data['id'] = offer.get('guid_int')
+                data['guid'] = offer.get('guid', '')
+                data['id_cam'] = offer.get('campaignId_int')
+                data['retid'] = offer.get('RetargetingID', '')
+                data['image'] = offer.get('image')
+                data['description'] = offer.get('description')
+                data['url'] = offer.get('url')
+                data['title'] = offer.get('title')
+                data['rating'] = offer.get('full_rating', 0)
+                data['recommended'] = offer.get('Recommended', '')
+                if len(data['image']) > 0:
+                    if social:
+                        result.append(OfferSocial(**data))
+                    else:
+                        if retargeting:
+                            if retargeting_type == 'offer':
+                                result.append(OfferDynamicRetargeting(**data))
+                            else:
+                                result.append(OfferAccountRetargeting(**data))
+                        else:
+                            result.append(OfferPlace(**data))
+
         with transaction.manager:
             self.session.add_all(result)
         return result

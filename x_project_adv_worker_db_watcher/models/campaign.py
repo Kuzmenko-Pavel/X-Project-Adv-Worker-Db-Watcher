@@ -8,7 +8,7 @@ from .meta import Base
 class Campaign(Base):
     __tablename__ = 'campaign'
     id = Column(BigInteger, primary_key=True, unique=True)
-    guid = Column(String(length=64), unique=True)
+    guid = Column(String(length=64))
     title = Column(String(length=100))
     project = Column(String(length=70))
     social = Column(Boolean, default=False)
@@ -28,12 +28,12 @@ class Campaign(Base):
     html_notification = Column(Boolean, default=True)
     disabled_retargiting_style = Column(Boolean, default=False)
     disabled_recomendet_style = Column(Boolean, default=False)
-    geos = relationship('GeoLiteCity', secondary='geo', back_populates="campaigns")
-    devices = relationship('Device', secondary='campaign2device', back_populates="campaigns")
-    cron = relationship('Cron', back_populates="campaign")
-    accounts = relationship('Accounts', secondary='campaign2accounts', back_populates="campaigns")
-    categories = relationship('Categories', secondary='campaign2categories', back_populates="campaigns")
-    offers = relationship('Offer', back_populates="campaign")
+    geos = relationship('GeoLiteCity', secondary='geo', back_populates="campaigns", passive_deletes=True)
+    devices = relationship('Device', secondary='campaign2device', back_populates="campaigns", passive_deletes=True)
+    cron = relationship('Cron', back_populates="campaign", passive_deletes=True)
+    accounts = relationship('Accounts', secondary='campaign2accounts', back_populates="campaigns", passive_deletes=True)
+    categories = relationship('Categories', secondary='campaign2categories', back_populates="campaigns",
+                              passive_deletes=True)
 
     __table_args__ = (Index('idx_Campaign_query', 'id', 'gender', 'cost', 'retargeting', 'social'),)
 

@@ -140,8 +140,28 @@ class Watcher(object):
 
     def on_message(self, unused_channel, basic_deliver, properties, body):
 
-        logger.debug('Received message # %s from %s: %s',
-                    basic_deliver.delivery_tag, properties.app_id, body)
+        if basic_deliver.exchange == 'getmyad':
+            key = basic_deliver.routing_key
+            if key == 'campaign.start':
+                self.loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
+
+            elif key == 'campaign.stop':
+                self.loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
+
+            elif key == 'campaign.update':
+                self.loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
+
+            elif key == 'informer.update':
+                self.loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
+
+            elif key == 'account.update':
+                self.loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
+            else:
+                logger.debug('Received message # %s from %s - %s: %s %s', basic_deliver.delivery_tag,
+                             basic_deliver.exchange, basic_deliver.routing_key, properties.app_id, body)
+        else:
+            logger.debug('Received message # %s from %s - %s: %s %s', basic_deliver.delivery_tag,
+                         basic_deliver.exchange, basic_deliver.routing_key, properties.app_id, body)
         self.acknowledge_message(basic_deliver.delivery_tag)
 
     def acknowledge_message(self, delivery_tag):

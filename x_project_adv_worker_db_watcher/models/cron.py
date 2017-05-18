@@ -6,7 +6,7 @@ from .meta import Base
 class Cron(Base):
     __tablename__ = 'cron'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    id_cam = Column(BigInteger, ForeignKey('campaign.id'), nullable=False)
+    id_cam = Column(BigInteger, ForeignKey('campaign.id', ondelete='CASCADE'), nullable=False)
     day = Column(SmallInteger)
     hour = Column(SmallInteger)
     min = Column(SmallInteger)

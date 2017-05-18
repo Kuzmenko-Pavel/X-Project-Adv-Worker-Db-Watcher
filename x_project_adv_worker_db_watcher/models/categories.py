@@ -10,8 +10,9 @@ class Categories(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     guid = Column(String(length=64), unique=True, index=True)
     title = Column(String(length=1024))
-    domains = relationship('Domains', secondary='categories2domain', back_populates="categories")
-    campaigns = relationship('Campaign', secondary='campaign2categories', back_populates="categories")
+    domains = relationship('Domains', secondary='categories2domain', back_populates="categories", passive_deletes=True)
+    campaigns = relationship('Campaign', secondary='campaign2categories', back_populates="categories",
+                             passive_deletes=True)
 
     @classmethod
     def upsert(cls, session, data):
