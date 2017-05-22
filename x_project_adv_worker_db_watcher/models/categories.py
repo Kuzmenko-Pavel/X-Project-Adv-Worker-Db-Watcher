@@ -1,8 +1,9 @@
-from sqlalchemy import (Column, Integer, String)
+from sqlalchemy import (Column, Integer, String, select, Index, cast)
 from sqlalchemy.dialects.postgresql import insert
 from zope.sqlalchemy import mark_changed
 from sqlalchemy.orm import relationship
 from .meta import Base
+from .__libs__.sql_view import create_view
 
 
 class Categories(Base):
@@ -30,3 +31,19 @@ class Categories(Base):
         return {'id': acc.inserted_primary_key[0],
                 'guid': data['guid'],
                 'title': data['title']}
+
+
+class MVCategories(Base):
+    __table__ = create_view(
+        Base.metadata,
+        'mv_categories',
+        select([
+            Categories.id,
+            Categories.guid,
+            Categories.title
+        ]).select_from(Categories),
+        is_mat=True)
+
+
+Index('ix_mv_categories_id', MVCategories.id, unique=True)
+Index('ix_mv_categories_guid', MVCategories.guid)

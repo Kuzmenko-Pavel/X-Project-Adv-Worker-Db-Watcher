@@ -1,5 +1,6 @@
-from sqlalchemy import (Column, Integer, BigInteger, UniqueConstraint, Boolean, ForeignKey)
+from sqlalchemy import (Column, Integer, BigInteger, UniqueConstraint, Boolean, ForeignKey, select, Index, cast)
 from .meta import Base
+from .__libs__.sql_view import create_view
 
 
 class Campaign2Accounts(Base):
@@ -10,3 +11,19 @@ class Campaign2Accounts(Base):
     allowed = Column(Boolean, default=False, index=True)
 
     __table_args__ = (UniqueConstraint('id_cam', 'id_acc', name='id_cam_id_acc_uc'),)
+
+
+class MVCampaign2Accounts(Base):
+    __table__ = create_view(
+        Base.metadata,
+        'mv_campaign2accounts',
+        select([
+            Campaign2Accounts.id,
+            cast(Campaign2Accounts.id_cam, BigInteger).label('id_cam'),
+            cast(Campaign2Accounts.id_acc, Integer).label('id_acc'),
+            Campaign2Accounts.allowed
+        ]).select_from(Campaign2Accounts),
+        is_mat=True)
+
+
+Index('ix_mv_campaign2accounts_id', MVCampaign2Accounts.id, unique=True)

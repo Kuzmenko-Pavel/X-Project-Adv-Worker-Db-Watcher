@@ -1,14 +1,15 @@
-from sqlalchemy import (Column, Integer, BigInteger, String, Boolean, SmallInteger, Index)
+from sqlalchemy import (Column, Integer, BigInteger, String, Boolean, SmallInteger, Index, select, Index, cast)
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import relationship
 from zope.sqlalchemy import mark_changed
 from .meta import Base
+from .__libs__.sql_view import create_view
 
 
 class Campaign(Base):
     __tablename__ = 'campaign'
     id = Column(BigInteger, primary_key=True, unique=True)
-    guid = Column(String(length=64))
+    guid = Column(String(length=64), index=True)
     title = Column(String(length=100))
     project = Column(String(length=70))
     social = Column(Boolean, default=False)
@@ -34,6 +35,7 @@ class Campaign(Base):
     accounts = relationship('Accounts', secondary='campaign2accounts', back_populates="campaigns", passive_deletes=True)
     categories = relationship('Categories', secondary='campaign2categories', back_populates="campaigns",
                               passive_deletes=True)
+    offers = relationship('Offer', back_populates="campaigns", passive_deletes=True)
 
     __table_args__ = (Index('idx_Campaign_query', 'id', 'gender', 'cost', 'retargeting', 'social'),)
 
@@ -114,3 +116,36 @@ class Campaign(Base):
             disabled_retargiting_style=data['disabled_retargiting_style'],
             disabled_recomendet_style=data['disabled_recomendet_style']
         )
+
+
+class MVCampaign(Base):
+    __table__ = create_view(
+        Base.metadata,
+        'mv_campaign',
+        select([
+            Campaign.id,
+            Campaign.guid,
+            Campaign.title,
+            Campaign.project,
+            Campaign.social,
+            Campaign.impressions_per_day_limit,
+            Campaign.showCoverage,
+            Campaign.retargeting,
+            Campaign.cost,
+            Campaign.gender,
+            Campaign.retargeting_type,
+            Campaign.brending,
+            Campaign.recomendet_type,
+            Campaign.recomendet_count,
+            Campaign.account,
+            Campaign.target,
+            Campaign.offer_by_campaign_unique,
+            Campaign.unique_impression_lot,
+            Campaign.html_notification,
+            Campaign.disabled_retargiting_style,
+            Campaign.disabled_recomendet_style
+        ]).select_from(Campaign),
+        is_mat=True)
+
+
+Index('ix_mv_campaign_id', MVCampaign.id, unique=True)

@@ -1,7 +1,8 @@
-from sqlalchemy import (Column, Integer, String, Boolean, SmallInteger, BigInteger, ForeignKey)
+from sqlalchemy import (Column, Integer, String, Boolean, SmallInteger, BigInteger, ForeignKey, select, Index, cast)
 from sqlalchemy.dialects.postgresql import insert
 from zope.sqlalchemy import mark_changed
 from .meta import Base
+from .__libs__.sql_view import create_view
 
 
 class Informer(Base):
@@ -148,3 +149,47 @@ class Informer(Base):
             retargeting_capacity=data['retargeting_capacity'],
             rating_division=data['rating_division']
         )
+
+
+class MVInformer(Base):
+    __table__ = create_view(
+        Base.metadata,
+        'mv_informer',
+        select([
+            Informer.id,
+            Informer.guid,
+            Informer.title,
+            cast(Informer.domain, Integer).label('domain'),
+            cast(Informer.account, Integer).label('account'),
+            Informer.teasersCss,
+            Informer.headerHtml,
+            Informer.footerHtml,
+            Informer.nonrelevant,
+            Informer.user_code,
+            Informer.auto_reload,
+            Informer.blinking,
+            Informer.shake,
+            Informer.blinking_reload,
+            Informer.shake_reload,
+            Informer.shake_mouse,
+            Informer.capacity,
+            Informer.valid,
+            Informer.html_notification,
+            Informer.place_branch,
+            Informer.retargeting_branch,
+            Informer.social_branch,
+            Informer.height,
+            Informer.width,
+            Informer.height_banner,
+            Informer.width_banner,
+            Informer.range_short_term,
+            Informer.range_long_term,
+            Informer.range_context,
+            Informer.range_search,
+            Informer.retargeting_capacity,
+            Informer.rating_division,
+        ]).select_from(Informer),
+        is_mat=True)
+
+
+Index('ix_mv_informer_id', MVInformer.id, unique=True)

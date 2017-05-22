@@ -9,23 +9,23 @@ import csv
 from x_project_adv_worker_db_watcher.logger import logger
 from .meta import DBSession, metadata
 
-from .informer import Informer
-from .offer import OfferPlace, OfferSocial, OfferAccountRetargeting, OfferDynamicRetargeting
-from .accounts import Accounts
-from .campaign import Campaign
-from .categories import Categories
-from .device import Device
-from .domains import Domains
-from .cron import Cron
-from .geo import Geo
-from .geo_lite_city import GeoLiteCity
+from .informer import Informer, MVInformer
+from .offer import Offer, MVOfferPlace, MVOfferSocial, MVOfferAccountRetargeting, MVOfferDynamicRetargeting
 from .offer2informer import Offer2Informer
-from .categories2domain import Categories2Domain
-from .campaign2accounts import Campaign2Accounts
-from .campaign2categories import Campaign2Categories
-from .campaign2device import Campaign2Device
-from .campaign2domains import Campaign2Domains
-from .campaign2informer import Campaign2Informer
+from .accounts import Accounts, MVAccounts
+from .campaign import Campaign, MVCampaign
+from .categories import Categories, MVCategories
+from .device import Device, MVDevice
+from .domains import Domains, MVDomains
+from .cron import Cron, MVCron
+from .geo import Geo, MVGeo
+from .geo_lite_city import GeoLiteCity, MVGeoLiteCity
+from .categories2domain import Categories2Domain, MVCategories2Domain
+from .campaign2accounts import Campaign2Accounts, MVCampaign2Accounts
+from .campaign2categories import Campaign2Categories, MVCampaign2Categories
+from .campaign2device import Campaign2Device, MVCampaign2Device
+from .campaign2domains import Campaign2Domains, MVCampaign2Domains
+from .campaign2informer import Campaign2Informer, MVCampaign2Informer
 
 
 def get_engine(config):
@@ -44,8 +44,10 @@ def clear_table(engine):
     with transaction.manager:
         metadata.drop_all(engine, checkfirst=True)
         metadata.create_all(engine, checkfirst=True)
-        for table in reversed(metadata.sorted_tables):
-            DBSession.execute(table.delete())
+        DBSession.execute('TRUNCATE {} RESTART IDENTITY CASCADE;'.format(
+            ', '.join([table.name for table in reversed(metadata.sorted_tables)])))
+        # for table in reversed(metadata.sorted_tables):
+        #     DBSession.execute(table.delete())
         mark_changed(DBSession())
         DBSession.flush()
 

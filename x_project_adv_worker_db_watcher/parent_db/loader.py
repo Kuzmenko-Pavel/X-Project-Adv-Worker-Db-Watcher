@@ -1,9 +1,9 @@
 import transaction
+from zope.sqlalchemy import mark_changed
 from x_project_adv_worker_db_watcher.logger import logger
 from x_project_adv_worker_db_watcher.models import (Accounts, Device, Domains, Categories, Informer, Campaign,
                                                     GeoLiteCity, Cron, Campaign2Accounts, Campaign2Informer,
-                                                    Campaign2Domains, OfferPlace, OfferSocial, OfferAccountRetargeting,
-                                                    OfferDynamicRetargeting)
+                                                    Campaign2Domains, Offer)
 
 
 class Loader(object):
@@ -12,15 +12,28 @@ class Loader(object):
         self.parent_session = ParentDBSession['getmyad_db']
 
     def all(self):
-        self.load_account()
-        self.load_device()
-        self.load_domain()
-        self.load_categories()
-        self.load_domain_category()
-        self.load_informer()
-        self.load_campaign()
+        self.load_account(refresh_mat_view=False)
+        self.load_device(refresh_mat_view=False)
+        self.load_domain(refresh_mat_view=False)
+        self.load_categories(refresh_mat_view=False)
+        self.load_domain_category(refresh_mat_view=False)
+        self.load_informer(refresh_mat_view=False)
+        self.load_campaign(refresh_mat_view=False)
+        self.refresh_mat_view()
 
-    def load_informer(self, query=None):
+    def refresh_mat_view(self, name=None):
+        with transaction.manager:
+            session = self.session()
+            session.flush()
+            conn = session.connection()
+            if name:
+                conn.execute('REFRESH MATERIALIZED VIEW CONCURRENTLY %s' % name)
+            else:
+                conn.execute('SELECT RefreshAllMaterializedViewsConcurrently()')
+            mark_changed(session)
+            session.flush()
+
+    def load_informer(self, query=None, *args, **kwargs):
         result = []
         if query is None:
             query = {}
@@ -64,9 +77,11 @@ class Loader(object):
                 data['rating_division'] = informer.get('rating_division')
 
                 result.append(Informer.upsert(self.session(), data=data))
+        if kwargs.get('refresh_mat_view', True):
+            self.refresh_mat_view('mv_informer')
         return result
 
-    def load_domain(self, query=None):
+    def load_domain(self, query=None, *args, **kwargs):
         result = []
         if query is None:
             query = {}
@@ -75,9 +90,11 @@ class Loader(object):
             for informer in informers:
                 name = informer.get('domain', '')
                 result.append(Domains.upsert(self.session(), {'name': name}))
+        if kwargs.get('refresh_mat_view', True):
+            self.refresh_mat_view('mv_domains')
         return result
 
-    def load_account(self, query=None):
+    def load_account(self, query=None, *args, **kwargs):
         result = []
         if query is None:
             query = {}
@@ -88,9 +105,12 @@ class Loader(object):
                 name = account.get('login', '')
                 blocked = True if account.get('blocked') == ('banned' or 'light') else False
                 result.append(Accounts.upsert(self.session(), {'name': name, 'blocked': blocked}))
+
+        if kwargs.get('refresh_mat_view', True):
+            self.refresh_mat_view('mv_accounts')
         return result
 
-    def load_categories(self, query=None):
+    def load_categories(self, query=None, *args, **kwargs):
         result = []
         if query is None:
             query = {}
@@ -100,9 +120,11 @@ class Loader(object):
                 guid = category.get('guid', '')
                 title = category.get('title', '')
                 result.append(Categories.upsert(self.session(), {'guid': guid, 'title': title}))
+        if kwargs.get('refresh_mat_view', True):
+            self.refresh_mat_view('mv_categories')
         return result
 
-    def load_domain_category(self, query=None):
+    def load_domain_category(self, query=None, *args, **kwargs):
         domain_categories = self.parent_session['domain.categories'].find(query)
         with transaction.manager:
             for domain_category in domain_categories:
@@ -111,8 +133,10 @@ class Loader(object):
                     Categories.guid.in_(domain_category.get('categories', []))).all()
                 for domain in domains:
                     domain.categories = categories
+        if kwargs.get('refresh_mat_view', True):
+            self.refresh_mat_view('mv_categories2domain')
 
-    def load_campaign(self, query=None):
+    def load_campaign(self, query=None, *args, **kwargs):
         result = []
         if query is None:
             query = {'status': 'working'}
@@ -268,55 +292,52 @@ class Loader(object):
 
                     new_campaign.cron = cron
                     self.session.flush()
-
+        if kwargs.get('refresh_mat_view', True):
+            self.refresh_mat_view('mv_campaign')
+            self.refresh_mat_view('mv_geo')
+            self.refresh_mat_view('mv_campaign2device')
+            self.refresh_mat_view('mv_campaign2accounts')
+            self.refresh_mat_view('mv_campaign2categories')
+            self.refresh_mat_view('mv_campaign2domains')
+            self.refresh_mat_view('mv_campaign2informer')
+            self.refresh_mat_view('mv_cron')
         for camp_id in result:
-            self.load_offer(query={'campaignId_int': camp_id})
+            self.load_offer(query={'campaignId_int': camp_id}, **kwargs)
 
-    def load_offer(self, query=None):
+    def load_offer(self, query=None, *args, **kwargs):
         result = []
         if query is None:
             return result
-        social = None
-        retargeting = None
-        retargeting_type = None
-        with transaction.manager:
-            campaign = self.session.query(Campaign).get(query['campaignId_int'])
-            if campaign is not None:
-                social = campaign.social
-                retargeting = campaign.retargeting
-                retargeting_type = campaign.retargeting_type
-
-        if social is not None and retargeting is not None and retargeting_type is not None:
-            offers = self.parent_session['offer'].find(query)
-            for offer in offers:
-                data = dict()
-                data['id'] = offer.get('guid_int')
-                data['guid'] = offer.get('guid', '')
-                data['id_cam'] = offer.get('campaignId_int')
-                data['retid'] = offer.get('RetargetingID', '')
-                data['image'] = offer.get('image')
-                data['description'] = offer.get('description')
-                data['url'] = offer.get('url')
-                data['title'] = offer.get('title')
-                data['rating'] = offer.get('full_rating', 0)
-                data['recommended'] = offer.get('Recommended', '')
-                if len(data['image']) > 0:
-                    if social:
-                        result.append(OfferSocial(**data))
-                    else:
-                        if retargeting:
-                            if retargeting_type == 'offer':
-                                result.append(OfferDynamicRetargeting(**data))
-                            else:
-                                result.append(OfferAccountRetargeting(**data))
-                        else:
-                            result.append(OfferPlace(**data))
-
+        offers = self.parent_session['offer'].find(query)
+        for offer in offers:
+            data = dict()
+            rec = offer.get('Recommended')
+            if isinstance(rec, str) and len(rec) > 0:
+                recommended = [int(x) for x in rec.split(',')]
+            else:
+                recommended = []
+            data['id'] = offer.get('guid_int')
+            data['guid'] = offer.get('guid', '')
+            data['id_cam'] = offer.get('campaignId_int')
+            data['retid'] = offer.get('RetargetingID', '')
+            data['image'] = offer.get('image')
+            data['description'] = offer.get('description')
+            data['url'] = offer.get('url')
+            data['title'] = offer.get('title')
+            data['rating'] = offer.get('full_rating', 0)
+            data['recommended'] = recommended
+            if len(data['image']) > 0:
+                result.append(Offer(**data))
         with transaction.manager:
             self.session.add_all(result)
+        if kwargs.get('refresh_mat_view', True):
+            self.refresh_mat_view('mv_offer_place')
+            self.refresh_mat_view('mv_offer_social')
+            self.refresh_mat_view('mv_offer_account_retargeting')
+            self.refresh_mat_view('mv_offer_dynamic_retargeting')
         return result
 
-    def load_device(self, query=None):
+    def load_device(self, query=None, *args, **kwargs):
         result = []
         if query is None:
             query = {}
@@ -325,4 +346,7 @@ class Loader(object):
             for device in devices:
                 name = device.get('name', '')
                 result.append(Device.upsert(self.session(), {'name': name}))
+
+        if kwargs.get('refresh_mat_view', True):
+            self.refresh_mat_view('mv_device')
         return result

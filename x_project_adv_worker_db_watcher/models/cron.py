@@ -1,6 +1,8 @@
-from sqlalchemy import (Column, BigInteger, Integer, SmallInteger, Boolean, UniqueConstraint, Index, ForeignKey)
+from sqlalchemy import (Column, BigInteger, Integer, SmallInteger, Boolean, UniqueConstraint, Index, ForeignKey, select,
+                        Index, cast)
 from sqlalchemy.orm import relationship
 from .meta import Base
+from .__libs__.sql_view import create_view
 
 
 class Cron(Base):
@@ -15,3 +17,23 @@ class Cron(Base):
 
     __table_args__ = (UniqueConstraint('id_cam', 'day', 'start_stop', name='id_cam_day_start_stop_uc'),
                       Index('day_hour_min', 'day', 'hour', 'min'))
+
+
+class MVCron(Base):
+    __table__ = create_view(
+        Base.metadata,
+        'mv_cron',
+        select([
+            Cron.id,
+            cast(Cron.id_cam, BigInteger).label('id_cam'),
+            Cron.day,
+            Cron.hour,
+            Cron.min,
+            Cron.start_stop
+        ]).select_from(Cron),
+        is_mat=True)
+
+
+Index('ix_mv_cron_id', MVCron.id, unique=True)
+Index('ix_mv_categories_id_cam_day_start_stop', MVCron.id_cam, MVCron.day, MVCron.start_stop, unique=True)
+Index('ix_mv_categories_day_hour_min', MVCron.day, MVCron.hour, MVCron.min)

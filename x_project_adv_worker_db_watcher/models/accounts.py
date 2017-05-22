@@ -1,8 +1,9 @@
-from sqlalchemy import (Column, Integer, Boolean, String)
+from sqlalchemy import (Column, Integer, Boolean, String, select, Index, cast)
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import relationship
 from zope.sqlalchemy import mark_changed
 from .meta import Base
+from .__libs__.sql_view import create_view
 
 
 class Accounts(Base):
@@ -29,3 +30,19 @@ class Accounts(Base):
                 'name': data['name'],
                 'blocked': data['blocked']
                 }
+
+
+class MVAccounts(Base):
+    __table__ = create_view(
+        Base.metadata,
+        'mv_accounts',
+        select([
+            Accounts.id,
+            Accounts.name,
+            Accounts.blocked
+        ]).select_from(Accounts),
+        is_mat=True)
+
+
+Index('ix_mv_accounts_id', MVAccounts.id, unique=True)
+Index('ix_mv_accounts_name', MVAccounts.name)
