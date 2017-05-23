@@ -1,31 +1,32 @@
+import csv
 import os
+import time
+
+import transaction
 from sqlalchemy import create_engine
-from zope.sqlalchemy import mark_changed
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
-import transaction
-import time
-import csv
-from x_project_adv_worker_db_watcher.logger import logger
-from .meta import DBSession, metadata
+from zope.sqlalchemy import mark_changed
 
-from .informer import Informer, MVInformer
-from .offer import Offer, MVOfferPlace, MVOfferSocial, MVOfferAccountRetargeting, MVOfferDynamicRetargeting
-from .offer2informer import Offer2Informer
+from x_project_adv_worker_db_watcher.logger import logger
 from .accounts import Accounts, MVAccounts
 from .campaign import Campaign, MVCampaign
-from .categories import Categories, MVCategories
-from .device import Device, MVDevice
-from .domains import Domains, MVDomains
-from .cron import Cron, MVCron
-from .geo import Geo, MVGeo
-from .geo_lite_city import GeoLiteCity, MVGeoLiteCity
-from .categories2domain import Categories2Domain, MVCategories2Domain
 from .campaign2accounts import Campaign2Accounts, MVCampaign2Accounts
 from .campaign2categories import Campaign2Categories, MVCampaign2Categories
 from .campaign2device import Campaign2Device, MVCampaign2Device
 from .campaign2domains import Campaign2Domains, MVCampaign2Domains
 from .campaign2informer import Campaign2Informer, MVCampaign2Informer
+from .categories import Categories, MVCategories
+from .categories2domain import Categories2Domain, MVCategories2Domain
+from .cron import Cron, MVCron
+from .device import Device, MVDevice
+from .domains import Domains, MVDomains
+from .geo import Geo, MVGeo
+from .geo_lite_city import GeoLiteCity, MVGeoLiteCity
+from .informer import Informer, MVInformer
+from .meta import DBSession, metadata
+from .offer import Offer, MVOfferPlace, MVOfferSocial, MVOfferAccountRetargeting, MVOfferDynamicRetargeting
+from .offer2informer import Offer2Informer, MVOfferPlace2Informer, MVOfferSocial2Informer
 
 
 def get_engine(config):
@@ -88,4 +89,3 @@ def after_cursor_execute(conn, cursor, statement, parameters, context, executema
     total = time.time() - conn.info['query_start_time'].pop(-1)
     logger.debug("=================== Query Complete! ===================")
     logger.debug("=================== Total Time: %f ===================", total)
-

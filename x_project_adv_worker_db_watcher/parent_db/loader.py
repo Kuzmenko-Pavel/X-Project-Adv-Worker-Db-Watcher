@@ -1,6 +1,6 @@
 import transaction
 from zope.sqlalchemy import mark_changed
-from x_project_adv_worker_db_watcher.logger import logger
+
 from x_project_adv_worker_db_watcher.models import (Accounts, Device, Domains, Categories, Informer, Campaign,
                                                     GeoLiteCity, Cron, Campaign2Accounts, Campaign2Informer,
                                                     Campaign2Domains, Offer)
@@ -19,6 +19,7 @@ class Loader(object):
         self.load_domain_category(refresh_mat_view=False)
         self.load_informer(refresh_mat_view=False)
         self.load_campaign(refresh_mat_view=False)
+        self.load_offer_informer_rating(refresh_mat_view=False)
         self.refresh_mat_view()
 
     def refresh_mat_view(self, name=None):
@@ -196,13 +197,13 @@ class Loader(object):
 
                     new_campaign.geos = geos
 
-                    #------------------------deviceTargeting-----------------------
+                    # ------------------------deviceTargeting-----------------------
                     device = conditions.get('device', [])
                     if len(device) <= 0:
                         device.append('**')
                     new_campaign.devices = self.session.query(Device).filter(Device.name.in_(device)).all()
 
-                    #------------------------sites----------------------
+                    # ------------------------sites----------------------
                     categories = conditions.get('categories', [])
                     allowed_domains = conditions.get('allowed', {'domains': []}).get('domains', [])
                     allowed_informers = conditions.get('allowed', {'informers': []}).get('informers', [])
@@ -271,9 +272,7 @@ class Loader(object):
                     self.session.add_all(all_ignored_informer)
                     self.session.add_all(all_ignored_accounts)
 
-
-
-                    #------------------------cron-----------------------
+                    # ------------------------cron-----------------------
                     startShowTimeHours = int(conditions.get('startShowTime', {'hours': 0}).get('hours', 0))
                     startShowTimeMinutes = int(conditions.get('startShowTime', {'minutes': 0}).get('minutes', 0))
                     endShowTimeHours = int(conditions.get('endShowTime', {'hours': 0}).get('hours', 0))
@@ -313,7 +312,7 @@ class Loader(object):
             data = dict()
             rec = offer.get('Recommended')
             if isinstance(rec, str) and len(rec) > 0:
-                recommended = [int(x) for x in rec.split(',')]
+                recommended = [str(x) for x in rec.split(',')]
             else:
                 recommended = []
             data['id'] = offer.get('guid_int')
@@ -349,4 +348,30 @@ class Loader(object):
 
         if kwargs.get('refresh_mat_view', True):
             self.refresh_mat_view('mv_device')
+        return result
+
+    def load_offer_informer_rating(self, query=None, *args, **kwargs):
+        result = []
+        if query is None:
+            query = {}
+        query['full_rating'] = {'$exists': True}
+        offer_informer_ratings = self.parent_session['stats_daily.rating'].find(query)
+        with transaction.manager:
+            session = self.session()
+            session.flush()
+            conn = session.connection()
+            for offer_informer_rating in offer_informer_ratings:
+                data = {}
+                id_ofr = offer_informer_rating.get('guid_int')
+                id_inf = offer_informer_rating.get('adv_int')
+                rating = offer_informer_rating.get('full_rating', 0.0)
+                if id_ofr and id_inf:
+                    result.append(conn.execute('SELECT offer_informer_rating_update(%d,%d,%d);' %
+                                               (id_ofr, id_inf, rating)))
+
+            mark_changed(session)
+            session.flush()
+
+        # if kwargs.get('refresh_mat_view', True):
+        #     self.refresh_mat_view('mv_device')
         return result

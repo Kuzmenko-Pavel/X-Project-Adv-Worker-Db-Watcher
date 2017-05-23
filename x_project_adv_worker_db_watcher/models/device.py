@@ -1,9 +1,10 @@
-from sqlalchemy import (Column, Integer, String, Boolean, select, Index, select, Index, cast)
+from sqlalchemy import (Column, Integer, String, Boolean, select, Index)
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import relationship
 from zope.sqlalchemy import mark_changed
-from .meta import Base
+
 from .__libs__.sql_view import create_view
+from .meta import Base
 
 
 class Device(Base):

@@ -1,8 +1,9 @@
-from sqlalchemy import (Column, BigInteger, Integer, SmallInteger, Boolean, UniqueConstraint, Index, ForeignKey, select,
+from sqlalchemy import (Column, BigInteger, Integer, SmallInteger, Boolean, UniqueConstraint, ForeignKey, select,
                         Index, cast)
 from sqlalchemy.orm import relationship
-from .meta import Base
+
 from .__libs__.sql_view import create_view
+from .meta import Base
 
 
 class Cron(Base):

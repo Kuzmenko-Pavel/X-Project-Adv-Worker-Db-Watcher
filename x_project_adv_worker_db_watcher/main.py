@@ -1,13 +1,15 @@
-import sys
-import os
 import argparse
+import os
+import sys
+
 from daemonize import Daemonize
 from trafaret_config import commandline
+
 from x_project_adv_worker_db_watcher.logger import logger, fh
-from x_project_adv_worker_db_watcher.utils import TRAFARET_CONF
-from x_project_adv_worker_db_watcher.watcher import Watcher
 from x_project_adv_worker_db_watcher.models import DBSession, get_engine, check_table
 from x_project_adv_worker_db_watcher.parent_db import get_parent_engine
+from x_project_adv_worker_db_watcher.utils import TRAFARET_CONF
+from x_project_adv_worker_db_watcher.watcher import Watcher
 
 pid = "./test.pid"
 
@@ -43,6 +45,7 @@ def main(argv):
     daemon = Daemonize(app="x_project_adv_worker_db_watcher", pid=pid, action=action, keep_fds=keep_fds, logger=logger,
                        verbose=True, foreground=True, chdir=dir_path + '/../')
     daemon.start()
+
 
 if __name__ == '__main__':
     main(sys.argv[1:])

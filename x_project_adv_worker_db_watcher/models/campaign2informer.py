@@ -1,6 +1,7 @@
-from sqlalchemy import (Column, Integer, BigInteger, Boolean, UniqueConstraint, ForeignKey, select, Index, cast)
-from .meta import Base
+from sqlalchemy import (Column, Integer, BigInteger, Boolean, ForeignKey, select, Index, cast)
+
 from .__libs__.sql_view import create_view
+from .meta import Base
 
 
 class Campaign2Informer(Base):

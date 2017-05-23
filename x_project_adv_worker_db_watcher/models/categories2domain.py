@@ -1,6 +1,7 @@
 from sqlalchemy import (Column, Integer, ForeignKey, select, Index, cast)
-from .meta import Base
+
 from .__libs__.sql_view import create_view
+from .meta import Base
 
 
 class Categories2Domain(Base):

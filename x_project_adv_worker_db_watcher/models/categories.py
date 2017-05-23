@@ -1,9 +1,10 @@
-from sqlalchemy import (Column, Integer, String, select, Index, cast)
+from sqlalchemy import (Column, Integer, String, select, Index)
 from sqlalchemy.dialects.postgresql import insert
-from zope.sqlalchemy import mark_changed
 from sqlalchemy.orm import relationship
-from .meta import Base
+from zope.sqlalchemy import mark_changed
+
 from .__libs__.sql_view import create_view
+from .meta import Base
 
 
 class Categories(Base):

@@ -1,8 +1,9 @@
 from sqlalchemy import (Column, Integer, String, Boolean, SmallInteger, BigInteger, ForeignKey, select, Index, cast)
 from sqlalchemy.dialects.postgresql import insert
 from zope.sqlalchemy import mark_changed
-from .meta import Base
+
 from .__libs__.sql_view import create_view
+from .meta import Base
 
 
 class Informer(Base):

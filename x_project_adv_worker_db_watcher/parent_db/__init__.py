@@ -1,5 +1,5 @@
-import pymongo
 import mongo_proxy
+import pymongo
 
 
 def get_parent_engine(config):

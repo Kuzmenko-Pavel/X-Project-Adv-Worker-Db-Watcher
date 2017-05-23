@@ -1,8 +1,10 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.schema import MetaData
 from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.schema import MetaData
 from zope.sqlalchemy import ZopeTransactionExtension
+
 from x_project_adv_worker_db_watcher.models.__libs__.sql_function.function import create_function
+
 NAMING_CONVENTION = {
     "ix": 'ix_%(column_0_label)s',
     "uq": "uq_%(table_name)s_%(column_0_name)s",
@@ -16,6 +18,7 @@ metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
 class ClsBase(object):
     pass
+
 
 Base = declarative_base(cls=ClsBase, metadata=metadata)
 
@@ -40,20 +43,47 @@ create_function(metadata, {
             ''',
     'language': 'plpgsql'
 })
-#
-# create_function(metadata, {
-#     'name': 'recommended_offer_to_json',
-#     'argument': 'ANYARRAY',
-#     'returns': 'ANYARRAY',
-#     'body': '''
-#         SELECT json_build_object(t.id, t.offer_json)
-#             from (
-#                 SELECT t1.id , row_to_json(t1) as offer_json
-#                 from (
-#                     SELECT offer_sub.id, offer_sub.guid, offer_sub.image  from offer as offer_sub where offer_sub.id =ANY($1)
-#                      ) as t1
-#                  ) as t
-#         );
-#     ''',
-#     'language': 'SQL'
-# })
+
+create_function(metadata, {
+    'name': 'recommended_to_json',
+    'argument': 'ANYARRAY',
+    'returns': 'JSON',
+    'body': '''
+       SELECT JSON_BUILD_OBJECT(T.id, T.offer_json)
+        FROM (
+             SELECT
+               TT.id,
+               ROW_TO_JSON(TT) AS offer_json
+             FROM (
+                    SELECT
+                      offer_sub.id,
+                      offer_sub.guid,
+                      offer_sub.image
+                    FROM public.offer AS offer_sub
+                    WHERE offer_sub.retid = ANY ($1)
+                  ) AS TT
+           ) AS T
+    ''',
+    'optimizer': 'STABLE',
+    'language': 'SQL'
+})
+
+create_function(metadata, {
+    'name': 'offer_informer_rating_update',
+    'argument': 'v_id_ofr bigint, v_id_inf bigint, v_rating real',
+    'returns': 'INT',
+    'body': '''
+        DECLARE
+        BEGIN
+            INSERT INTO offer2informer (id_ofr, id_inf, rating)
+            VALUES (v_id_ofr, v_id_inf, v_rating)
+            ON CONFLICT (id_ofr, id_inf)
+            DO UPDATE SET
+            rating=v_rating;
+            RETURN 1;
+        EXCEPTION WHEN OTHERS THEN
+            RETURN 1;
+        END
+    ''',
+    'language': 'plpgsql'
+})

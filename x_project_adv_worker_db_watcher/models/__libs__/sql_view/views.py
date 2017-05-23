@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
+import sqlalchemy as db
 from sqlalchemy.ext import compiler
 from sqlalchemy.schema import DDLElement
-import sqlalchemy as db
 
 __author__ = 'kuzmenko-pavel'
 

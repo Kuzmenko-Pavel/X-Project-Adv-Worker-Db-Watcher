@@ -1,7 +1,7 @@
-# -*- coding: utf-8 -*-
+from uuid import uuid4
 
 import pika
-from uuid import uuid4
+
 from x_project_adv_worker_db_watcher.logger import logger
 from x_project_adv_worker_db_watcher.parent_db.loader import Loader
 
@@ -109,7 +109,8 @@ class Watcher(object):
     def setup_queue(self, queue):
         routing = ''
         logger.debug('Declaring queue %s', queue)
-        self._channel.queue_declare(callback=self.dummy, queue=queue, durable=self.DURABLE, auto_delete=self.AUTO_DELETE, nowait=False)
+        self._channel.queue_declare(callback=self.dummy, queue=queue, durable=self.DURABLE,
+                                    auto_delete=self.AUTO_DELETE, nowait=False)
         for routing_key in self.ROUTING_KEYS:
             queue_name = queue.split(':')[0]
             routing_key_name = routing_key.split('.')[0]
@@ -117,7 +118,8 @@ class Watcher(object):
                 routing = routing_key
         if len(routing) > 0:
             logger.debug('Binding %s to %s with %s ', self.EXCHANGE, queue, routing)
-            self._channel.queue_bind(callback=self.dummy, queue=queue, exchange=self.EXCHANGE, routing_key=routing, nowait=False)
+            self._channel.queue_bind(callback=self.dummy, queue=queue, exchange=self.EXCHANGE, routing_key=routing,
+                                     nowait=False)
 
     def start_consuming(self):
 
@@ -134,7 +136,7 @@ class Watcher(object):
     def on_consumer_cancelled(self, method_frame):
 
         logger.debug('Consumer was cancelled remotely, shutting down: %r',
-                    method_frame)
+                     method_frame)
         if self._channel:
             self._channel.close()
 

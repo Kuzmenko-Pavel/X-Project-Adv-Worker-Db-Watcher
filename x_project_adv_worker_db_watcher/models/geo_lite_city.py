@@ -1,7 +1,8 @@
-from sqlalchemy import (Column, Integer, String, UniqueConstraint, select, Index, select, Index, cast)
+from sqlalchemy import (Column, Integer, String, UniqueConstraint, select, Index)
 from sqlalchemy.orm import relationship
-from .meta import Base
+
 from .__libs__.sql_view import create_view
+from .meta import Base
 
 
 class GeoLiteCity(Base):
@@ -11,7 +12,7 @@ class GeoLiteCity(Base):
     region = Column(String(length=2))
     city = Column(String(length=50))
     campaigns = relationship('Campaign', secondary='geo', back_populates="geos", passive_deletes=True)
-    __table_args__ = (UniqueConstraint('country', 'region', 'city',  name='country_region_city_uc'),)
+    __table_args__ = (UniqueConstraint('country', 'region', 'city', name='country_region_city_uc'),)
 
 
 class MVGeoLiteCity(Base):

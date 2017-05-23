@@ -1,6 +1,7 @@
 from sqlalchemy import (Column, Integer, BigInteger, ForeignKey, select, Index, cast)
-from .meta import Base
+
 from .__libs__.sql_view import create_view
+from .meta import Base
 
 
 class Campaign2Device(Base):
