@@ -16,9 +16,6 @@ class Cron(Base):
     start_stop = Column(Boolean)
     campaign = relationship('Campaign', back_populates="cron")
 
-    __table_args__ = (UniqueConstraint('id_cam', 'day', 'start_stop', name='id_cam_day_start_stop_uc'),
-                      Index('day_hour_min', 'day', 'hour', 'min'))
-
 
 class MVCron(Base):
     __table__ = create_view(

@@ -11,8 +11,6 @@ class Campaign2Accounts(Base):
     id_acc = Column(Integer, ForeignKey('accounts.id', ondelete='CASCADE'), nullable=False)
     allowed = Column(Boolean, default=False, index=True)
 
-    __table_args__ = (UniqueConstraint('id_cam', 'id_acc', name='id_cam_id_acc_uc'),)
-
 
 class MVCampaign2Accounts(Base):
     __table__ = create_view(

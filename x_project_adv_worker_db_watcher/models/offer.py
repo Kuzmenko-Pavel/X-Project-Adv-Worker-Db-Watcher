@@ -14,13 +14,17 @@ class Offer(Base):
     guid = Column(String(length=64))
     retid = Column(String, default='', index=True)
     id_cam = Column(BigInteger, ForeignKey('campaign.id', ondelete='CASCADE'), nullable=False)
-    image = Column(String)
+    image = Column(ARRAY(String), default=[])
     description = Column(String(length=70))
     url = Column(String)
     title = Column(String(length=35))
     rating = Column(Float)
     recommended = Column(ARRAY(String), default=[])
     campaigns = relationship('Campaign', back_populates="offers", passive_deletes=True)
+    __table_args__ = (
+        Index('ix_offer_rating', rating.desc().nullslast()),
+        # {'prefixes': ['UNLOGGED']}
+    )
 
 
 class MVOfferPlace(Base):
@@ -41,7 +45,9 @@ class MVOfferPlace(Base):
             func.recommended_to_json(Offer.recommended).label('recommended')
         ]).select_from(
             join(Offer, Campaign, Offer.id_cam == Campaign.id, isouter=True)
-        ).where(and_(Campaign.social == false(), Campaign.retargeting == false())).order_by(Offer.rating), is_mat=True)
+        ).where(and_(Campaign.social == false(),
+                     Campaign.retargeting == false())
+                ).order_by(Offer.rating.desc().nullslast()), is_mat=True)
 
 
 Index('ix_mv_offer_place_id', MVOfferPlace.id, unique=True)
@@ -65,7 +71,10 @@ class MVOfferSocial(Base):
             func.recommended_to_json(Offer.recommended).label('recommended')
         ]).select_from(
             join(Offer, Campaign, Offer.id_cam == Campaign.id, isouter=True)
-        ).where(and_(Campaign.social == true(), Campaign.retargeting == false())).order_by(Offer.rating),
+        ).where(and_(
+            Campaign.social == true(),
+            Campaign.retargeting == false())
+        ).order_by(Offer.rating.desc().nullslast()),
         is_mat=True)
 
 

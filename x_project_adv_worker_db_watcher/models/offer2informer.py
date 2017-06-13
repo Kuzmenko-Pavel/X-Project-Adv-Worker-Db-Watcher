@@ -14,6 +14,7 @@ class Offer2Informer(Base):
     id_inf = Column(BigInteger, ForeignKey('informer.id', ondelete='CASCADE'), nullable=False, primary_key=True)
     rating = Column(Float)
     __table_args__ = (
+        Index('ix_offer2informer_rating', rating.desc().nullslast()),
         # {'prefixes': ['UNLOGGED']}
     )
 
@@ -24,7 +25,7 @@ off_place = select([
 ]).select_from(join(
     Offer,
     Campaign,
-    and_(Offer.id_cam == Campaign.id, Campaign.retargeting == false(), Campaign.social == true())
+    and_(Offer.id_cam == Campaign.id, Campaign.retargeting == false(), Campaign.social == false())
 )
 ).alias('off_social')
 
@@ -67,12 +68,12 @@ class MVOfferPlace2Informer(Base):
             off_to_inf_place.c.offer,
             off_to_inf_place.c.inf,
             func.COALESCE(Offer2Informer.rating, off_to_inf_place.c.rating, 0).label('rating')
-        ]).select_from(j_place)
+        ]).select_from(j_place).order_by(Offer2Informer.rating.desc().nullslast())
         , is_mat=True)
 
 
 Index('ix_mv_offer_place2informer_offer_inf', MVOfferPlace2Informer.offer, MVOfferPlace2Informer.inf, unique=True)
-Index('ix_mv_offer_place2informer_rating', MVOfferPlace2Informer.rating.desc(),
+Index('ix_mv_offer_place2informer_rating', MVOfferPlace2Informer.rating.desc().nullslast(),
       postgresql_using='btree', postgresql_with={"fillfactor": 50})
 
 
@@ -84,10 +85,10 @@ class MVOfferSocial2Informer(Base):
             off_to_inf_social.c.offer,
             off_to_inf_social.c.inf,
             func.COALESCE(Offer2Informer.rating, off_to_inf_social.c.rating, 0).label('rating')
-        ]).select_from(j_social)
+        ]).select_from(j_social).order_by(Offer2Informer.rating.desc().nullslast())
         , is_mat=True)
 
 
 Index('ix_mv_offer_social2informer_offer_inf', MVOfferSocial2Informer.offer, MVOfferSocial2Informer.inf, unique=True)
-Index('ix_mv_offer_social2informer_rating', MVOfferSocial2Informer.rating.desc(),
+Index('ix_mv_offer_social2informer_rating', MVOfferSocial2Informer.rating.desc().nullslast(),
       postgresql_using='btree', postgresql_with={"fillfactor": 50})

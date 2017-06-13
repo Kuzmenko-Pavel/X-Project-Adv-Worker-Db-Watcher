@@ -1,4 +1,4 @@
-from sqlalchemy import (Column, BigInteger, String, Boolean, SmallInteger, select, Index)
+from sqlalchemy import (Column, BigInteger, String, Boolean, SmallInteger, select, Index, func, join, text, table)
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import relationship
 from zope.sqlalchemy import mark_changed
@@ -38,7 +38,9 @@ class Campaign(Base):
                               passive_deletes=True)
     offers = relationship('Offer', back_populates="campaigns", passive_deletes=True)
 
-    __table_args__ = (Index('idx_Campaign_query', 'id', 'gender', 'cost', 'retargeting', 'social'),)
+    __table_args__ = (
+        # {'prefixes': ['UNLOGGED']}
+    )
 
     @classmethod
     def upsert(cls, session, data):
@@ -124,6 +126,7 @@ class MVCampaign(Base):
         Base.metadata,
         'mv_campaign',
         select([
+            func.count('offer.id').over(partition_by=Campaign.id).label('offer_count'),
             Campaign.id,
             Campaign.guid,
             Campaign.title,
@@ -145,7 +148,10 @@ class MVCampaign(Base):
             Campaign.html_notification,
             Campaign.disabled_retargiting_style,
             Campaign.disabled_recomendet_style
-        ]).select_from(Campaign),
+        ], distinct=Campaign.id).select_from(
+            join(Campaign, table('offer'), Campaign.id == text('offer.id_cam'), isouter=True)
+        )
+        ,
         is_mat=True)
 
 

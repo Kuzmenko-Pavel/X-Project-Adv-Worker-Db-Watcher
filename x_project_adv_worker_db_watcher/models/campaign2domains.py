@@ -11,8 +11,6 @@ class Campaign2Domains(Base):
     id_dom = Column(Integer, ForeignKey('domains.id', ondelete='CASCADE'), nullable=False)
     allowed = Column(Boolean, default=False, index=True)
 
-    __table_args__ = (UniqueConstraint('id_cam', 'id_dom', name='id_cam_id_dom_uc'),)
-
 
 class MVCampaign2Domains(Base):
     __table__ = create_view(

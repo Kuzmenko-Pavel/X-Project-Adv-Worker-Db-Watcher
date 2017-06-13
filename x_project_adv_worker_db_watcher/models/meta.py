@@ -46,26 +46,31 @@ create_function(metadata, {
 
 create_function(metadata, {
     'name': 'recommended_to_json',
-    'argument': 'ANYARRAY',
-    'returns': 'JSON',
+    'argument': 'recommended_id character varying[]',
+    'returns': 'json',
     'body': '''
-       SELECT JSON_BUILD_OBJECT(T.id, T.offer_json)
-        FROM (
-             SELECT
-               TT.id,
-               ROW_TO_JSON(TT) AS offer_json
-             FROM (
-                    SELECT
-                      offer_sub.id,
-                      offer_sub.guid,
-                      offer_sub.image
-                    FROM public.offer AS offer_sub
-                    WHERE offer_sub.retid = ANY ($1)
-                  ) AS TT
-           ) AS T
+       DECLARE
+        recommended json;
+       BEGIN
+           recommended = json_object_agg(T.id, T.offer_json)
+                FROM (
+                     SELECT
+                       TT.id,
+                       ROW_TO_JSON(TT) AS offer_json
+                     FROM (
+                            SELECT
+                              offer_sub.id,
+                              offer_sub.guid,
+                              offer_sub.image
+                            FROM public.offer AS offer_sub
+                            WHERE offer_sub.retid = ANY (recommended_id)
+                          ) AS TT
+                   ) AS T;
+        RETURN recommended;
+        END
     ''',
     'optimizer': 'STABLE',
-    'language': 'SQL'
+    'language': 'plpgsql'
 })
 
 create_function(metadata, {
