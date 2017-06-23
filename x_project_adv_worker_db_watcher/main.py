@@ -20,10 +20,10 @@ def action():
     global config
     engine = get_engine(config)
     parent_engine = get_parent_engine(config)
-    try:
-        check_table(engine)
-    except Exception as e:
-        logger.error(e)
+    # try:
+    #     check_table(engine)
+    # except Exception as e:
+    #     logger.error(e)
 
     watcher = Watcher(config, DBSession, parent_engine)
     try:

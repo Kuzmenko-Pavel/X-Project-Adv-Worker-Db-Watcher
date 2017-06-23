@@ -11,8 +11,8 @@ class Watcher(object):
     EXCHANGE_TYPE = 'topic'
     DURABLE = False
     AUTO_DELETE = True
-    QUEUES = [x % uuid4() for x in ['campaign:%s', 'informer:%s', 'account:%s']]
-    ROUTING_KEYS = ['campaign.#', 'informer.#', 'account.#']
+    QUEUES = [x % uuid4() for x in ['campaign:%s', 'informer:%s', 'account:%s', 'rating:%s']]
+    ROUTING_KEYS = ['campaign.#', 'informer.#', 'account.#', 'rating.#']
 
     def __init__(self, config, DBSession, ParentDBSession):
 
@@ -24,10 +24,10 @@ class Watcher(object):
         self._closing = False
         self._consumer_tag = None
         self._url = config['amqp']
-        try:
-            self.loader.all()
-        except Exception as e:
-            logger.error(e)
+        # try:
+        #     self.loader.all()
+        # except Exception as e:
+        #     logger.error(e)
 
     def connect(self):
 
@@ -141,29 +141,46 @@ class Watcher(object):
             self._channel.close()
 
     def on_message(self, unused_channel, basic_deliver, properties, body):
+        try:
+            if basic_deliver.exchange == 'getmyad':
+                key = basic_deliver.routing_key
+                if key == 'campaign.start':
+                    self.loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
 
-        if basic_deliver.exchange == 'getmyad':
-            key = basic_deliver.routing_key
-            if key == 'campaign.start':
-                self.loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
+                elif key == 'campaign.stop':
+                    self.loader.stop_campaign(guid=body.decode(encoding='UTF-8'))
 
-            elif key == 'campaign.stop':
-                self.loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
+                elif key == 'campaign.update':
+                    self.loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
 
-            elif key == 'campaign.update':
-                self.loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
+                elif key == 'informer.update':
+                    self.loader.load_domain({'guid': body.decode(encoding='UTF-8')})
+                    self.loader.load_informer({'guid': body.decode(encoding='UTF-8')})
 
-            elif key == 'informer.update':
-                self.loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
+                elif key == 'account.update':
+                    self.loader.load_domain_category_by_account({'login': body.decode(encoding='UTF-8')})
+                    self.loader.load_account({'login': body.decode(encoding='UTF-8')})
 
-            elif key == 'account.update':
-                self.loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
+                elif key == 'rating.informer':
+                    pass
+                    self.loader.load_offer_informer_rating()
+
+                elif key == 'rating.campaign':
+                    pass
+                    self.loader.load_campaign_rating()
+
+                elif key == 'rating.offer':
+                    pass
+                    self.loader.load_offer_rating()
+
+                else:
+                    logger.debug('Received message # %s from %s - %s: %s %s', basic_deliver.delivery_tag,
+                                 basic_deliver.exchange, basic_deliver.routing_key, properties.app_id, body)
             else:
                 logger.debug('Received message # %s from %s - %s: %s %s', basic_deliver.delivery_tag,
                              basic_deliver.exchange, basic_deliver.routing_key, properties.app_id, body)
-        else:
-            logger.debug('Received message # %s from %s - %s: %s %s', basic_deliver.delivery_tag,
-                         basic_deliver.exchange, basic_deliver.routing_key, properties.app_id, body)
+        except Exception as e:
+            print(e, body, basic_deliver)
         self.acknowledge_message(basic_deliver.delivery_tag)
 
     def acknowledge_message(self, delivery_tag):
@@ -188,7 +205,6 @@ class Watcher(object):
         self._channel.close()
 
     def run(self):
-
         self._connection = self.connect()
         self._connection.ioloop.start()
 

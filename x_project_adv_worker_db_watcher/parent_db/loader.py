@@ -1,9 +1,12 @@
 import transaction
+import json
 from zope.sqlalchemy import mark_changed
 
 from x_project_adv_worker_db_watcher.models import (Accounts, Device, Domains, Categories, Informer, Campaign,
                                                     GeoLiteCity, Cron, Campaign2Accounts, Campaign2Informer,
                                                     Campaign2Domains, Offer)
+from .adv_settings import AdvSetting
+from .block_settings import BlockSetting
 
 
 class Loader(object):
@@ -34,6 +37,189 @@ class Loader(object):
             mark_changed(session)
             session.flush()
 
+    @staticmethod
+    def __to_int(val):
+        if val is None:
+            val = 0
+        elif isinstance(val, str):
+            if val == 'auto':
+                val = 0
+            elif val == '':
+                val = 0
+            else:
+                val = val.replace('px', '')
+                val = val.replace('x', '')
+        return int(val)
+
+    @staticmethod
+    def __to_color(val):
+        if isinstance(val, str) and len(val) == 6:
+            val = '#' + val
+        else:
+            val = '#ffffff'
+        return val
+
+    @staticmethod
+    def __to_str(val):
+        return val
+
+    @staticmethod
+    def __to_float(val):
+        if isinstance(val, float):
+            return val
+        if isinstance(val, int):
+            val = float(val)
+        else:
+            val = 0.0
+        return val
+
+    @staticmethod
+    def __to_bool(val):
+        if isinstance(val, bool):
+            return val
+        if isinstance(val, str):
+            if val in ['true', '1', 't', 'y', 'yes', 'yeah', 'yup', 'certainly', 'uh-huh']:
+                val = True
+            else:
+                val = False
+        elif isinstance(val, int) or isinstance(val, float):
+            val = bool(val)
+        else:
+            val = False
+        return val
+
+    def create_adv_setting(self, data, name=None):
+        if name is None:
+            name = ''
+        try:
+            adv = AdvSetting()
+            adv.width = self.__to_int(data.get('Advertise', {}).get('width'))
+            adv.height = self.__to_int(data.get('Advertise', {}).get('height'))
+            adv.top = self.__to_int(data.get('Advertise', {}).get('top'))
+            adv.left = self.__to_int(data.get('Advertise', {}).get('left'))
+            adv.border_radius = [
+                self.__to_int(data.get('Advertise', {}).get('border_top_left_radius')),
+                self.__to_int(data.get('Advertise', {}).get('border_top_right_radius')),
+                self.__to_int(data.get('Advertise', {}).get('border_bottom_right_radius')),
+                self.__to_int(data.get('Advertise', {}).get('border_bottom_left_radius'))
+            ]
+            adv.margin = [
+                self.__to_int(data.get('Advertise', {}).get('margin_top')),
+                self.__to_int(data.get('Advertise', {}).get('margin_right')),
+                self.__to_int(data.get('Advertise', {}).get('margin_bottom')),
+                self.__to_int(data.get('Advertise', {}).get('margin_left'))
+            ]
+            adv.border = self.__to_int(data.get('Advertise', {}).get('borderWidth%s' % name))
+            adv.border_color = self.__to_color(data.get('Advertise', {}).get('borderColor%s' % name))
+            background_color_transparent = data.get('Advertise', {}).get('backgroundColor%sStatus' % name, True)
+            adv.background_color = 'transparent' if background_color_transparent else self.__to_color(
+                data.get('Advertise', {}).get('backgroundColor%s' % name)
+            )
+            adv.header.width = self.__to_int(data.get('%sHeader' % name, {}).get('width'))
+            adv.header.height = self.__to_int(data.get('%sHeader' % name, {}).get('height'))
+            adv.header.top = self.__to_int(data.get('%sHeader' % name, {}).get('top'))
+            adv.header.left = self.__to_int(data.get('%sHeader' % name, {}).get('left'))
+            adv.header.font.size = self.__to_int(data.get('%sHeader' % name, {}).get('fontSize'))
+            adv.header.font.color = self.__to_color(data.get('%sHeader' % name, {}).get('fontColor'))
+            adv.header.font.align = self.__to_str(data.get('%sHeader' % name, {}).get('align'))
+            adv.header.font.weight = self.__to_int(data.get('%sHeader' % name, {}).get('fontBold'))
+            adv.header.font.letter = self.__to_float(data.get('%sHeader' % name, {}).get('letter_spacing'))
+            adv.header.font.line = self.__to_float(data.get('%sHeader' % name, {}).get('line_height'))
+            adv.header.font.variant = self.__to_bool(data.get('%sHeader' % name, {}).get('font_variant'))
+            adv.header.font.decoration = self.__to_bool(data.get('%sHeader' % name, {}).get('fontUnderline'))
+            adv.header.font.family = self.__to_str(
+                data.get('%sHeader' % name, {}).get('fontFamily', 'arial, sans serif'))
+            adv.description.width = self.__to_int(data.get('%sDescription' % name, {}).get('width'))
+            adv.description.height = self.__to_int(data.get('%sDescription' % name, {}).get('height'))
+            adv.description.top = self.__to_int(data.get('%sDescription' % name, {}).get('top'))
+            adv.description.left = self.__to_int(data.get('%sDescription' % name, {}).get('left'))
+            adv.description.font.size = self.__to_int(data.get('%sDescription' % name, {}).get('fontSize'))
+            adv.description.font.color = self.__to_color(data.get('%sDescription' % name, {}).get('fontColor'))
+            adv.description.font.align = self.__to_str(data.get('%sDescription' % name, {}).get('align'))
+            adv.description.font.weight = self.__to_int(data.get('%sDescription' % name, {}).get('fontBold'))
+            adv.description.font.letter = self.__to_float(data.get('%sDescription' % name, {}).get('letter_spacing'))
+            adv.description.font.line = self.__to_float(data.get('%sDescription' % name, {}).get('line_height'))
+            adv.description.font.variant = self.__to_bool(data.get('%sDescription' % name, {}).get('font_variant'))
+            adv.description.font.decoration = self.__to_bool(data.get('%sDescription' % name, {}).get('fontUnderline'))
+            adv.description.font.family = self.__to_str(
+                data.get('%sDescription' % name, {}).get('fontFamily', 'arial, sans serif'))
+            adv.cost.width = self.__to_int(data.get('%sCost' % name, {}).get('width'))
+            adv.cost.height = self.__to_int(data.get('%sCost' % name, {}).get('height'))
+            adv.cost.top = self.__to_int(data.get('%sCost' % name, {}).get('top'))
+            adv.cost.left = self.__to_int(data.get('%sCost' % name, {}).get('left'))
+            adv.cost.font.size = self.__to_int(data.get('%sCost' % name, {}).get('fontSize'))
+            adv.cost.font.color = self.__to_color(data.get('%sCost' % name, {}).get('fontColor'))
+            adv.cost.font.align = self.__to_str(data.get('%sCost' % name, {}).get('align'))
+            adv.cost.font.weight = self.__to_int(data.get('%sCost' % name, {}).get('fontBold'))
+            adv.cost.font.letter = self.__to_float(data.get('%sCost' % name, {}).get('letter_spacing'))
+            adv.cost.font.line = self.__to_float(data.get('%sCost' % name, {}).get('line_height'))
+            adv.cost.font.variant = self.__to_bool(data.get('%sCost' % name, {}).get('font_variant'))
+            adv.cost.font.decoration = self.__to_bool(data.get('%sCost' % name, {}).get('fontUnderline'))
+            adv.cost.font.family = self.__to_str(data.get('%sCost' % name, {}).get('fontFamily', 'arial, sans serif'))
+            adv.button.width = self.__to_int(data.get('%sButton' % name, {}).get('width'))
+            adv.button.height = self.__to_int(data.get('%sButton' % name, {}).get('height'))
+            adv.button.top = self.__to_int(data.get('%sButton' % name, {}).get('top'))
+            adv.button.left = self.__to_int(data.get('%sButton' % name, {}).get('left'))
+            adv.image.width = self.__to_int(data.get('%sImage' % name, {}).get('width'))
+            adv.image.height = self.__to_int(data.get('%sImage' % name, {}).get('height'))
+            adv.image.top = self.__to_int(data.get('%sImage' % name, {}).get('top'))
+            adv.image.left = self.__to_int(data.get('%sImage' % name, {}).get('left'))
+            adv.image.border = self.__to_int(data.get('%sImage' % name, {}).get('borderWidth'))
+            adv.image.border_color = self.__to_color(data.get('%sImage' % name, {}).get('borderColor'))
+            adv.image.border_radius = [
+                self.__to_int(data.get('%sImage' % name, {}).get('border_top_left_radius')),
+                self.__to_int(data.get('%sImage' % name, {}).get('border_top_right_radius')),
+                self.__to_int(data.get('%sImage' % name, {}).get('border_bottom_right_radius')),
+                self.__to_int(data.get('%sImage' % name, {}).get('border_bottom_left_radius'))
+            ]
+        except Exception as e:
+            print(e)
+            print(data)
+            raise
+        return adv
+
+    def ad_style(self, data=None):
+        adv_data = None
+        if data is not None:
+            try:
+                adv_data = dict()
+                block = BlockSetting()
+                block.width = self.__to_int(data.get('Main', {}).get('width'))
+                block.height = self.__to_int(data.get('Main', {}).get('height'))
+                block.border = self.__to_int(data.get('Main', {}).get('borderWidth'))
+                block.border_color = self.__to_color(data.get('Main', {}).get('borderColor'))
+                background_color_transparent = data.get('Main', {}).get('backgroundColorStatus', True)
+                block.background_color = 'transparent' if background_color_transparent else self.__to_color(
+                    data.get('Main', {}).get('backgroundColor')
+                )
+                block.border_radius = [
+                    self.__to_int(data.get('Main', {}).get('border_top_left_radius')),
+                    self.__to_int(data.get('Main', {}).get('border_top_right_radius')),
+                    self.__to_int(data.get('Main', {}).get('border_bottom_right_radius')),
+                    self.__to_int(data.get('Main', {}).get('border_bottom_left_radius'))
+                ]
+
+                block.header.width = self.__to_int(data.get('MainHeader', {}).get('width'))
+                block.header.height = self.__to_int(data.get('MainHeader', {}).get('height'))
+                block.header.top = self.__to_int(data.get('MainHeader', {}).get('top'))
+                block.header.left = self.__to_int(data.get('MainHeader', {}).get('left'))
+
+                block.footer.width = self.__to_int(data.get('MainFooter', {}).get('width'))
+                block.footer.height = self.__to_int(data.get('MainFooter', {}).get('height'))
+                block.footer.top = self.__to_int(data.get('MainFooter', {}).get('top'))
+                block.footer.left = self.__to_int(data.get('MainFooter', {}).get('left'))
+
+                adv_data['block'] = dict(block)
+                adv_data['adv'] = dict()
+                adv_data['adv']['Block'] = dict(self.create_adv_setting(data))
+                adv_data['adv']['RetBlock'] = dict(self.create_adv_setting(data, 'Ret'))
+                adv_data['adv']['RecBlock'] = dict(self.create_adv_setting(data, 'Rec'))
+            except Exception as e:
+                print(e)
+                print(data)
+                raise
+        return adv_data
+
     def load_informer(self, query=None, *args, **kwargs):
         result = []
         if query is None:
@@ -51,17 +237,17 @@ class Loader(object):
                 data['title'] = informer.get('title')
                 data['headerHtml'] = informer.get('admaker', {}).get('MainHeader', {}).get('html', '')
                 data['footerHtml'] = informer.get('admaker', {}).get('MainFooter', {}).get('html', '')
-                data['ad_style'] = informer.get('admaker', {})
+                data['ad_style'] = self.ad_style(informer.get('admaker'))
                 data['auto_reload'] = informer.get('auto_reload')
                 data['blinking'] = informer.get('blinking')
                 data['shake'] = informer.get('shake')
                 data['blinking_reload'] = informer.get('blinking_reload')
                 data['shake_reload'] = informer.get('shake_reload')
                 data['shake_mouse'] = informer.get('shake_mouse')
-                data['html_notification'] = informer.get('html_notification')
-                data['place_branch'] = informer.get('place_branch')
-                data['retargeting_branch'] = informer.get('retargeting_branch')
-                data['social_branch'] = informer.get('social_branch')
+                data['html_notification'] = informer.get('html_notification', True)
+                data['place_branch'] = informer.get('plase_branch', True)
+                data['retargeting_branch'] = informer.get('retargeting_branch', True)
+                data['social_branch'] = informer.get('social_branch', True)
                 data['rating_division'] = informer.get('rating_division')
 
                 result.append(Informer.upsert(self.session(), data=data))
@@ -82,12 +268,28 @@ class Loader(object):
             self.refresh_mat_view('mv_domains')
         return result
 
+    def stop_account(self, name=None, *args, **kwargs):
+        if name is None:
+            name = ''
+        with transaction.manager:
+            old_account = self.session.query(Accounts).filter(Accounts.name == name).one_or_none()
+            if old_account is not None:
+                self.session.delete(old_account)
+                self.session.flush()
+                transaction.commit()
+                transaction.begin()
+            if kwargs.get('refresh_mat_view', True):
+                self.refresh_mat_view('mv_accounts')
+                self.refresh_mat_view('mv_informer')
+
     def load_account(self, query=None, *args, **kwargs):
         result = []
         if query is None:
             query = {}
         query['manager'] = False
         accounts = self.parent_session['users'].find(query)
+        if accounts.count() <= 0 and 'login' in query:
+            self.stop_account(name=query['login'])
         with transaction.manager:
             for account in accounts:
                 name = account.get('login', '')
@@ -112,7 +314,20 @@ class Loader(object):
             self.refresh_mat_view('mv_categories')
         return result
 
+    def load_domain_category_by_account(self, query=None, *args, **kwargs):
+        if query is None:
+            query = {}
+        else:
+            query = {'user': query.get('login', '')}
+        domains = []
+        cursor = self.load_domain(query)
+        for domain in cursor:
+            domains.append(domain.get('name', ''))
+        self.load_domain_category({'domain': {'$in': list(set(domains))}})
+
     def load_domain_category(self, query=None, *args, **kwargs):
+        if query is None:
+            query = {}
         domain_categories = self.parent_session['domain.categories'].find(query)
         with transaction.manager:
             for domain_category in domain_categories:
@@ -124,15 +339,56 @@ class Loader(object):
         if kwargs.get('refresh_mat_view', True):
             self.refresh_mat_view('mv_categories2domain')
 
+    def stop_campaign(self, guid=None, *args, **kwargs):
+        if guid is None:
+            guid = ''
+        with transaction.manager:
+            old_campaign = self.session.query(Campaign).filter(Campaign.guid == guid).one_or_none()
+            offer_place = False
+            offer_social = False
+            offer_account_retargeting = False
+            offer_dynamic_retargeting = False
+            if old_campaign is not None:
+                if old_campaign.social:
+                    offer_social = True
+                elif old_campaign.retargeting:
+                    if old_campaign.retargeting_type == 'offer':
+                        offer_dynamic_retargeting = True
+                    else:
+                        offer_account_retargeting = True
+                else:
+                    offer_place = True
+
+                self.session.delete(old_campaign)
+                self.session.flush()
+                transaction.commit()
+                transaction.begin()
+            if kwargs.get('refresh_mat_view', True):
+                self.refresh_mat_view('mv_campaign')
+                self.refresh_mat_view('mv_geo')
+                self.refresh_mat_view('mv_campaign2device')
+                self.refresh_mat_view('mv_campaign2accounts')
+                self.refresh_mat_view('mv_campaign2categories')
+                self.refresh_mat_view('mv_campaign2domains')
+                self.refresh_mat_view('mv_campaign2informer')
+                self.refresh_mat_view('mv_cron')
+                if offer_place:
+                    self.refresh_mat_view('mv_offer_place')
+                if offer_social:
+                    self.refresh_mat_view('mv_offer_social')
+                if offer_account_retargeting:
+                    self.refresh_mat_view('mv_offer_account_retargeting')
+                if offer_dynamic_retargeting:
+                    self.refresh_mat_view('mv_offer_dynamic_retargeting')
+
     def load_campaign(self, query=None, *args, **kwargs):
         result = []
         if query is None:
-            query = {'status': 'working'}
-        print(query)
+            query = {}
+
         campaigns = self.parent_session['campaign'].find(query)
         with transaction.manager:
             for campaign in campaigns:
-                print(campaign)
                 id = campaign.get('guid_int')
                 conditions = campaign.get('showConditions')
                 old_campaign = self.session.query(Campaign).get(id)
@@ -336,6 +592,56 @@ class Loader(object):
         if kwargs.get('refresh_mat_view', True):
             self.refresh_mat_view('mv_device')
         return result
+
+    def load_offer_rating(self, query=None, *args, **kwargs):
+        result = []
+        if query is None:
+            query = {}
+        query['full_rating'] = {'$exists': True}
+        offer_informer_ratings = self.parent_session['stats_daily.rating'].find(query)
+        with transaction.manager:
+            session = self.session()
+            session.flush()
+            conn = session.connection()
+            for offer_informer_rating in offer_informer_ratings:
+                data = {}
+                id_ofr = offer_informer_rating.get('guid_int')
+                id_inf = offer_informer_rating.get('adv_int')
+                rating = offer_informer_rating.get('full_rating', 0.0)
+                if id_ofr and id_inf:
+                    result.append(conn.execute('SELECT offer_informer_rating_update(%d,%d,%d);' %
+                                               (id_ofr, id_inf, rating)))
+
+            mark_changed(session)
+            session.flush()
+
+            # if kwargs.get('refresh_mat_view', True):
+            #     self.refresh_mat_view('mv_device')
+
+    def load_campaign_rating(self, query=None, *args, **kwargs):
+        result = []
+        if query is None:
+            query = {}
+        query['full_rating'] = {'$exists': True}
+        offer_informer_ratings = self.parent_session['stats_daily.rating'].find(query)
+        with transaction.manager:
+            session = self.session()
+            session.flush()
+            conn = session.connection()
+            for offer_informer_rating in offer_informer_ratings:
+                data = {}
+                id_ofr = offer_informer_rating.get('guid_int')
+                id_inf = offer_informer_rating.get('adv_int')
+                rating = offer_informer_rating.get('full_rating', 0.0)
+                if id_ofr and id_inf:
+                    result.append(conn.execute('SELECT offer_informer_rating_update(%d,%d,%d);' %
+                                               (id_ofr, id_inf, rating)))
+
+            mark_changed(session)
+            session.flush()
+
+            # if kwargs.get('refresh_mat_view', True):
+            #     self.refresh_mat_view('mv_device')
 
     def load_offer_informer_rating(self, query=None, *args, **kwargs):
         result = []
