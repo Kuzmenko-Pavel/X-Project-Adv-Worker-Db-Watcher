@@ -46,26 +46,56 @@ create_function(metadata, {
 
 create_function(metadata, {
     'name': 'recommended_to_json',
-    'argument': 'recommended_id character varying[]',
+    'argument': 'recommended_id character varying[], style_class character varying(50), brending boolean, offer_id_cam bigint',
     'returns': 'json',
     'body': '''
        DECLARE
         recommended json;
        BEGIN
-           recommended = json_object_agg(T.id, T.offer_json)
-                FROM (
-                     SELECT
-                       TT.id,
-                       ROW_TO_JSON(TT) AS offer_json
-                     FROM (
-                            SELECT
-                              offer_sub.id,
-                              offer_sub.guid,
-                              offer_sub.image
-                            FROM public.offer AS offer_sub
-                            WHERE offer_sub.retid = ANY (recommended_id)
-                          ) AS TT
-                   ) AS T;
+            IF brending AND array_length(recommended_id, 1) <= 0  THEN
+                recommended = json_object_agg(T.id, T.offer_json)
+                        FROM (
+                             SELECT
+                               TT.id,
+                               ROW_TO_JSON(TT) AS offer_json
+                             FROM (
+                                    SELECT
+                                      offer_sub.id,
+                                      offer_sub.guid,
+                                      offer_sub.title,
+                                      offer_sub.description,
+                                      offer_sub.image,
+                                      offer_sub.image,
+                                      offer_sub.price,
+                                      offer_sub.url,
+                                      style_class
+                                    FROM public.offer AS offer_sub
+                                    WHERE offer_sub.id_cam = offer_id_cam
+                                    ORDER BY RANDOM() LIMIT 10
+                                  ) AS TT
+                           ) AS T;
+            ELSE
+                recommended = json_object_agg(T.id, T.offer_json)
+                    FROM (
+                         SELECT
+                           TT.id,
+                           ROW_TO_JSON(TT) AS offer_json
+                         FROM (
+                                SELECT
+                                  offer_sub.id,
+                                  offer_sub.guid,
+                                  offer_sub.title,
+                                  offer_sub.description,
+                                  offer_sub.image,
+                                  offer_sub.image,
+                                  offer_sub.price,
+                                  offer_sub.url,
+                                  style_class
+                                FROM public.offer AS offer_sub
+                                WHERE offer_sub.retid = ANY (recommended_id) and offer_sub.id_cam = offer_id_cam
+                              ) AS TT
+                       ) AS T;
+            END IF;
         RETURN recommended;
         END
     ''',
@@ -85,6 +115,24 @@ create_function(metadata, {
             ON CONFLICT (id_ofr, id_inf)
             DO UPDATE SET
             rating=v_rating;
+            RETURN 1;
+        EXCEPTION WHEN OTHERS THEN
+            RETURN 1;
+        END
+    ''',
+    'language': 'plpgsql'
+})
+
+create_function(metadata, {
+    'name': 'offer_informer_rating_update',
+    'argument': 'v_id_ofr bigint, v_rating real',
+    'returns': 'INT',
+    'body': '''
+        DECLARE
+        BEGIN
+            UPDATE offer
+                SET rating=v_rating
+            WHERE id=v_id_ofr;
             RETURN 1;
         EXCEPTION WHEN OTHERS THEN
             RETURN 1;

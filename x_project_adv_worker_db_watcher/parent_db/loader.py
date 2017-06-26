@@ -22,7 +22,7 @@ class Loader(object):
         self.load_domain_category(refresh_mat_view=False)
         self.load_informer(refresh_mat_view=False)
         self.load_campaign(refresh_mat_view=False)
-        self.load_offer_informer_rating(refresh_mat_view=False)
+        # self.load_offer_informer_rating(refresh_mat_view=False)
         self.refresh_mat_view()
 
     def refresh_mat_view(self, name=None):
@@ -224,7 +224,26 @@ class Loader(object):
         result = []
         if query is None:
             query = {}
-        informers = self.parent_session['informer'].find(query)
+        fields = {
+            'guid_int': 1,
+            'guid': 1,
+            'domain': 1,
+            'user': 1,
+            'title': 1,
+            'admaker': 1,
+            'auto_reload': 1,
+            'blinking': 1,
+            'shake': 1,
+            'blinking_reload': 1,
+            'shake_reload': 1,
+            'shake_mouse': 1,
+            'html_notification': 1,
+            'plase_branch': 1,
+            'retargeting_branch': 1,
+            'social_branch': 1,
+            'rating_division': 1
+        }
+        informers = self.parent_session['informer'].find(query, fields)
         with transaction.manager:
             for informer in informers:
                 data = dict()
@@ -259,7 +278,10 @@ class Loader(object):
         result = []
         if query is None:
             query = {}
-        informers = self.parent_session['informer'].find(query, {'domain': 1})
+        fields = {
+            'domain': 1
+        }
+        informers = self.parent_session['informer'].find(query, fields)
         with transaction.manager:
             for informer in informers:
                 name = informer.get('domain', '')
@@ -277,17 +299,20 @@ class Loader(object):
                 self.session.delete(old_account)
                 self.session.flush()
                 transaction.commit()
-                transaction.begin()
-            if kwargs.get('refresh_mat_view', True):
-                self.refresh_mat_view('mv_accounts')
-                self.refresh_mat_view('mv_informer')
+                if kwargs.get('refresh_mat_view', True):
+                    self.refresh_mat_view('mv_accounts')
+                    self.refresh_mat_view('mv_informer')
 
     def load_account(self, query=None, *args, **kwargs):
         result = []
         if query is None:
             query = {}
         query['manager'] = False
-        accounts = self.parent_session['users'].find(query)
+        fields = {
+            'login': 1,
+            'blocked': 1
+        }
+        accounts = self.parent_session['users'].find(query, fields)
         if accounts.count() <= 0 and 'login' in query:
             self.stop_account(name=query['login'])
         with transaction.manager:
@@ -304,7 +329,11 @@ class Loader(object):
         result = []
         if query is None:
             query = {}
-        categories = self.parent_session['advertise.category'].find(query)
+        fields = {
+            'guid': 1,
+            'title': 1
+        }
+        categories = self.parent_session['advertise.category'].find(query, fields)
         with transaction.manager:
             for category in categories:
                 guid = category.get('guid', '')
@@ -328,7 +357,11 @@ class Loader(object):
     def load_domain_category(self, query=None, *args, **kwargs):
         if query is None:
             query = {}
-        domain_categories = self.parent_session['domain.categories'].find(query)
+        fields = {
+            'domain': 1,
+            'categories': 1
+        }
+        domain_categories = self.parent_session['domain.categories'].find(query, fields)
         with transaction.manager:
             for domain_category in domain_categories:
                 domains = self.session.query(Domains).filter(Domains.name == domain_category.get('domain', '')).all()
@@ -344,68 +377,59 @@ class Loader(object):
             guid = ''
         with transaction.manager:
             old_campaign = self.session.query(Campaign).filter(Campaign.guid == guid).one_or_none()
-            offer_place = False
-            offer_social = False
-            offer_account_retargeting = False
-            offer_dynamic_retargeting = False
             if old_campaign is not None:
-                if old_campaign.social:
-                    offer_social = True
-                elif old_campaign.retargeting:
-                    if old_campaign.retargeting_type == 'offer':
-                        offer_dynamic_retargeting = True
-                    else:
-                        offer_account_retargeting = True
-                else:
-                    offer_place = True
-
                 self.session.delete(old_campaign)
                 self.session.flush()
                 transaction.commit()
-                transaction.begin()
-            if kwargs.get('refresh_mat_view', True):
-                self.refresh_mat_view('mv_campaign')
-                self.refresh_mat_view('mv_geo')
-                self.refresh_mat_view('mv_campaign2device')
-                self.refresh_mat_view('mv_campaign2accounts')
-                self.refresh_mat_view('mv_campaign2categories')
-                self.refresh_mat_view('mv_campaign2domains')
-                self.refresh_mat_view('mv_campaign2informer')
-                self.refresh_mat_view('mv_cron')
-                if offer_place:
-                    self.refresh_mat_view('mv_offer_place')
-                if offer_social:
-                    self.refresh_mat_view('mv_offer_social')
-                if offer_account_retargeting:
-                    self.refresh_mat_view('mv_offer_account_retargeting')
-                if offer_dynamic_retargeting:
-                    self.refresh_mat_view('mv_offer_dynamic_retargeting')
+                if kwargs.get('refresh_mat_view', True):
+                    self.refresh_mat_view('mv_campaign')
+                    self.refresh_mat_view('mv_geo')
+                    self.refresh_mat_view('mv_campaign2device')
+                    self.refresh_mat_view('mv_campaign2accounts')
+                    self.refresh_mat_view('mv_campaign2categories')
+                    self.refresh_mat_view('mv_campaign2domains')
+                    self.refresh_mat_view('mv_campaign2informer')
+                    self.refresh_mat_view('mv_cron')
 
     def load_campaign(self, query=None, *args, **kwargs):
         result = []
+        offer_place = False
+        offer_social = False
+        offer_account_retargeting = False
+        offer_dynamic_retargeting = False
         if query is None:
             query = {}
-
-        campaigns = self.parent_session['campaign'].find(query)
+        fields = {
+            'guid': 1,
+            'guid_int': 1,
+            'title': 1,
+            'social': 1,
+            'impressions_per_day_limit': 1,
+            'showConditions': 1,
+            'disabled_retargiting_style': 1,
+            'disabled_recomendet_style': 1,
+            'status': 1,
+            'account': 1
+        }
+        campaigns = self.parent_session['campaign'].find(query, fields)
         with transaction.manager:
             for campaign in campaigns:
                 id = campaign.get('guid_int')
-                conditions = campaign.get('showConditions')
-                old_campaign = self.session.query(Campaign).get(id)
+                guid = campaign.get('guid')
+                conditions = campaign.get('showConditions', False)
+                old_campaign = self.session.query(Campaign).filter(Campaign.guid == guid).one_or_none()
                 if old_campaign is not None:
                     self.session.delete(old_campaign)
                     self.session.flush()
-                    transaction.commit()
-                    transaction.begin()
+                if not conditions:
+                    continue
                 data = dict()
                 data['id'] = id
-                data['guid'] = campaign.get('guid')
+                data['guid'] = guid
                 data['title'] = campaign.get('title')
-                data['project'] = campaign.get('project')
                 data['social'] = campaign.get('social')
-                data['impressions_per_day_limit'] = campaign.get('impressionsPerDayLimit')
                 data['showCoverage'] = conditions.get('showCoverage')
-                data['retargeting'] = conditions.get('retargeting')
+                data['retargeting'] = conditions.get('retargeting', False)
                 data['cost'] = conditions.get('cost')
                 data['gender'] = conditions.get('gender')
                 data['retargeting_type'] = conditions.get('retargeting_type')
@@ -417,12 +441,33 @@ class Loader(object):
                 data['offer_by_campaign_unique'] = conditions.get('offer_by_campaign_unique')
                 data['unique_impression_lot'] = conditions.get('UnicImpressionLot')
                 data['html_notification'] = conditions.get('html_notification')
-                data['disabled_retargiting_style'] = campaign.get('disabled_retargiting_style')
-                data['disabled_recomendet_style'] = campaign.get('disabled_recomendet_style')
+                data['style_data'] = conditions.get('style_data', {'img': '', 'head_title': '', 'button_title': ''})
+                data['style_type'] = conditions.get('style_type', 'default')
+                data['style_class'] = 'Block'
+                data['style_class_recommendet'] = 'RecBlock'
+                if data['style_type'] not in ['default', 'Block', 'RetBlock', 'RecBlock']:
+                    data['style_class'] = str(data['id'])
+                    data['style_class_recommendet'] = str(data['id'])
+                elif data['style_type'] in ['Block', 'RetBlock', 'RecBlock']:
+                    data['style_class'] = data['style_type']
+                    data['style_class_recommendet'] = data['style_type']
+                else:
+                    if data['retargeting']:
+                        data['style_class'] = 'RetBlock'
 
                 if campaign.get('status') == 'working':
                     new_campaign = Campaign(**data)
                     self.session.add(new_campaign)
+                    if new_campaign.social:
+                        offer_social = True
+                    elif new_campaign.retargeting:
+                        if new_campaign.retargeting_type == 'offer':
+                            offer_dynamic_retargeting = True
+                        else:
+                            offer_account_retargeting = True
+                    else:
+                        offer_place = True
+
                     self.session.flush()
                     result.append(new_campaign.id)
 
@@ -534,6 +579,9 @@ class Loader(object):
 
                     new_campaign.cron = cron
                     self.session.flush()
+        for camp_id in result:
+            self.load_offer(query={'campaignId_int': camp_id}, **kwargs)
+
         if kwargs.get('refresh_mat_view', True):
             self.refresh_mat_view('mv_campaign')
             self.refresh_mat_view('mv_geo')
@@ -543,17 +591,35 @@ class Loader(object):
             self.refresh_mat_view('mv_campaign2domains')
             self.refresh_mat_view('mv_campaign2informer')
             self.refresh_mat_view('mv_cron')
-        for camp_id in result:
-            self.load_offer(query={'campaignId_int': camp_id}, **kwargs)
+            if offer_place:
+                self.refresh_mat_view('mv_offer_place')
+            if offer_social:
+                self.refresh_mat_view('mv_offer_social')
+            if offer_account_retargeting:
+                self.refresh_mat_view('mv_offer_account_retargeting')
+            if offer_dynamic_retargeting:
+                self.refresh_mat_view('mv_offer_dynamic_retargeting')
 
     def load_offer(self, query=None, *args, **kwargs):
         result = []
         if query is None:
             return result
-        offers = self.parent_session['offer'].find(query)
+        fields = {
+            'guid': 1,
+            'guid_int': 1,
+            'campaignId_int': 1,
+            'RetargetingID': 1,
+            'image': 1,
+            'description': 1,
+            'url': 1,
+            'title': 1,
+            'full_rating': 1,
+            'Recommended': 1
+        }
+        offers = self.parent_session['offer'].find(query, fields)
         for offer in offers:
             data = dict()
-            rec = offer.get('Recommended')
+            rec = offer.get('Recommended', '')
             if isinstance(rec, str) and len(rec) > 0:
                 recommended = [str(x) for x in rec.split(',')]
             else:
@@ -563,20 +629,16 @@ class Loader(object):
             data['id_cam'] = offer.get('campaignId_int')
             data['retid'] = offer.get('RetargetingID', '')
             data['image'] = offer.get('image', '').split(',')
-            data['description'] = offer.get('description')
-            data['url'] = offer.get('url')
-            data['title'] = offer.get('title')
-            data['rating'] = offer.get('full_rating', 0)
+            data['description'] = offer.get('description', '')
+            data['url'] = offer.get('url', '')
+            data['title'] = offer.get('title', '')
+            data['price'] = offer.get('price', '')
+            data['rating'] = offer.get('full_rating', 0.0)
             data['recommended'] = recommended
             if len(data['image']) > 0:
                 result.append(Offer(**data))
         with transaction.manager:
             self.session.add_all(result)
-        if kwargs.get('refresh_mat_view', True):
-            self.refresh_mat_view('mv_offer_place')
-            self.refresh_mat_view('mv_offer_social')
-            self.refresh_mat_view('mv_offer_account_retargeting')
-            self.refresh_mat_view('mv_offer_dynamic_retargeting')
         return result
 
     def load_device(self, query=None, *args, **kwargs):
@@ -598,57 +660,51 @@ class Loader(object):
         if query is None:
             query = {}
         query['full_rating'] = {'$exists': True}
-        offer_informer_ratings = self.parent_session['stats_daily.rating'].find(query)
+        fields = {'guid_int': 1, 'full_rating': 1}
+        offer_ratings = self.parent_session['offer'].find(query, fields)
         with transaction.manager:
             session = self.session()
             session.flush()
             conn = session.connection()
-            for offer_informer_rating in offer_informer_ratings:
-                data = {}
-                id_ofr = offer_informer_rating.get('guid_int')
-                id_inf = offer_informer_rating.get('adv_int')
-                rating = offer_informer_rating.get('full_rating', 0.0)
-                if id_ofr and id_inf:
-                    result.append(conn.execute('SELECT offer_informer_rating_update(%d,%d,%d);' %
-                                               (id_ofr, id_inf, rating)))
+            for offer_rating in offer_ratings:
+                id_ofr = offer_rating.get('guid_int')
+                rating = offer_rating.get('full_rating', 0.0)
+                if id_ofr:
+                    result.append(conn.execute('SELECT offer_rating_update(%d,%f);' %
+                                               (id_ofr, rating)))
 
             mark_changed(session)
             session.flush()
 
-            # if kwargs.get('refresh_mat_view', True):
-            #     self.refresh_mat_view('mv_device')
-
-    def load_campaign_rating(self, query=None, *args, **kwargs):
-        result = []
-        if query is None:
-            query = {}
-        query['full_rating'] = {'$exists': True}
-        offer_informer_ratings = self.parent_session['stats_daily.rating'].find(query)
-        with transaction.manager:
-            session = self.session()
-            session.flush()
-            conn = session.connection()
-            for offer_informer_rating in offer_informer_ratings:
-                data = {}
-                id_ofr = offer_informer_rating.get('guid_int')
-                id_inf = offer_informer_rating.get('adv_int')
-                rating = offer_informer_rating.get('full_rating', 0.0)
-                if id_ofr and id_inf:
-                    result.append(conn.execute('SELECT offer_informer_rating_update(%d,%d,%d);' %
-                                               (id_ofr, id_inf, rating)))
-
-            mark_changed(session)
-            session.flush()
-
-            # if kwargs.get('refresh_mat_view', True):
-            #     self.refresh_mat_view('mv_device')
+    # def load_campaign_rating(self, query=None, *args, **kwargs):
+    #     result = []
+    #     if query is None:
+    #         query = {}
+    #     query['full_rating'] = {'$exists': True}
+    #     offer_informer_ratings = self.parent_session['stats_daily.rating'].find(query)
+    #     with transaction.manager:
+    #         session = self.session()
+    #         session.flush()
+    #         conn = session.connection()
+    #         for offer_informer_rating in offer_informer_ratings:
+    #             data = {}
+    #             id_ofr = offer_informer_rating.get('guid_int')
+    #             id_inf = offer_informer_rating.get('adv_int')
+    #             rating = offer_informer_rating.get('full_rating', 0.0)
+    #             if id_ofr and id_inf:
+    #                 result.append(conn.execute('SELECT campaign_informer_rating_update(%d,%d,%d);' %
+    #                                            (id_ofr, id_inf, rating)))
+    #
+    #         mark_changed(session)
+    #         session.flush()
 
     def load_offer_informer_rating(self, query=None, *args, **kwargs):
         result = []
         if query is None:
             query = {}
         query['full_rating'] = {'$exists': True}
-        offer_informer_ratings = self.parent_session['stats_daily.rating'].find(query)
+        fields = {'guid_int': 1, 'adv_int': 1, 'full_rating': 1}
+        offer_informer_ratings = self.parent_session['stats_daily.rating'].find(query, fields)
         with transaction.manager:
             session = self.session()
             session.flush()
@@ -659,12 +715,10 @@ class Loader(object):
                 id_inf = offer_informer_rating.get('adv_int')
                 rating = offer_informer_rating.get('full_rating', 0.0)
                 if id_ofr and id_inf:
-                    result.append(conn.execute('SELECT offer_informer_rating_update(%d,%d,%d);' %
+                    result.append(conn.execute('SELECT offer_informer_rating_update(%d,%d,%f);' %
                                                (id_ofr, id_inf, rating)))
 
             mark_changed(session)
             session.flush()
 
-        # if kwargs.get('refresh_mat_view', True):
-        #     self.refresh_mat_view('mv_device')
         return result

@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import pika
 
-from x_project_adv_worker_db_watcher.logger import logger
+from x_project_adv_worker_db_watcher.logger import logger, exception_message
 from x_project_adv_worker_db_watcher.parent_db.loader import Loader
 
 
@@ -25,9 +25,9 @@ class Watcher(object):
         self._consumer_tag = None
         self._url = config['amqp']
         # try:
-        #     self.loader.all()
+        self.loader.all()
         # except Exception as e:
-        #     logger.error(e)
+        #     logger.error(exception_message())
 
     def connect(self):
 
@@ -165,9 +165,9 @@ class Watcher(object):
                     pass
                     self.loader.load_offer_informer_rating()
 
-                elif key == 'rating.campaign':
-                    pass
-                    self.loader.load_campaign_rating()
+                # elif key == 'rating.campaign':
+                #     pass
+                #     self.loader.load_campaign_rating()
 
                 elif key == 'rating.offer':
                     pass
