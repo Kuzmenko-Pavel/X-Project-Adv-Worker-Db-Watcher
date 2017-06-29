@@ -160,6 +160,24 @@ class Loader(object):
             adv.button.height = self.__to_int(data.get('%sButton' % name, {}).get('height'))
             adv.button.top = self.__to_int(data.get('%sButton' % name, {}).get('top'))
             adv.button.left = self.__to_int(data.get('%sButton' % name, {}).get('left'))
+            adv.button.border = self.__to_int(data.get('%sButton' % name, {}).get('borderWidth'))
+            adv.button.border_color = self.__to_color(data.get('%sButton' % name, {}).get('borderColor'))
+            adv.button.border_radius = [
+                self.__to_int(data.get('%sButton' % name, {}).get('border_top_left_radius')),
+                self.__to_int(data.get('%sButton' % name, {}).get('border_top_right_radius')),
+                self.__to_int(data.get('%sButton' % name, {}).get('border_bottom_right_radius')),
+                self.__to_int(data.get('%sButton' % name, {}).get('border_bottom_left_radius'))
+            ]
+            adv.button.font.size = self.__to_int(data.get('%sButton' % name, {}).get('fontSize'))
+            adv.button.font.color = self.__to_color(data.get('%sButton' % name, {}).get('fontColor'))
+            adv.button.font.align = self.__to_str(data.get('%sButton' % name, {}).get('align'))
+            adv.button.font.weight = self.__to_int(data.get('%sButton' % name, {}).get('fontBold'))
+            adv.button.font.letter = self.__to_float(data.get('%sButton' % name, {}).get('letter_spacing'))
+            adv.button.font.line = self.__to_float(data.get('%sButton' % name, {}).get('line_height'))
+            adv.button.font.variant = self.__to_bool(data.get('%sButton' % name, {}).get('font_variant'))
+            adv.button.font.decoration = self.__to_bool(data.get('%sButton' % name, {}).get('fontUnderline'))
+            adv.button.font.family = self.__to_str(
+                data.get('%sButton' % name, {}).get('fontFamily', 'arial, sans serif'))
             adv.image.width = self.__to_int(data.get('%sImage' % name, {}).get('width'))
             adv.image.height = self.__to_int(data.get('%sImage' % name, {}).get('height'))
             adv.image.top = self.__to_int(data.get('%sImage' % name, {}).get('top'))
@@ -230,6 +248,7 @@ class Loader(object):
             'domain': 1,
             'user': 1,
             'title': 1,
+            'dynamic': 1,
             'admaker': 1,
             'auto_reload': 1,
             'blinking': 1,
@@ -249,14 +268,18 @@ class Loader(object):
                 data = dict()
                 domains = self.session.query(Domains).filter(Domains.name == informer.get('domain', '')).first()
                 account = self.session.query(Accounts).filter(Accounts.name == informer.get('user', '')).first()
-                data['id'] = informer.get('guid_int')
-                data['guid'] = informer.get('guid')
+                data['id'] = informer.get('guid_int', 1)
+                data['guid'] = informer.get('guid', '')
                 data['domain'] = domains.id
                 data['account'] = account.id
-                data['title'] = informer.get('title')
+                data['title'] = informer.get('title', '')
                 data['headerHtml'] = informer.get('admaker', {}).get('MainHeader', {}).get('html', '')
                 data['footerHtml'] = informer.get('admaker', {}).get('MainFooter', {}).get('html', '')
-                data['ad_style'] = self.ad_style(informer.get('admaker'))
+                data['dynamic'] = informer.get('dynamic', False)
+                if not data['dynamic']:
+                    data['ad_style'] = self.ad_style(informer.get('admaker', {}))
+                else:
+                    data['ad_style'] = None
                 data['auto_reload'] = informer.get('auto_reload')
                 data['blinking'] = informer.get('blinking')
                 data['shake'] = informer.get('shake')
@@ -299,9 +322,9 @@ class Loader(object):
                 self.session.delete(old_account)
                 self.session.flush()
                 transaction.commit()
-                if kwargs.get('refresh_mat_view', True):
-                    self.refresh_mat_view('mv_accounts')
-                    self.refresh_mat_view('mv_informer')
+        if kwargs.get('refresh_mat_view', True):
+            self.refresh_mat_view('mv_accounts')
+            self.refresh_mat_view('mv_informer')
 
     def load_account(self, query=None, *args, **kwargs):
         result = []
@@ -381,15 +404,15 @@ class Loader(object):
                 self.session.delete(old_campaign)
                 self.session.flush()
                 transaction.commit()
-                if kwargs.get('refresh_mat_view', True):
-                    self.refresh_mat_view('mv_campaign')
-                    self.refresh_mat_view('mv_geo')
-                    self.refresh_mat_view('mv_campaign2device')
-                    self.refresh_mat_view('mv_campaign2accounts')
-                    self.refresh_mat_view('mv_campaign2categories')
-                    self.refresh_mat_view('mv_campaign2domains')
-                    self.refresh_mat_view('mv_campaign2informer')
-                    self.refresh_mat_view('mv_cron')
+        if kwargs.get('refresh_mat_view', True):
+            self.refresh_mat_view('mv_campaign')
+            self.refresh_mat_view('mv_geo')
+            self.refresh_mat_view('mv_campaign2device')
+            self.refresh_mat_view('mv_campaign2accounts')
+            self.refresh_mat_view('mv_campaign2categories')
+            self.refresh_mat_view('mv_campaign2domains')
+            self.refresh_mat_view('mv_campaign2informer')
+            self.refresh_mat_view('mv_cron')
 
     def load_campaign(self, query=None, *args, **kwargs):
         result = []

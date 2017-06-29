@@ -19,6 +19,7 @@ class Informer(Base):
     auto_reload = Column(SmallInteger)
     blinking = Column(SmallInteger)
     shake = Column(SmallInteger)
+    dynamic = Column(Boolean, default=False)
     blinking_reload = Column(Boolean, default=True)
     shake_reload = Column(Boolean, default=True)
     shake_mouse = Column(Boolean, default=True)
@@ -44,6 +45,7 @@ class Informer(Base):
                     auto_reload=data['auto_reload'],
                     blinking=data['blinking'],
                     shake=data['shake'],
+                    dynamic=data['dynamic'],
                     blinking_reload=data['blinking_reload'],
                     shake_reload=data['shake_reload'],
                     shake_mouse=data['shake_mouse'],
@@ -65,6 +67,7 @@ class Informer(Base):
                 auto_reload=data['auto_reload'],
                 blinking=data['blinking'],
                 shake=data['shake'],
+                dynamic=data['dynamic'],
                 blinking_reload=data['blinking_reload'],
                 shake_reload=data['shake_reload'],
                 shake_mouse=data['shake_mouse'],
@@ -89,6 +92,7 @@ class Informer(Base):
             auto_reload=data['auto_reload'],
             blinking=data['blinking'],
             shake=data['shake'],
+            dynamic=data['dynamic'],
             blinking_reload=data['blinking_reload'],
             shake_reload=data['shake_reload'],
             shake_mouse=data['shake_mouse'],
@@ -116,6 +120,7 @@ class MVInformer(Base):
             Informer.auto_reload,
             Informer.blinking,
             Informer.shake,
+            Informer.dynamic,
             Informer.blinking_reload,
             Informer.shake_reload,
             Informer.shake_mouse,
