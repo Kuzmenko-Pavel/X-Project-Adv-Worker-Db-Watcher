@@ -19,6 +19,10 @@ class BlockSetting(Map):
         self.footer.height = 0
         self.footer.top = 0
         self.footer.left = 0
+        self.default_button = Map()
+        self.default_button.block = 'Подробнее'
+        self.default_button.ret_block = 'Подробнее'
+        self.default_button.rec_block = 'Подробнее'
         self.default_adv = Map()
         self.styling_adv = Map()
         self.default_adv.count_column = 0

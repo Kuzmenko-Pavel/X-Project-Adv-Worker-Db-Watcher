@@ -217,6 +217,13 @@ class Loader(object):
                     self.__to_int(data.get('Main', {}).get('border_bottom_left_radius'))
                 ]
 
+                block.default_button.block = self.__to_str(
+                    data.get('Button', {}).get('content', block.default_button.block))
+                block.default_button.ret_block = self.__to_str(
+                    data.get('RetButton', {}).get('content', block.default_button.ret_block))
+                block.default_button.rec_block = self.__to_str(
+                    data.get('RecButton', {}).get('content', block.default_button.rec_block))
+
                 block.header.width = self.__to_int(data.get('MainHeader', {}).get('width'))
                 block.header.height = self.__to_int(data.get('MainHeader', {}).get('height'))
                 block.header.top = self.__to_int(data.get('MainHeader', {}).get('top'))
