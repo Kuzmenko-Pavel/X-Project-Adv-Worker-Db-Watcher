@@ -22,7 +22,7 @@ class Loader(object):
         self.load_domain_category(refresh_mat_view=False)
         self.load_informer(refresh_mat_view=False)
         self.load_campaign(refresh_mat_view=False)
-        # self.load_offer_informer_rating(refresh_mat_view=False)
+        self.load_offer_informer_rating(refresh_mat_view=False)
         self.refresh_mat_view()
 
     def refresh_mat_view(self, name=None):
@@ -460,8 +460,8 @@ class Loader(object):
                 data['social'] = campaign.get('social')
                 data['showCoverage'] = conditions.get('showCoverage')
                 data['retargeting'] = conditions.get('retargeting', False)
-                data['cost'] = conditions.get('cost')
-                data['gender'] = conditions.get('gender')
+                data['cost'] = conditions.get('cost', 0)
+                data['gender'] = conditions.get('gender', 0)
                 data['retargeting_type'] = conditions.get('retargeting_type')
                 data['brending'] = conditions.get('brending')
                 data['recomendet_type'] = conditions.get('recomendet_type')
@@ -471,12 +471,13 @@ class Loader(object):
                 data['offer_by_campaign_unique'] = conditions.get('offer_by_campaign_unique')
                 data['unique_impression_lot'] = conditions.get('UnicImpressionLot')
                 data['html_notification'] = conditions.get('html_notification')
-                data['style_data'] = conditions.get('style_data', {'img': '', 'head_title': '', 'button_title': ''})
+                data['style_data'] = None
                 data['style_type'] = conditions.get('style_type', 'default')
                 data['style_class'] = 'Block'
                 data['style_class_recommendet'] = 'RecBlock'
                 if data['style_type'] not in ['default', 'Block', 'RetBlock', 'RecBlock']:
                     data['style_class'] = str(data['id'])
+                    data['style_data'] = conditions.get('style_data', {'img': '', 'head_title': '', 'button_title': ''})
                     data['style_class_recommendet'] = str(data['id'])
                 elif data['style_type'] in ['Block', 'RetBlock', 'RecBlock']:
                     data['style_class'] = data['style_type']
@@ -663,7 +664,7 @@ class Loader(object):
             data['url'] = offer.get('url', '')
             data['title'] = offer.get('title', '')
             data['price'] = offer.get('price', '')
-            data['rating'] = offer.get('full_rating', 0.0)
+            data['rating'] = float(offer.get('full_rating', 0.0))
             data['recommended'] = recommended
             if len(data['image']) > 0:
                 result.append(Offer(**data))
@@ -700,7 +701,7 @@ class Loader(object):
                 id_ofr = offer_rating.get('guid_int')
                 rating = offer_rating.get('full_rating', 0.0)
                 if id_ofr:
-                    result.append(conn.execute('SELECT offer_rating_update(%d,%f);' %
+                    result.append(conn.execute('SELECT offer_rating_update(%d::bigint,%f);' %
                                                (id_ofr, rating)))
 
             mark_changed(session)

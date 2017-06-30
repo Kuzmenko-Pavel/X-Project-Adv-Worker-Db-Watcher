@@ -1,4 +1,4 @@
-from sqlalchemy import (Column, BigInteger, String, Float, Boolean, ForeignKey, select, Index, cast)
+from sqlalchemy import (Column, BigInteger, String, Float, ForeignKey, select, Index, cast)
 from sqlalchemy.dialects.postgresql import ARRAY, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func, join, true, false, and_
@@ -29,27 +29,17 @@ class Offer(Base):
     )
 
 
-class MVOfferPlace(Base):
-    __table__ = create_view(
-        Base.metadata,
-        'mv_offer_place',
-        select([
+place_sub = select([
+    func.row_number().over(partition_by=Offer.id_cam).label('range_number'),
             Offer.id,
             Offer.guid,
             cast(Offer.id_cam, BigInteger).label('id_cam'),
-            cast(Campaign.account, String).label('accounts_cam'),
-            cast(Campaign.guid, String).label('guid_cam'),
-            cast(Campaign.title, String).label('title_cam'),
-            cast(Campaign.brending, Boolean).label('brending'),
-            cast(Campaign.style_data, JSON).label('logo'),
-            cast(Campaign.style_class, String).label('style_class'),
             Offer.image,
             Offer.description,
             Offer.url,
             Offer.title,
             Offer.price,
             func.recommended_to_json(Offer.recommended,
-                                     Campaign.style_class_recommendet,
                                      Campaign.brending,
                                      Offer.id_cam).label('recommended')
         ]).select_from(
@@ -59,33 +49,19 @@ class MVOfferPlace(Base):
                                        ), isouter=False)
         ).where(and_(Campaign.social == false(),
                      Campaign.retargeting == false())
-                ).order_by(Offer.rating.desc().nullslast()), is_mat=True)
+                ).order_by(Offer.rating.desc().nullslast()).alias('place_sub')
 
-
-Index('ix_mv_offer_place_id', MVOfferPlace.id, unique=True)
-
-
-class MVOfferSocial(Base):
-    __table__ = create_view(
-        Base.metadata,
-        'mv_offer_social',
-        select([
+social_sub = select([
+    func.row_number().over(partition_by=Offer.id_cam).label('range_number'),
             Offer.id,
             Offer.guid,
             cast(Offer.id_cam, BigInteger).label('id_cam'),
-            cast(Campaign.account, String).label('accounts_cam'),
-            cast(Campaign.guid, String).label('guid_cam'),
-            cast(Campaign.title, String).label('title_cam'),
-            cast(Campaign.brending, Boolean).label('brending'),
-            cast(Campaign.style_data, JSON).label('logo'),
-            cast(Campaign.style_class, String).label('style_class'),
             Offer.image,
             Offer.description,
             Offer.url,
             Offer.title,
             Offer.price,
             func.recommended_to_json(Offer.recommended,
-                                     Campaign.style_class_recommendet,
                                      Campaign.brending,
                                      Offer.id_cam).label('recommended')
         ]).select_from(
@@ -96,34 +72,19 @@ class MVOfferSocial(Base):
         ).where(and_(
             Campaign.social == true(),
             Campaign.retargeting == false())
-        ).order_by(Offer.rating.desc().nullslast()),
-        is_mat=True)
+).order_by(Offer.rating.desc().nullslast()).alias('social_sub')
 
-
-Index('ix_mv_offer_social_id', MVOfferSocial.id, unique=True)
-
-
-class MVOfferAccountRetargeting(Base):
-    __table__ = create_view(
-        Base.metadata,
-        'mv_offer_account_retargeting',
-        select([
+account_retargeting_sub = select([
+    func.row_number().over(partition_by=Offer.id_cam).label('range_number'),
             Offer.id,
             Offer.guid,
             cast(Offer.id_cam, BigInteger).label('id_cam'),
-            cast(Campaign.account, String).label('accounts_cam'),
-            cast(Campaign.guid, String).label('guid_cam'),
-            cast(Campaign.title, String).label('title_cam'),
-            cast(Campaign.brending, Boolean).label('brending'),
-            cast(Campaign.style_data, JSON).label('logo'),
-            cast(Campaign.style_class, String).label('style_class'),
             Offer.image,
             Offer.description,
             Offer.url,
             Offer.title,
             Offer.price,
             func.recommended_to_json(Offer.recommended,
-                                     Campaign.style_class_recommendet,
                                      Campaign.brending,
                                      Offer.id_cam).label('recommended')
         ]).select_from(
@@ -131,11 +92,73 @@ class MVOfferAccountRetargeting(Base):
                                        Campaign.retargeting == true(),
                                        Campaign.retargeting_type == 'account'
                                        ), isouter=False)
-        ).where(and_(Campaign.retargeting == true(), Campaign.retargeting_type == 'account')),
+).where(and_(Campaign.retargeting == true(), Campaign.retargeting_type == 'account')).alias('account_retargeting_sub')
+
+
+class MVOfferPlace(Base):
+    __table__ = create_view(
+        Base.metadata,
+        'mv_offer_place',
+        select([
+            place_sub.c.id,
+            place_sub.c.guid,
+            place_sub.c.id_cam,
+            place_sub.c.image,
+            place_sub.c.description,
+            place_sub.c.url,
+            place_sub.c.title,
+            place_sub.c.price,
+            place_sub.c.recommended
+        ]).select_from(place_sub).where(place_sub.c.range_number < 31)
+        , is_mat=True)
+
+
+Index('ix_mv_offer_place_id', MVOfferPlace.id, unique=True)
+Index('ix_mv_offer_place_id_cam', MVOfferPlace.id_cam)
+
+
+class MVOfferSocial(Base):
+    __table__ = create_view(
+        Base.metadata,
+        'mv_offer_social',
+        select([
+            social_sub.c.id,
+            social_sub.c.guid,
+            social_sub.c.id_cam,
+            social_sub.c.image,
+            social_sub.c.description,
+            social_sub.c.url,
+            social_sub.c.title,
+            social_sub.c.price,
+            social_sub.c.recommended
+        ]).select_from(social_sub).where(social_sub.c.range_number < 31),
+        is_mat=True)
+
+
+Index('ix_mv_offer_social_id', MVOfferSocial.id, unique=True)
+Index('ix_mv_offer_social_id_cam', MVOfferSocial.id_cam)
+
+
+class MVOfferAccountRetargeting(Base):
+    __table__ = create_view(
+        Base.metadata,
+        'mv_offer_account_retargeting',
+        select([
+            account_retargeting_sub.c.id,
+            account_retargeting_sub.c.guid,
+            account_retargeting_sub.c.id_cam,
+            account_retargeting_sub.c.image,
+            account_retargeting_sub.c.description,
+            account_retargeting_sub.c.url,
+            account_retargeting_sub.c.title,
+            account_retargeting_sub.c.price,
+            account_retargeting_sub.c.recommended
+        ]).select_from(account_retargeting_sub).where(account_retargeting_sub.c.range_number < 31),
         is_mat=True)
 
 
 Index('ix_mv_offer_account_retargeting_id', MVOfferAccountRetargeting.id, unique=True)
+Index('ix_mv_offer_account_retargeting_id_cam', MVOfferAccountRetargeting.id_cam)
 
 
 class MVOfferDynamicRetargeting(Base):
@@ -145,20 +168,15 @@ class MVOfferDynamicRetargeting(Base):
         select([
             Offer.id,
             Offer.guid,
+            Offer.retid,
             cast(Offer.id_cam, BigInteger).label('id_cam'),
             cast(Campaign.account, String).label('accounts_cam'),
-            cast(Campaign.guid, String).label('guid_cam'),
-            cast(Campaign.title, String).label('title_cam'),
-            cast(Campaign.brending, Boolean).label('brending'),
-            cast(Campaign.style_data, JSON).label('logo'),
-            cast(Campaign.style_class, String).label('style_class'),
             Offer.image,
             Offer.description,
             Offer.url,
             Offer.title,
             Offer.price,
             func.recommended_to_json(Offer.recommended,
-                                     Campaign.style_class_recommendet,
                                      Campaign.brending,
                                      Offer.id_cam).label('recommended')
         ]).select_from(
@@ -171,3 +189,5 @@ class MVOfferDynamicRetargeting(Base):
 
 
 Index('ix_mv_offer_dynamic_retargeting_id', MVOfferDynamicRetargeting.id, unique=True)
+Index('ix_mv_offer_dynamic_retargeting_retid_accounts_cam', MVOfferDynamicRetargeting.retid,
+      MVOfferDynamicRetargeting.accounts_cam)

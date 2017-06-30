@@ -46,7 +46,7 @@ create_function(metadata, {
 
 create_function(metadata, {
     'name': 'recommended_to_json',
-    'argument': 'recommended_id character varying[], style_class character varying(50), brending boolean, offer_id_cam bigint',
+    'argument': 'recommended_id character varying[], brending boolean, offer_id_cam bigint',
     'returns': 'json',
     'body': '''
        DECLARE
@@ -65,10 +65,8 @@ create_function(metadata, {
                                       offer_sub.title,
                                       offer_sub.description,
                                       offer_sub.image,
-                                      offer_sub.image,
                                       offer_sub.price,
-                                      offer_sub.url,
-                                      style_class
+                                      offer_sub.url
                                     FROM public.offer AS offer_sub
                                     WHERE offer_sub.id_cam = offer_id_cam
                                     ORDER BY RANDOM() LIMIT 10
@@ -87,10 +85,8 @@ create_function(metadata, {
                                   offer_sub.title,
                                   offer_sub.description,
                                   offer_sub.image,
-                                  offer_sub.image,
                                   offer_sub.price,
-                                  offer_sub.url,
-                                  style_class
+                                  offer_sub.url
                                 FROM public.offer AS offer_sub
                                 WHERE offer_sub.retid = ANY (recommended_id) and offer_sub.id_cam = offer_id_cam
                               ) AS TT
@@ -105,7 +101,7 @@ create_function(metadata, {
 
 create_function(metadata, {
     'name': 'offer_informer_rating_update',
-    'argument': 'v_id_ofr bigint, v_id_inf bigint, v_rating real',
+    'argument': 'v_id_ofr bigint, v_id_inf bigint, v_rating double precision',
     'returns': 'INT',
     'body': '''
         DECLARE
@@ -124,8 +120,8 @@ create_function(metadata, {
 })
 
 create_function(metadata, {
-    'name': 'offer_informer_rating_update',
-    'argument': 'v_id_ofr bigint, v_rating real',
+    'name': 'offer_rating_update',
+    'argument': 'v_id_ofr bigint, v_rating double precision',
     'returns': 'INT',
     'body': '''
         DECLARE
