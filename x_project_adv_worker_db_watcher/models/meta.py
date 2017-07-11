@@ -53,7 +53,7 @@ create_function(metadata, {
         recommended json;
        BEGIN
             IF brending AND array_length(recommended_id, 1) <= 0  THEN
-                recommended = json_object_agg(T.id, T.offer_json)
+                recommended = json_agg(T.offer_json)
                         FROM (
                              SELECT
                                TT.id,
@@ -73,7 +73,7 @@ create_function(metadata, {
                                   ) AS TT
                            ) AS T;
             ELSE
-                recommended = json_object_agg(T.id, T.offer_json)
+                recommended = json_agg(T.offer_json)
                     FROM (
                          SELECT
                            TT.id,

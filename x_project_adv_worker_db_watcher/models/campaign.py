@@ -15,10 +15,12 @@ class Campaign(Base):
     social = Column(Boolean, default=False)
     showCoverage = Column(String(length=70))
     retargeting = Column(Boolean, default=False)
+    capacity = Column(SmallInteger, default=1)
     cost = Column(SmallInteger, default=0)
     gender = Column(SmallInteger, default=0)
     retargeting_type = Column(String(length=10), default='offer')
     brending = Column(Boolean, default=False)
+    styling = Column(Boolean, default=False)
     style_data = Column(JSON, default=lambda: {'img': '', 'head_title': '', 'button_title': ''})
     style_type = Column(String(length=50), default='default')
     style_class = Column(String(length=50), default='Block')
@@ -55,10 +57,12 @@ class Campaign(Base):
                     social=data['social'],
                     showCoverage=data['showCoverage'],
                     retargeting=data['retargeting'],
+                    capacity=data['capacity'],
                     cost=data['cost'],
                     gender=data['gender'],
                     retargeting_type=data['retargeting_type'],
                     brending=data['brending'],
+                    styling=data['styling'],
                     style_data=data['style_data'],
                     style_type=data['style_type'],
                     style_class=data['style_class'],
@@ -78,10 +82,12 @@ class Campaign(Base):
                 social=data['social'],
                 showCoverage=data['showCoverage'],
                 retargeting=data['retargeting'],
+                capacity=data['capacity'],
                 cost=data['cost'],
                 gender=data['gender'],
                 retargeting_type=data['retargeting_type'],
                 brending=data['brending'],
+                styling=data['styling'],
                 style_data=data['style_data'],
                 style_type=data['style_type'],
                 style_class=data['style_class'],
@@ -105,10 +111,12 @@ class Campaign(Base):
             social=data['social'],
             showCoverage=data['showCoverage'],
             retargeting=data['retargeting'],
+            capacity=data['capacity'],
             cost=data['cost'],
             gender=data['gender'],
             retargeting_type=data['retargeting_type'],
             brending=data['brending'],
+            styling=data['styling'],
             style_data=data['style_data'],
             style_type=data['style_type'],
             style_class=data['style_class'],
@@ -131,13 +139,14 @@ class MVCampaign(Base):
             func.count('offer.id').over(partition_by=Campaign.id).label('offer_count'),
             Campaign.id,
             Campaign.guid,
-            Campaign.title,
             Campaign.social,
             Campaign.retargeting,
+            Campaign.capacity,
             Campaign.cost,
             Campaign.gender,
             Campaign.retargeting_type,
             Campaign.brending,
+            Campaign.styling,
             Campaign.style_data,
             Campaign.style_type,
             Campaign.style_class,

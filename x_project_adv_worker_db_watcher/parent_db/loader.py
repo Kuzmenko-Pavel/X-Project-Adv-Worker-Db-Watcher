@@ -234,6 +234,8 @@ class Loader(object):
                 block.footer.top = self.__to_int(data.get('MainFooter', {}).get('top'))
                 block.footer.left = self.__to_int(data.get('MainFooter', {}).get('left'))
 
+                block.default_adv.count_adv = self.__to_int(data.get('Main', {}).get('itemsNumber'))
+
                 adv_data['block'] = dict(block)
                 adv_data['adv'] = dict()
                 adv_data['adv']['Block'] = dict(self.create_adv_setting(data))
@@ -471,14 +473,19 @@ class Loader(object):
                 data['offer_by_campaign_unique'] = conditions.get('offer_by_campaign_unique')
                 data['unique_impression_lot'] = conditions.get('UnicImpressionLot')
                 data['html_notification'] = conditions.get('html_notification')
+                data['styling'] = False
                 data['style_data'] = None
                 data['style_type'] = conditions.get('style_type', 'default')
                 data['style_class'] = 'Block'
                 data['style_class_recommendet'] = 'RecBlock'
+                data['capacity'] = 1
                 if data['style_type'] not in ['default', 'Block', 'RetBlock', 'RecBlock']:
                     data['style_class'] = str(data['id'])
                     data['style_data'] = conditions.get('style_data', {'img': '', 'head_title': '', 'button_title': ''})
                     data['style_class_recommendet'] = str(data['id'])
+                    data['capacity'] = 2
+                    data['offer_by_campaign_unique'] = 10
+                    data['styling'] = True
                 elif data['style_type'] in ['Block', 'RetBlock', 'RecBlock']:
                     data['style_class'] = data['style_type']
                     data['style_class_recommendet'] = data['style_type']
@@ -644,6 +651,7 @@ class Loader(object):
             'description': 1,
             'url': 1,
             'title': 1,
+            'price': 1,
             'full_rating': 1,
             'Recommended': 1
         }
@@ -659,14 +667,15 @@ class Loader(object):
             data['guid'] = offer.get('guid', '')
             data['id_cam'] = offer.get('campaignId_int')
             data['retid'] = offer.get('RetargetingID', '')
-            data['image'] = offer.get('image', '').split(',')
             data['description'] = offer.get('description', '')
             data['url'] = offer.get('url', '')
             data['title'] = offer.get('title', '')
             data['price'] = offer.get('price', '')
             data['rating'] = float(offer.get('full_rating', 0.0))
             data['recommended'] = recommended
-            if len(data['image']) > 0:
+            images = offer.get('image', '')
+            if len(images) > 5:
+                data['image'] = images.split(',')
                 result.append(Offer(**data))
         with transaction.manager:
             self.session.add_all(result)

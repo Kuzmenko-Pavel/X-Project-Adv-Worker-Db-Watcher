@@ -16,9 +16,9 @@ class Informer(Base):
     headerHtml = Column(String, default='')
     footerHtml = Column(String, default='')
     ad_style = Column(JSON, default=lambda: {})
-    auto_reload = Column(SmallInteger)
-    blinking = Column(SmallInteger)
-    shake = Column(SmallInteger)
+    auto_reload = Column(SmallInteger, default=0)
+    blinking = Column(SmallInteger, default=0)
+    shake = Column(SmallInteger, default=0)
     dynamic = Column(Boolean, default=False)
     blinking_reload = Column(Boolean, default=True)
     shake_reload = Column(Boolean, default=True)
@@ -134,3 +134,4 @@ class MVInformer(Base):
 
 
 Index('ix_mv_informer_id', MVInformer.id, unique=True)
+Index('ix_mv_informer_guid', MVInformer.guid, unique=True)
