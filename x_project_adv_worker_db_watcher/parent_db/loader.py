@@ -731,6 +731,7 @@ class Loader(object):
         fields = {'guid_int': 1, 'full_rating': 1}
         offer_ratings = self.parent_session['offer'].find(query, fields)
         with transaction.manager:
+
             session.flush()
             conn = session.connection()
             for offer_rating in offer_ratings:

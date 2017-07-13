@@ -15,10 +15,8 @@ class Watcher(object):
     ROUTING_KEYS = ['campaign.#', 'informer.#', 'account.#', 'rating.#']
 
     def __init__(self, config, DBSession, ParentDBSession):
-
-        self.__session = DBSession
-        self.__parent_session = ParentDBSession
-        self.loader = Loader(DBSession, ParentDBSession)
+        self.DBSession = DBSession
+        self.ParentDBSession = ParentDBSession
         self._connection = None
         self._channel = None
         self._closing = False
@@ -26,7 +24,7 @@ class Watcher(object):
         self._url = config['amqp']
         try:
             logger.info('Start All Load')
-            loader = Loader(DBSession, ParentDBSession)
+            loader = Loader(self.DBSession, self.ParentDBSession)
             loader.all()
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
@@ -144,32 +142,33 @@ class Watcher(object):
 
     def on_message(self, unused_channel, basic_deliver, properties, body):
         try:
+            loader = Loader(self.DBSession, self.ParentDBSession)
             if basic_deliver.exchange == 'getmyad':
                 key = basic_deliver.routing_key
                 if key == 'campaign.start':
-                    self.loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
+                    loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
                     logger.info('Campaign %s Start', body.decode(encoding='UTF-8'))
 
                 elif key == 'campaign.stop':
-                    self.loader.stop_campaign(guid=body.decode(encoding='UTF-8'))
+                    loader.stop_campaign(guid=body.decode(encoding='UTF-8'))
                     logger.info('Campaign %s Stop', body.decode(encoding='UTF-8'))
 
                 elif key == 'campaign.update':
-                    self.loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
+                    loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
                     logger.info('Campaign %s Update', body.decode(encoding='UTF-8'))
 
                 elif key == 'informer.update':
-                    self.loader.load_domain({'guid': body.decode(encoding='UTF-8')})
-                    self.loader.load_informer({'guid': body.decode(encoding='UTF-8')})
+                    loader.load_domain({'guid': body.decode(encoding='UTF-8')})
+                    loader.load_informer({'guid': body.decode(encoding='UTF-8')})
                     logger.info('Informer %s Update', body.decode(encoding='UTF-8'))
 
                 elif key == 'account.update':
-                    self.loader.load_domain_category_by_account({'login': body.decode(encoding='UTF-8')})
-                    self.loader.load_account({'login': body.decode(encoding='UTF-8')})
+                    loader.load_domain_category_by_account({'login': body.decode(encoding='UTF-8')})
+                    loader.load_account({'login': body.decode(encoding='UTF-8')})
                     logger.info('Account %s Update', body.decode(encoding='UTF-8'))
 
                 elif key == 'rating.informer':
-                    self.loader.load_offer_informer_rating()
+                    loader.load_offer_informer_rating()
                     logger.info('Rating Informer %s Update', body.decode(encoding='UTF-8'))
 
                 # # elif key == 'rating.campaign':
@@ -177,7 +176,7 @@ class Watcher(object):
                 # #     self.loader.load_campaign_rating()
                 #
                 elif key == 'rating.offer':
-                    self.loader.load_offer_rating()
+                    loader.load_offer_rating()
                     logger.info('Rating Offer %s Update', body.decode(encoding='UTF-8'))
                 else:
                     logger.debug('Received message # %s from %s - %s: %s %s', basic_deliver.delivery_tag,

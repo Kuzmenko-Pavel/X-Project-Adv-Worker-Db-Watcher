@@ -1,3 +1,7 @@
+import tracemalloc
+
+tracemalloc.start()
+
 import argparse
 import os
 import sys
@@ -29,6 +33,11 @@ def action():
     try:
         watcher.run()
     except KeyboardInterrupt:
+        snapshot = tracemalloc.take_snapshot()
+        top_stats = snapshot.statistics('lineno')
+        print("[ Top 100 ]")
+        for stat in top_stats[:100]:
+            print(stat)
         watcher.stop()
 
 
