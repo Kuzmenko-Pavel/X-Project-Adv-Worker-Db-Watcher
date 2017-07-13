@@ -26,7 +26,8 @@ class Watcher(object):
         self._url = config['amqp']
         try:
             logger.info('Start All Load')
-            self.loader.all()
+            loader = Loader(DBSession, ParentDBSession)
+            loader.all()
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
 

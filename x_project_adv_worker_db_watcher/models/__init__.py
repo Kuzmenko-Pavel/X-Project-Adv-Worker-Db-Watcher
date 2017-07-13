@@ -30,7 +30,7 @@ from .offer2informer import Offer2Informer, MVOfferPlace2Informer, MVOfferSocial
 
 
 def get_engine(config):
-    engine = create_engine(config['postgres']['uri'], echo=False)
+    engine = create_engine(config['postgres']['uri'], echo=False, pool_recycle=600)
     DBSession.configure(bind=engine)
     metadata.bind = engine
     return engine

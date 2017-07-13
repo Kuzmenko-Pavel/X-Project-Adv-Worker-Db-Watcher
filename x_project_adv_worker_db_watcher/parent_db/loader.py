@@ -289,11 +289,12 @@ class Loader(object):
             'rating_division': 1
         }
         informers = self.parent_session['informer'].find(query, fields)
+        session = self.session()
         with transaction.manager:
             for informer in informers:
                 data = dict()
-                domains = self.session.query(Domains).filter(Domains.name == informer.get('domain', '')).first()
-                account = self.session.query(Accounts).filter(Accounts.name == informer.get('user', '')).first()
+                domains = session.query(Domains).filter(Domains.name == informer.get('domain', '')).first()
+                account = session.query(Accounts).filter(Accounts.name == informer.get('user', '')).first()
                 data['id'] = informer.get('guid_int', 1)
                 data['guid'] = informer.get('guid', '')
                 data['domain'] = domains.id
@@ -318,12 +319,13 @@ class Loader(object):
                 data['social_branch'] = informer.get('social_branch', True)
                 data['rating_division'] = informer.get('rating_division')
 
-                result.append(Informer.upsert(self.session(), data=data))
+                result.append(Informer.upsert(session, data=data))
         if kwargs.get('refresh_mat_view', True):
             self.refresh_mat_view('mv_informer')
         return result
 
     def load_domain(self, query=None, *args, **kwargs):
+        session = self.session()
         result = []
         if query is None:
             query = {}
@@ -334,25 +336,27 @@ class Loader(object):
         with transaction.manager:
             for informer in informers:
                 name = informer.get('domain', '')
-                result.append(Domains.upsert(self.session(), {'name': name}))
+                result.append(Domains.upsert(session, {'name': name}))
         if kwargs.get('refresh_mat_view', True):
             self.refresh_mat_view('mv_domains')
         return result
 
     def stop_account(self, name=None, *args, **kwargs):
+        session = self.session()
         if name is None:
             name = ''
         with transaction.manager:
-            old_account = self.session.query(Accounts).filter(Accounts.name == name).one_or_none()
+            old_account = session.query(Accounts).filter(Accounts.name == name).one_or_none()
             if old_account is not None:
-                self.session.delete(old_account)
-                self.session.flush()
+                session.delete(old_account)
+                session.flush()
                 transaction.commit()
         if kwargs.get('refresh_mat_view', True):
             self.refresh_mat_view('mv_accounts')
             self.refresh_mat_view('mv_informer')
 
     def load_account(self, query=None, *args, **kwargs):
+        session = self.session()
         result = []
         if query is None:
             query = {}
@@ -368,13 +372,14 @@ class Loader(object):
             for account in accounts:
                 name = account.get('login', '')
                 blocked = True if account.get('blocked') == ('banned' or 'light') else False
-                result.append(Accounts.upsert(self.session(), {'name': name, 'blocked': blocked}))
+                result.append(Accounts.upsert(session, {'name': name, 'blocked': blocked}))
 
         if kwargs.get('refresh_mat_view', True):
             self.refresh_mat_view('mv_accounts')
         return result
 
     def load_categories(self, query=None, *args, **kwargs):
+        session = self.session()
         result = []
         if query is None:
             query = {}
@@ -387,7 +392,7 @@ class Loader(object):
             for category in categories:
                 guid = category.get('guid', '')
                 title = category.get('title', '')
-                result.append(Categories.upsert(self.session(), {'guid': guid, 'title': title}))
+                result.append(Categories.upsert(session, {'guid': guid, 'title': title}))
         if kwargs.get('refresh_mat_view', True):
             self.refresh_mat_view('mv_categories')
         return result
@@ -404,6 +409,7 @@ class Loader(object):
         self.load_domain_category({'domain': {'$in': list(set(domains))}})
 
     def load_domain_category(self, query=None, *args, **kwargs):
+        session = self.session()
         if query is None:
             query = {}
         fields = {
@@ -413,8 +419,8 @@ class Loader(object):
         domain_categories = self.parent_session['domain.categories'].find(query, fields)
         with transaction.manager:
             for domain_category in domain_categories:
-                domains = self.session.query(Domains).filter(Domains.name == domain_category.get('domain', '')).all()
-                categories = self.session.query(Categories).filter(
+                domains = session.query(Domains).filter(Domains.name == domain_category.get('domain', '')).all()
+                categories = session.query(Categories).filter(
                     Categories.guid.in_(domain_category.get('categories', []))).all()
                 for domain in domains:
                     domain.categories = categories
@@ -422,13 +428,14 @@ class Loader(object):
             self.refresh_mat_view('mv_categories2domain')
 
     def stop_campaign(self, guid=None, *args, **kwargs):
+        session = self.session()
         if guid is None:
             guid = ''
         with transaction.manager:
-            old_campaign = self.session.query(Campaign).filter(Campaign.guid == guid).one_or_none()
+            old_campaign = session.query(Campaign).filter(Campaign.guid == guid).one_or_none()
             if old_campaign is not None:
-                self.session.delete(old_campaign)
-                self.session.flush()
+                session.delete(old_campaign)
+                session.flush()
                 transaction.commit()
         if kwargs.get('refresh_mat_view', True):
             self.refresh_mat_view('mv_campaign')
@@ -441,6 +448,7 @@ class Loader(object):
             self.refresh_mat_view('mv_cron')
 
     def load_campaign(self, query=None, *args, **kwargs):
+        session = self.session()
         result = []
         offer_place = False
         offer_social = False
@@ -466,10 +474,10 @@ class Loader(object):
                 id = campaign.get('guid_int')
                 guid = campaign.get('guid')
                 conditions = campaign.get('showConditions', False)
-                old_campaign = self.session.query(Campaign).filter(Campaign.guid == guid).one_or_none()
+                old_campaign = session.query(Campaign).filter(Campaign.guid == guid).one_or_none()
                 if old_campaign is not None:
-                    self.session.delete(old_campaign)
-                    self.session.flush()
+                    session.delete(old_campaign)
+                    session.flush()
                 if not conditions:
                     continue
                 data = dict()
@@ -512,7 +520,7 @@ class Loader(object):
 
                 if campaign.get('status') == 'working':
                     new_campaign = Campaign(**data)
-                    self.session.add(new_campaign)
+                    session.add(new_campaign)
                     if new_campaign.social:
                         offer_social = True
                     elif new_campaign.retargeting:
@@ -523,7 +531,7 @@ class Loader(object):
                     else:
                         offer_place = True
 
-                    self.session.flush()
+                    session.flush()
                     result.append(new_campaign.id)
 
                     # ------------------------regionTargeting-----------------------
@@ -535,7 +543,7 @@ class Loader(object):
                         region_targeting.append('*')
                     geos = list()
                     for country in country_targeting:
-                        geos = geos + self.session.query(GeoLiteCity).filter(
+                        geos = geos + session.query(GeoLiteCity).filter(
                             GeoLiteCity.country == country, GeoLiteCity.city.in_(region_targeting)).all()
 
                     new_campaign.geos = geos
@@ -544,7 +552,7 @@ class Loader(object):
                     device = conditions.get('device', [])
                     if len(device) <= 0:
                         device.append('**')
-                    new_campaign.devices = self.session.query(Device).filter(Device.name.in_(device)).all()
+                    new_campaign.devices = session.query(Device).filter(Device.name.in_(device)).all()
 
                     # ------------------------sites----------------------
                     categories = conditions.get('categories', [])
@@ -561,59 +569,59 @@ class Loader(object):
                     all_ignored_informer = []
                     all_ignored_accounts = []
                     if new_campaign.showCoverage == 'thematic':
-                        new_campaign.categories = self.session.query(Categories).filter(
+                        new_campaign.categories = session.query(Categories).filter(
                             Categories.guid.in_(categories)).all()
 
-                        for dom in self.session.query(Domains).filter(Domains.name.in_(allowed_domains)).all():
+                        for dom in session.query(Domains).filter(Domains.name.in_(allowed_domains)).all():
                             all_allowed_domains.append(Campaign2Domains(id_cam=new_campaign.id,
                                                                         id_dom=dom.id, allowed=True))
-                        for inf in self.session.query(Informer).filter(Informer.guid.in_(allowed_informers)).all():
+                        for inf in session.query(Informer).filter(Informer.guid.in_(allowed_informers)).all():
                             all_allowed_informer.append(Campaign2Informer(id_cam=new_campaign.id,
                                                                           id_inf=inf.id, allowed=True))
 
-                        for acc in self.session.query(Accounts).filter(Accounts.name.in_(allowed_accounts)).all():
+                        for acc in session.query(Accounts).filter(Accounts.name.in_(allowed_accounts)).all():
                             all_allowed_accounts.append(Campaign2Accounts(id_cam=new_campaign.id,
                                                                           id_acc=acc.id, allowed=True))
-                        for dom in self.session.query(Domains).filter(Domains.name.in_(ignored_domains)).all():
+                        for dom in session.query(Domains).filter(Domains.name.in_(ignored_domains)).all():
                             all_ignored_domains.append(Campaign2Domains(id_cam=new_campaign.id,
                                                                         id_dom=dom.id, allowed=False))
-                        for inf in self.session.query(Informer).filter(Informer.guid.in_(ignored_informers)).all():
+                        for inf in session.query(Informer).filter(Informer.guid.in_(ignored_informers)).all():
                             all_ignored_informer.append(Campaign2Informer(id_cam=new_campaign.id,
                                                                           id_inf=inf.id, allowed=False))
 
-                        for acc in self.session.query(Accounts).filter(Accounts.name.in_(ignored_accounts)).all():
+                        for acc in session.query(Accounts).filter(Accounts.name.in_(ignored_accounts)).all():
                             all_ignored_accounts.append(Campaign2Accounts(id_cam=new_campaign.id,
                                                                           id_acc=acc.id, allowed=False))
                     elif new_campaign.showCoverage == 'allowed':
-                        for dom in self.session.query(Domains).filter(Domains.name.in_(allowed_domains)).all():
+                        for dom in session.query(Domains).filter(Domains.name.in_(allowed_domains)).all():
                             all_allowed_domains.append(Campaign2Domains(id_cam=new_campaign.id,
                                                                         id_dom=dom.id, allowed=True))
-                        for inf in self.session.query(Informer).filter(Informer.guid.in_(allowed_informers)).all():
+                        for inf in session.query(Informer).filter(Informer.guid.in_(allowed_informers)).all():
                             all_allowed_informer.append(Campaign2Informer(id_cam=new_campaign.id,
                                                                           id_inf=inf.id, allowed=True))
 
-                        for acc in self.session.query(Accounts).filter(Accounts.name.in_(allowed_accounts)).all():
+                        for acc in session.query(Accounts).filter(Accounts.name.in_(allowed_accounts)).all():
                             all_allowed_accounts.append(Campaign2Accounts(id_cam=new_campaign.id,
                                                                           id_acc=acc.id, allowed=True))
                     else:
                         all_allowed_accounts.append(Campaign2Accounts(id_cam=new_campaign.id, id_acc=1, allowed=True))
 
-                        for dom in self.session.query(Domains).filter(Domains.name.in_(ignored_domains)).all():
+                        for dom in session.query(Domains).filter(Domains.name.in_(ignored_domains)).all():
                             all_ignored_domains.append(Campaign2Domains(id_cam=new_campaign.id,
                                                                         id_dom=dom.id, allowed=False))
-                        for inf in self.session.query(Informer).filter(Informer.guid.in_(ignored_informers)).all():
+                        for inf in session.query(Informer).filter(Informer.guid.in_(ignored_informers)).all():
                             all_ignored_informer.append(Campaign2Informer(id_cam=new_campaign.id,
                                                                           id_inf=inf.id, allowed=False))
 
-                        for acc in self.session.query(Accounts).filter(Accounts.name.in_(ignored_accounts)).all():
+                        for acc in session.query(Accounts).filter(Accounts.name.in_(ignored_accounts)).all():
                             all_ignored_accounts.append(Campaign2Accounts(id_cam=new_campaign.id,
                                                                           id_acc=acc.id, allowed=False))
-                    self.session.add_all(all_allowed_domains)
-                    self.session.add_all(all_allowed_informer)
-                    self.session.add_all(all_allowed_accounts)
-                    self.session.add_all(all_ignored_domains)
-                    self.session.add_all(all_ignored_informer)
-                    self.session.add_all(all_ignored_accounts)
+                    session.add_all(all_allowed_domains)
+                    session.add_all(all_allowed_informer)
+                    session.add_all(all_allowed_accounts)
+                    session.add_all(all_ignored_domains)
+                    session.add_all(all_ignored_informer)
+                    session.add_all(all_ignored_accounts)
 
                     # ------------------------cron-----------------------
                     startShowTimeHours = int(conditions.get('startShowTime', {'hours': 0}).get('hours', 0))
@@ -633,7 +641,7 @@ class Loader(object):
                         cron.append(Cron(day=x, hour=endShowTimeHours, min=endShowTimeMinutes, start_stop=False))
 
                     new_campaign.cron = cron
-                    self.session.flush()
+                    session.flush()
         for camp_id in result:
             self.load_offer(query={'campaignId_int': camp_id}, **kwargs)
 
@@ -656,6 +664,7 @@ class Loader(object):
                 self.refresh_mat_view('mv_offer_dynamic_retargeting')
 
     def load_offer(self, query=None, *args, **kwargs):
+        session = self.session()
         result = []
         if query is None:
             return result
@@ -695,10 +704,11 @@ class Loader(object):
                 data['image'] = images.split(',')
                 result.append(Offer(**data))
         with transaction.manager:
-            self.session.add_all(result)
+            session.add_all(result)
         return result
 
     def load_device(self, query=None, *args, **kwargs):
+        session = self.session()
         result = []
         if query is None:
             query = {}
@@ -706,13 +716,14 @@ class Loader(object):
         with transaction.manager:
             for device in devices:
                 name = device.get('name', '')
-                result.append(Device.upsert(self.session(), {'name': name}))
+                result.append(Device.upsert(session, {'name': name}))
 
         if kwargs.get('refresh_mat_view', True):
             self.refresh_mat_view('mv_device')
         return result
 
     def load_offer_rating(self, query=None, *args, **kwargs):
+        session = self.session()
         result = []
         if query is None:
             query = {}
@@ -720,7 +731,6 @@ class Loader(object):
         fields = {'guid_int': 1, 'full_rating': 1}
         offer_ratings = self.parent_session['offer'].find(query, fields)
         with transaction.manager:
-            session = self.session()
             session.flush()
             conn = session.connection()
             for offer_rating in offer_ratings:
@@ -756,6 +766,7 @@ class Loader(object):
     #         session.flush()
 
     def load_offer_informer_rating(self, query=None, *args, **kwargs):
+        session = self.session()
         result = []
         if query is None:
             query = {}
@@ -763,7 +774,6 @@ class Loader(object):
         fields = {'guid_int': 1, 'adv_int': 1, 'full_rating': 1}
         offer_informer_ratings = self.parent_session['stats_daily.rating'].find(query, fields)
         with transaction.manager:
-            session = self.session()
             session.flush()
             conn = session.connection()
             for offer_informer_rating in offer_informer_ratings:
