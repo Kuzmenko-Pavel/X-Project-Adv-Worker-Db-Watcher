@@ -11,7 +11,7 @@ from x_project_adv_worker_db_watcher.parent_db import get_parent_engine
 from x_project_adv_worker_db_watcher.utils import TRAFARET_CONF
 from x_project_adv_worker_db_watcher.watcher import Watcher
 
-pid = "./../test.pid"
+pid = "/test.pid"
 
 config = None
 
@@ -43,7 +43,8 @@ def main(argv):
     options = ap.parse_args(argv)
     config = commandline.config_from_options(options, TRAFARET_CONF)
 
-    daemon = Daemonize(app="x_project_adv_worker_db_watcher", pid=pid, action=action, keep_fds=keep_fds, logger=logger,
+    daemon = Daemonize(app="x_project_adv_worker_db_watcher", pid=dir_path + '/../' + pid, action=action,
+                       keep_fds=keep_fds, logger=logger,
                        verbose=False, foreground=True, chdir=dir_path + '/../')
     daemon.start()
 
