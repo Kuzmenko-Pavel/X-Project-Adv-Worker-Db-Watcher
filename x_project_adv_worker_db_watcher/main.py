@@ -5,7 +5,7 @@ import sys
 from daemonize import Daemonize
 from trafaret_config import commandline
 
-from x_project_adv_worker_db_watcher.logger import logger, fh, exception_message
+from x_project_adv_worker_db_watcher.logger import logger, exception_message  # ,ft
 from x_project_adv_worker_db_watcher.models import DBSession, get_engine, check_table
 from x_project_adv_worker_db_watcher.parent_db import get_parent_engine
 from x_project_adv_worker_db_watcher.utils import TRAFARET_CONF
@@ -20,10 +20,10 @@ def action():
     global config
     engine = get_engine(config)
     parent_engine = get_parent_engine(config)
-    # try:
-    check_table(engine)
-    # except Exception as e:
-    #     logger.error(exception_message())
+    try:
+        check_table(engine)
+    except Exception as e:
+        logger.error(exception_message(exc=str(e)))
 
     watcher = Watcher(config, DBSession, parent_engine)
     try:
@@ -35,7 +35,8 @@ def action():
 def main(argv):
     global config
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    keep_fds = [fh.stream.fileno()]
+    # keep_fds = [fh.stream.fileno()]
+    keep_fds = []
     ap = argparse.ArgumentParser(description='Great Description To Be Here')
     commandline.standard_argparse_options(ap.add_argument_group('configuration'),
                                           default_config=dir_path + '/../conf.yaml')

@@ -24,10 +24,11 @@ class Watcher(object):
         self._closing = False
         self._consumer_tag = None
         self._url = config['amqp']
-        # try:
-        self.loader.all()
-        # except Exception as e:
-        #     logger.error(exception_message())
+        try:
+            logger.info('Start All Load')
+            self.loader.all()
+        except Exception as e:
+            logger.error(exception_message(exc=str(e)))
 
     def connect(self):
 
@@ -146,33 +147,37 @@ class Watcher(object):
                 key = basic_deliver.routing_key
                 if key == 'campaign.start':
                     self.loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
+                    logger.info('Campaign %s Start', body.decode(encoding='UTF-8'))
 
                 elif key == 'campaign.stop':
                     self.loader.stop_campaign(guid=body.decode(encoding='UTF-8'))
+                    logger.info('Campaign %s Stop', body.decode(encoding='UTF-8'))
 
                 elif key == 'campaign.update':
                     self.loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
+                    logger.info('Campaign %s Update', body.decode(encoding='UTF-8'))
 
                 elif key == 'informer.update':
                     self.loader.load_domain({'guid': body.decode(encoding='UTF-8')})
                     self.loader.load_informer({'guid': body.decode(encoding='UTF-8')})
+                    logger.info('Informer %s Update', body.decode(encoding='UTF-8'))
 
                 elif key == 'account.update':
                     self.loader.load_domain_category_by_account({'login': body.decode(encoding='UTF-8')})
                     self.loader.load_account({'login': body.decode(encoding='UTF-8')})
+                    logger.info('Account %s Update', body.decode(encoding='UTF-8'))
 
                 elif key == 'rating.informer':
-                    pass
                     self.loader.load_offer_informer_rating()
+                    logger.info('Rating Informer %s Update', body.decode(encoding='UTF-8'))
 
-                # elif key == 'rating.campaign':
-                #     pass
-                #     self.loader.load_campaign_rating()
-
+                # # elif key == 'rating.campaign':
+                # #     pass
+                # #     self.loader.load_campaign_rating()
+                #
                 elif key == 'rating.offer':
-                    pass
                     self.loader.load_offer_rating()
-
+                    logger.info('Rating Offer %s Update', body.decode(encoding='UTF-8'))
                 else:
                     logger.debug('Received message # %s from %s - %s: %s %s', basic_deliver.delivery_tag,
                                  basic_deliver.exchange, basic_deliver.routing_key, properties.app_id, body)
@@ -180,22 +185,19 @@ class Watcher(object):
                 logger.debug('Received message # %s from %s - %s: %s %s', basic_deliver.delivery_tag,
                              basic_deliver.exchange, basic_deliver.routing_key, properties.app_id, body)
         except Exception as e:
-            print(e, body, basic_deliver)
+            logger.error(exception_message(exc=str(e), body=body, basic_deliver=basic_deliver))
         self.acknowledge_message(basic_deliver.delivery_tag)
 
     def acknowledge_message(self, delivery_tag):
-
         logger.debug('Acknowledging message %s', delivery_tag)
         self._channel.basic_ack(delivery_tag)
 
     def stop_consuming(self):
-
         if self._channel:
             logger.debug('Sending a Basic.Cancel RPC command to RabbitMQ')
             self._channel.basic_cancel(self.on_cancelok, self._consumer_tag)
 
     def on_cancelok(self, unused_frame):
-
         logger.debug('RabbitMQ acknowledged the cancellation of the consumer')
         self.close_channel()
 
@@ -205,16 +207,16 @@ class Watcher(object):
         self._channel.close()
 
     def run(self):
+        logger.info('Starting Listening AMQP')
         self._connection = self.connect()
         self._connection.ioloop.start()
 
     def stop(self):
-
-        logger.debug('Stopping')
+        logger.info('Stopping Listening AMQP')
         self._closing = True
         self.stop_consuming()
         self._connection.ioloop.start()
-        logger.debug('Stopped')
+        logger.info('Stopped Listening AMQP')
 
     def close_connection(self):
         logger.debug('Closing connection')

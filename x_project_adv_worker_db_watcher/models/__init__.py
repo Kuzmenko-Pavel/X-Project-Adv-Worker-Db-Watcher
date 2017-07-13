@@ -30,7 +30,7 @@ from .offer2informer import Offer2Informer, MVOfferPlace2Informer, MVOfferSocial
 
 
 def get_engine(config):
-    engine = create_engine(config['postgres']['uri'], echo=True)
+    engine = create_engine(config['postgres']['uri'], echo=False)
     DBSession.configure(bind=engine)
     metadata.bind = engine
     return engine
@@ -76,16 +76,15 @@ def load_default_data():
 
         DBSession.flush()
 
-
-@event.listens_for(Engine, "before_cursor_execute")
-def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-    conn.info.setdefault('query_start_time', []).append(time.time())
-    logger.debug("=================== Start Query: ===================")
-    logger.debug(statement)
-
-
-@event.listens_for(Engine, "after_cursor_execute")
-def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-    total = time.time() - conn.info['query_start_time'].pop(-1)
-    logger.debug("=================== Query Complete! ===================")
-    logger.debug("=================== Total Time: %f ===================", total)
+# @event.listens_for(Engine, "before_cursor_execute")
+# def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+#     conn.info.setdefault('query_start_time', []).append(time.time())
+#     logger.debug("=================== Start Query: ===================")
+#     logger.debug(statement)
+#
+#
+# @event.listens_for(Engine, "after_cursor_execute")
+# def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+#     total = time.time() - conn.info['query_start_time'].pop(-1)
+#     logger.debug("=================== Query Complete! ===================")
+#     logger.debug("=================== Total Time: %f ===================", total)

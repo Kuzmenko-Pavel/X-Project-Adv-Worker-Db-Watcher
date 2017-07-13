@@ -1,6 +1,7 @@
 import transaction
 import json
 from zope.sqlalchemy import mark_changed
+from x_project_adv_worker_db_watcher.logger import logger, exception_message
 
 from x_project_adv_worker_db_watcher.models import (Accounts, Device, Domains, Categories, Informer, Campaign,
                                                     GeoLiteCity, Cron, Campaign2Accounts, Campaign2Informer,
@@ -15,15 +16,33 @@ class Loader(object):
         self.parent_session = ParentDBSession['getmyad_db']
 
     def all(self):
+        logger.info('Starting Load Account')
         self.load_account(refresh_mat_view=False)
+        logger.info('Stopping Load Account')
+        logger.info('Starting Load Device')
         self.load_device(refresh_mat_view=False)
+        logger.info('Stopping Load Device')
+        logger.info('Starting Load Domain')
         self.load_domain(refresh_mat_view=False)
+        logger.info('Stopping Load Domain')
+        logger.info('Starting Load Categories')
         self.load_categories(refresh_mat_view=False)
+        logger.info('Stopping Load Categories')
+        logger.info('Starting Load Domain-Categories')
         self.load_domain_category(refresh_mat_view=False)
+        logger.info('Stopping Load Domain-Categories')
+        logger.info('Starting Load Informer')
         self.load_informer(refresh_mat_view=False)
+        logger.info('Stopping Load Informer')
+        logger.info('Starting Load Campaign')
         self.load_campaign(refresh_mat_view=False)
+        logger.info('Stopping Load Campaign')
+        logger.info('Starting Load Informer Rating')
         self.load_offer_informer_rating(refresh_mat_view=False)
+        logger.info('Stopping Load Informer Rating')
+        logger.info('Starting Reload Mat View')
         self.refresh_mat_view()
+        logger.info('Stopping Reload Mat View')
 
     def refresh_mat_view(self, name=None):
         with transaction.manager:
@@ -191,8 +210,7 @@ class Loader(object):
                 self.__to_int(data.get('%sImage' % name, {}).get('border_bottom_left_radius'))
             ]
         except Exception as e:
-            print(e)
-            print(data)
+            logger.error(exception_message(exc=str(e), data=data))
             raise
         return adv
 
@@ -242,8 +260,7 @@ class Loader(object):
                 adv_data['adv']['RetBlock'] = dict(self.create_adv_setting(data, 'Ret'))
                 adv_data['adv']['RecBlock'] = dict(self.create_adv_setting(data, 'Rec'))
             except Exception as e:
-                print(e)
-                print(data)
+                logger.error(exception_message(exc=str(e), data=data))
                 raise
         return adv_data
 
