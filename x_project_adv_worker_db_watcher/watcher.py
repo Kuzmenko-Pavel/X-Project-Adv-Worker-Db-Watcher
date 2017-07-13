@@ -26,6 +26,7 @@ class Watcher(object):
             logger.info('Start All Load')
             loader = Loader(self.DBSession, self.ParentDBSession)
             loader.all()
+            del loader
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
 
@@ -184,6 +185,7 @@ class Watcher(object):
             else:
                 logger.debug('Received message # %s from %s - %s: %s %s', basic_deliver.delivery_tag,
                              basic_deliver.exchange, basic_deliver.routing_key, properties.app_id, body)
+            del loader
         except Exception as e:
             logger.error(exception_message(exc=str(e), body=body, basic_deliver=basic_deliver))
         self.acknowledge_message(basic_deliver.delivery_tag)

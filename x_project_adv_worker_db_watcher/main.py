@@ -11,7 +11,7 @@ from x_project_adv_worker_db_watcher.parent_db import get_parent_engine
 from x_project_adv_worker_db_watcher.utils import TRAFARET_CONF
 from x_project_adv_worker_db_watcher.watcher import Watcher
 
-pid = "./test.pid"
+pid = "./../test.pid"
 
 config = None
 
