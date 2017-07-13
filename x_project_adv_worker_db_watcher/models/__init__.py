@@ -43,7 +43,7 @@ def check_table(engine):
 
 def clear_table(engine):
     with transaction.manager:
-        metadata.drop_all(engine, checkfirst=True)
+        # metadata.drop_all(engine, checkfirst=True)
         metadata.create_all(engine, checkfirst=True)
         DBSession.execute('TRUNCATE {} RESTART IDENTITY CASCADE;'.format(
             ', '.join([table.name for table in reversed(metadata.sorted_tables)])))
