@@ -18,8 +18,7 @@ def read_version():
             raise RuntimeError(msg)
 
 
-install_requires = ['daemonize',
-                    'pika',
+install_requires = ['pika',
                     'sqlalchemy',
                     'psycopg2',
                     'pymongo',

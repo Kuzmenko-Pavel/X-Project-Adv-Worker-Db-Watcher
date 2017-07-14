@@ -27,10 +27,6 @@ class Accounts(Base):
         )
         mark_changed(session)
         session.flush()
-        return {'id': acc.inserted_primary_key[0],
-                'name': data['name'],
-                'blocked': data['blocked']
-                }
 
 
 class MVAccounts(Base):

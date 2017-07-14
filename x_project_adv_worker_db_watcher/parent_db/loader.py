@@ -45,8 +45,8 @@ class Loader(object):
         logger.info('Stopping Reload Mat View')
 
     def refresh_mat_view(self, name=None):
+        session = self.session()
         with transaction.manager:
-            session = self.session()
             session.flush()
             conn = session.connection()
             if name:
@@ -55,6 +55,7 @@ class Loader(object):
                 conn.execute('SELECT RefreshAllMaterializedViewsConcurrently()')
             mark_changed(session)
             session.flush()
+        session.close()
 
     @staticmethod
     def __to_int(val):
@@ -265,7 +266,6 @@ class Loader(object):
         return adv_data
 
     def load_informer(self, query=None, *args, **kwargs):
-        result = []
         if query is None:
             query = {}
         fields = {
@@ -319,10 +319,10 @@ class Loader(object):
                 data['social_branch'] = informer.get('social_branch', True)
                 data['rating_division'] = informer.get('rating_division')
 
-                result.append(Informer.upsert(session, data=data))
+                Informer.upsert(session, data=data)
         if kwargs.get('refresh_mat_view', True):
             self.refresh_mat_view('mv_informer')
-        return result
+        session.close()
 
     def load_domain(self, query=None, *args, **kwargs):
         session = self.session()
@@ -339,6 +339,7 @@ class Loader(object):
                 result.append(Domains.upsert(session, {'name': name}))
         if kwargs.get('refresh_mat_view', True):
             self.refresh_mat_view('mv_domains')
+        session.close()
         return result
 
     def stop_account(self, name=None, *args, **kwargs):
@@ -354,10 +355,10 @@ class Loader(object):
         if kwargs.get('refresh_mat_view', True):
             self.refresh_mat_view('mv_accounts')
             self.refresh_mat_view('mv_informer')
+        session.close()
 
     def load_account(self, query=None, *args, **kwargs):
         session = self.session()
-        result = []
         if query is None:
             query = {}
         query['manager'] = False
@@ -372,11 +373,11 @@ class Loader(object):
             for account in accounts:
                 name = account.get('login', '')
                 blocked = True if account.get('blocked') == ('banned' or 'light') else False
-                result.append(Accounts.upsert(session, {'name': name, 'blocked': blocked}))
+                Accounts.upsert(session, {'name': name, 'blocked': blocked})
 
         if kwargs.get('refresh_mat_view', True):
             self.refresh_mat_view('mv_accounts')
-        return result
+        session.close()
 
     def load_categories(self, query=None, *args, **kwargs):
         session = self.session()
@@ -662,6 +663,7 @@ class Loader(object):
                 self.refresh_mat_view('mv_offer_account_retargeting')
             if offer_dynamic_retargeting:
                 self.refresh_mat_view('mv_offer_dynamic_retargeting')
+        session.close()
 
     def load_offer(self, query=None, *args, **kwargs):
         session = self.session()
@@ -705,26 +707,25 @@ class Loader(object):
                 result.append(Offer(**data))
         with transaction.manager:
             session.add_all(result)
-        return result
+        session.close()
+        del result
 
     def load_device(self, query=None, *args, **kwargs):
         session = self.session()
-        result = []
         if query is None:
             query = {}
         devices = self.parent_session['device'].find(query)
         with transaction.manager:
             for device in devices:
                 name = device.get('name', '')
-                result.append(Device.upsert(session, {'name': name}))
+                Device.upsert(session, {'name': name})
 
         if kwargs.get('refresh_mat_view', True):
             self.refresh_mat_view('mv_device')
-        return result
+        session.close()
 
     def load_offer_rating(self, query=None, *args, **kwargs):
         session = self.session()
-        result = []
         if query is None:
             query = {}
         query['full_rating'] = {'$exists': True}
@@ -738,11 +739,11 @@ class Loader(object):
                 id_ofr = offer_rating.get('guid_int')
                 rating = offer_rating.get('full_rating', 0.0)
                 if id_ofr:
-                    result.append(conn.execute('SELECT offer_rating_update(%d::bigint,%f);' %
-                                               (id_ofr, rating)))
+                    conn.execute('SELECT offer_rating_update(%d::bigint,%f);' % (id_ofr, rating))
 
             mark_changed(session)
             session.flush()
+        session.close()
 
     # def load_campaign_rating(self, query=None, *args, **kwargs):
     #     result = []
@@ -768,7 +769,6 @@ class Loader(object):
 
     def load_offer_informer_rating(self, query=None, *args, **kwargs):
         session = self.session()
-        result = []
         if query is None:
             query = {}
         query['full_rating'] = {'$exists': True}
@@ -778,15 +778,12 @@ class Loader(object):
             session.flush()
             conn = session.connection()
             for offer_informer_rating in offer_informer_ratings:
-                data = {}
                 id_ofr = offer_informer_rating.get('guid_int')
                 id_inf = offer_informer_rating.get('adv_int')
                 rating = offer_informer_rating.get('full_rating', 0.0)
                 if id_ofr and id_inf:
-                    result.append(conn.execute('SELECT offer_informer_rating_update(%d,%d,%f);' %
-                                               (id_ofr, id_inf, rating)))
+                    conn.execute('SELECT offer_informer_rating_update(%d,%d,%f);' % (id_ofr, id_inf, rating))
 
             mark_changed(session)
             session.flush()
-
-        return result
+        session.close()

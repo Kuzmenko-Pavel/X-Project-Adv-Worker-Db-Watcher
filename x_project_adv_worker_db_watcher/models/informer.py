@@ -80,28 +80,6 @@ class Informer(Base):
         )
         mark_changed(session)
         session.flush()
-        return dict(
-            id=acc.inserted_primary_key[0],
-            guid=data['guid'],
-            title=data['title'],
-            domain=data['domain'],
-            account=data['account'],
-            headerHtml=data['headerHtml'],
-            footerHtml=data['footerHtml'],
-            ad_style=data['ad_style'],
-            auto_reload=data['auto_reload'],
-            blinking=data['blinking'],
-            shake=data['shake'],
-            dynamic=data['dynamic'],
-            blinking_reload=data['blinking_reload'],
-            shake_reload=data['shake_reload'],
-            shake_mouse=data['shake_mouse'],
-            html_notification=data['html_notification'],
-            place_branch=data['place_branch'],
-            retargeting_branch=data['retargeting_branch'],
-            social_branch=data['social_branch'],
-            rating_division=data['rating_division']
-        )
 
 
 class MVInformer(Base):

@@ -42,39 +42,45 @@ def check_table(engine):
 
 
 def clear_table(engine):
+    session = DBSession()
     with transaction.manager:
         # metadata.drop_all(engine, checkfirst=True)
-        metadata.create_all(engine, checkfirst=True)
-        DBSession.execute('TRUNCATE {} RESTART IDENTITY CASCADE;'.format(
+        # logger.info('Check and Create DB')
+        # metadata.create_all(engine, checkfirst=True)
+        logger.info('Truncate DB')
+        session.execute('TRUNCATE {} RESTART IDENTITY CASCADE;'.format(
             ', '.join([table.name for table in reversed(metadata.sorted_tables)])))
         # for table in reversed(metadata.sorted_tables):
         #     DBSession.execute(table.delete())
-        mark_changed(DBSession())
-        DBSession.flush()
+        mark_changed(session)
+        session.flush()
+    session.close()
 
 
 def load_default_data():
+    session = DBSession()
     with transaction.manager:
         default_account = Accounts(name='')
         default_category = Categories(guid='', title='')
         default_device = Device(name='**')
         default_domain = Domains(name='')
-        DBSession.add(default_account)
-        DBSession.add(default_category)
-        DBSession.add(default_device)
-        DBSession.add(default_domain)
+        session.add(default_account)
+        session.add(default_category)
+        session.add(default_device)
+        session.add(default_domain)
 
         dir_path = os.path.dirname(os.path.realpath(__file__))
         with open(dir_path + '/fixture/GEO', newline='') as geo_file:
             geo_reader = csv.reader(geo_file, delimiter=',')
             for row in geo_reader:
-                DBSession.add(GeoLiteCity(country=row[0], region=row[1], city=row[2]))
+                session.add(GeoLiteCity(country=row[0], region=row[1], city=row[2]))
         with open(dir_path + '/fixture/GEO_NOT_FOUND', newline='') as geo_file:
             geo_reader = csv.reader(geo_file, delimiter=',')
             for row in geo_reader:
-                DBSession.add(GeoLiteCity(country=row[0], region=row[1], city=row[2]))
+                session.add(GeoLiteCity(country=row[0], region=row[1], city=row[2]))
 
-        DBSession.flush()
+        session.flush()
+    session.close()
 
 # @event.listens_for(Engine, "before_cursor_execute")
 # def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
