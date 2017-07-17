@@ -13,12 +13,15 @@ class AdvSetting(Map):
         self.opacity = 1
         self.border_radius = [5, 5, 5, 5]
         self.margin = [1, 1, 1, 1]
+        self.padding = [0, 0, 0, 0]
         self.header = Map()
         self.header.width = 0
         self.header.height = 0
         self.header.top = 0
         self.header.left = 0
         self.header.z = 0
+        self.header.margin = [0, 0, 0, 0]
+        self.header.padding = [0, 0, 0, 0]
         self.header.background_color = 'transparent'
         self.header.opacity = 1
         self.header.border_radius = [5, 5, 5, 5]
@@ -38,6 +41,8 @@ class AdvSetting(Map):
         self.description.top = 0
         self.description.left = 0
         self.description.z = 0
+        self.description.margin = [0, 0, 0, 0]
+        self.description.padding = [0, 0, 0, 0]
         self.description.background_color = 'transparent'
         self.description.opacity = 1
         self.description.border_radius = [5, 5, 5, 5]
@@ -57,6 +62,8 @@ class AdvSetting(Map):
         self.cost.top = 0
         self.cost.left = 0
         self.cost.z = 0
+        self.cost.margin = [0, 0, 0, 0]
+        self.cost.padding = [0, 0, 0, 0]
         self.cost.background_color = 'transparent'
         self.cost.opacity = 1
         self.cost.border_radius = [5, 5, 5, 5]
@@ -76,6 +83,8 @@ class AdvSetting(Map):
         self.button.top = 0
         self.button.left = 0
         self.button.z = 0
+        self.button.margin = [0, 0, 0, 0]
+        self.button.padding = [0, 0, 0, 0]
         self.button.opacity = 1
         self.button.background_color = 'transparent'
         self.button.border = 1
