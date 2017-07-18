@@ -786,4 +786,9 @@ class Loader(object):
 
             mark_changed(session)
             session.flush()
+        if kwargs.get('refresh_mat_view', True):
+            self.refresh_mat_view('mv_offer_place')
+            self.refresh_mat_view('mv_offer_social')
+            self.refresh_mat_view('mv_offer_place2informer')
+            self.refresh_mat_view('mv_offer_social2informer')
         session.close()

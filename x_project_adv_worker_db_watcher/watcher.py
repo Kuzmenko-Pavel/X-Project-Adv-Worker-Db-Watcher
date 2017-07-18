@@ -1,9 +1,12 @@
-from uuid import uuid4
-
+import socket
+from datetime import datetime
 import pika
 
 from x_project_adv_worker_db_watcher.logger import logger, exception_message
 from x_project_adv_worker_db_watcher.parent_db.loader import Loader
+
+server_name = socket.gethostname()
+server_time = datetime.utcnow()
 
 
 class Watcher(object):
@@ -11,7 +14,10 @@ class Watcher(object):
     EXCHANGE_TYPE = 'topic'
     DURABLE = False
     AUTO_DELETE = True
-    QUEUES = [x % uuid4() for x in ['campaign:%s', 'informer:%s', 'account:%s', 'rating:%s']]
+    QUEUES = [x % (server_name, server_time.strftime("%d-%m-%Y_%H:%M:%S:%f")) for x in ['campaign:%s_%s',
+                                                                                        'informer:%s_%s',
+                                                                                        'account:%s_%s',
+                                                                                        'rating:%s_%s']]
     ROUTING_KEYS = ['campaign.#', 'informer.#', 'account.#', 'rating.#']
 
     def __init__(self, config, DBSession, ParentDBSession):
@@ -143,34 +149,35 @@ class Watcher(object):
 
     def on_message(self, unused_channel, basic_deliver, properties, body):
         try:
+            date = datetime.utcnow().strftime("%d-%m-%Y %H:%M:%S:%f")
             loader = Loader(self.DBSession, self.ParentDBSession)
             if basic_deliver.exchange == 'getmyad':
                 key = basic_deliver.routing_key
                 if key == 'campaign.start':
                     loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
-                    logger.info('Campaign %s Start', body.decode(encoding='UTF-8'))
+                    logger.info('%s Campaign %s Start', date, body.decode(encoding='UTF-8'))
 
                 elif key == 'campaign.stop':
                     loader.stop_campaign(guid=body.decode(encoding='UTF-8'))
-                    logger.info('Campaign %s Stop', body.decode(encoding='UTF-8'))
+                    logger.info('%s Campaign %s Stop', date, body.decode(encoding='UTF-8'))
 
                 elif key == 'campaign.update':
                     loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
-                    logger.info('Campaign %s Update', body.decode(encoding='UTF-8'))
+                    logger.info('%s Campaign %s Update', date, body.decode(encoding='UTF-8'))
 
                 elif key == 'informer.update':
                     loader.load_domain({'guid': body.decode(encoding='UTF-8')})
                     loader.load_informer({'guid': body.decode(encoding='UTF-8')})
-                    logger.info('Informer %s Update', body.decode(encoding='UTF-8'))
+                    logger.info('%s Informer %s Update', date, body.decode(encoding='UTF-8'))
 
                 elif key == 'account.update':
                     loader.load_domain_category_by_account({'login': body.decode(encoding='UTF-8')})
                     loader.load_account({'login': body.decode(encoding='UTF-8')})
-                    logger.info('Account %s Update', body.decode(encoding='UTF-8'))
+                    logger.info('%s Account %s Update', date, body.decode(encoding='UTF-8'))
 
                 elif key == 'rating.informer':
                     loader.load_offer_informer_rating()
-                    logger.info('Rating Informer %s Update', body.decode(encoding='UTF-8'))
+                    logger.info('%s Rating Informer %s Update', date, body.decode(encoding='UTF-8'))
 
                 # # elif key == 'rating.campaign':
                 # #     pass
@@ -178,12 +185,12 @@ class Watcher(object):
                 #
                 elif key == 'rating.offer':
                     loader.load_offer_rating()
-                    logger.info('Rating Offer %s Update', body.decode(encoding='UTF-8'))
+                    logger.info('%s Rating Offer %s Update', date, body.decode(encoding='UTF-8'))
                 else:
-                    logger.debug('Received message # %s from %s - %s: %s %s', basic_deliver.delivery_tag,
+                    logger.debug('%s Received message # %s from %s - %s: %s %s', date, basic_deliver.delivery_tag,
                                  basic_deliver.exchange, basic_deliver.routing_key, properties.app_id, body)
             else:
-                logger.debug('Received message # %s from %s - %s: %s %s', basic_deliver.delivery_tag,
+                logger.debug('%s Received message # %s from %s - %s: %s %s', date, basic_deliver.delivery_tag,
                              basic_deliver.exchange, basic_deliver.routing_key, properties.app_id, body)
             del loader
         except Exception as e:
