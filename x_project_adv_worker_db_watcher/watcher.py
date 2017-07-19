@@ -1,12 +1,13 @@
 import socket
 from datetime import datetime
+import threading
 import pika
 
 from x_project_adv_worker_db_watcher.logger import logger, exception_message
 from x_project_adv_worker_db_watcher.parent_db.loader import Loader
 
 server_name = socket.gethostname()
-server_time = datetime.utcnow()
+server_time = datetime.now()
 
 
 class Watcher(object):
@@ -28,6 +29,13 @@ class Watcher(object):
         self._closing = False
         self._consumer_tag = None
         self._url = config['amqp']
+        self.ready = False
+        self.messages = []
+        thread = threading.Thread(target=self.load_all)
+        thread.daemon = True
+        thread.start()
+
+    def load_all(self):
         try:
             logger.info('Start All Load')
             loader = Loader(self.DBSession, self.ParentDBSession)
@@ -35,6 +43,9 @@ class Watcher(object):
             del loader
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
+        finally:
+            self.ready = True
+
 
     def connect(self):
 
@@ -78,6 +89,18 @@ class Watcher(object):
 
         logger.debug('Creating a new channel')
         self._connection.channel(on_open_callback=self.on_channel_open)
+        self._connection.add_timeout(60, self.run_saved_message)
+
+    def run_saved_message(self):
+        logger.debug('Run saved massages')
+        if not self.ready:
+            logger.debug('Not ready')
+            self._connection.add_timeout(60, self.run_saved_message)
+        else:
+            logger.debug('Ready')
+            if len(self.messages) > 0:
+                self.message_processing(*self.messages.pop(0))
+                self._connection.add_timeout(10, self.run_saved_message)
 
     def on_channel_open(self, channel):
 
@@ -148,8 +171,21 @@ class Watcher(object):
             self._channel.close()
 
     def on_message(self, unused_channel, basic_deliver, properties, body):
+        date = datetime.now().strftime("%d-%m-%Y %H:%M:%S:%f")
+        if not self.ready:
+            self.messages.append([unused_channel, basic_deliver, properties, body])
+            logger.debug('%s Saved message # %s from %s - %s: %s %s', date, basic_deliver.delivery_tag,
+                         basic_deliver.exchange, basic_deliver.routing_key, properties.app_id, body)
+        else:
+            for item in self.messages:
+                self.message_processing(*item)
+            self.messages = []
+            self.message_processing(unused_channel, basic_deliver, properties, body)
+        self.acknowledge_message(basic_deliver.delivery_tag)
+
+    def message_processing(self, unused_channel, basic_deliver, properties, body):
+        date = datetime.now().strftime("%d-%m-%Y %H:%M:%S:%f")
         try:
-            date = datetime.utcnow().strftime("%d-%m-%Y %H:%M:%S:%f")
             loader = Loader(self.DBSession, self.ParentDBSession)
             if basic_deliver.exchange == 'getmyad':
                 key = basic_deliver.routing_key
@@ -195,7 +231,6 @@ class Watcher(object):
             del loader
         except Exception as e:
             logger.error(exception_message(exc=str(e), body=body, basic_deliver=basic_deliver))
-        self.acknowledge_message(basic_deliver.delivery_tag)
 
     def acknowledge_message(self, delivery_tag):
         logger.debug('Acknowledging message %s', delivery_tag)
