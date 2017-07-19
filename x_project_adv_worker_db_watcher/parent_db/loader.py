@@ -643,8 +643,10 @@ class Loader(object):
 
                     new_campaign.cron = cron
                     session.flush()
+        logger.info('Starting Load Offer')
         for camp_id in result:
             self.load_offer(query={'campaignId_int': camp_id}, **kwargs)
+        logger.info('Stop Load Offer')
 
         if kwargs.get('refresh_mat_view', True):
             self.refresh_mat_view('mv_campaign')

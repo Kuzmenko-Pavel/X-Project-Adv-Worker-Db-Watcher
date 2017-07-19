@@ -92,12 +92,12 @@ class Watcher(object):
         self._connection.add_timeout(60, self.run_saved_message)
 
     def run_saved_message(self):
-        logger.debug('Run saved massages')
+        logger.info('Run saved massages')
         if not self.ready:
-            logger.debug('Not ready')
+            logger.info('Not ready')
             self._connection.add_timeout(60, self.run_saved_message)
         else:
-            logger.debug('Ready')
+            logger.info('Ready')
             if len(self.messages) > 0:
                 self.message_processing(*self.messages.pop(0))
                 self._connection.add_timeout(10, self.run_saved_message)
