@@ -190,38 +190,59 @@ class Watcher(object):
             if basic_deliver.exchange == 'getmyad':
                 key = basic_deliver.routing_key
                 if key == 'campaign.start':
-                    loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
-                    logger.info('%s Campaign %s Start', date, body.decode(encoding='UTF-8'))
+                    try:
+                        loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
+                        logger.info('%s Campaign %s Start', date, body.decode(encoding='UTF-8'))
+                    except Exception as e:
+                        logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
 
                 elif key == 'campaign.stop':
-                    loader.stop_campaign(guid=body.decode(encoding='UTF-8'))
-                    logger.info('%s Campaign %s Stop', date, body.decode(encoding='UTF-8'))
+                    try:
+                        loader.stop_campaign(guid=body.decode(encoding='UTF-8'))
+                        logger.info('%s Campaign %s Stop', date, body.decode(encoding='UTF-8'))
+                    except Exception as e:
+                        logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
 
                 elif key == 'campaign.update':
-                    loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
-                    logger.info('%s Campaign %s Update', date, body.decode(encoding='UTF-8'))
+                    try:
+                        loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
+                        logger.info('%s Campaign %s Update', date, body.decode(encoding='UTF-8'))
+                    except Exception as e:
+                        logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
 
                 elif key == 'informer.update':
-                    loader.load_domain({'guid': body.decode(encoding='UTF-8')})
-                    loader.load_informer({'guid': body.decode(encoding='UTF-8')})
-                    logger.info('%s Informer %s Update', date, body.decode(encoding='UTF-8'))
+                    try:
+                        loader.load_domain({'guid': body.decode(encoding='UTF-8')})
+                        loader.load_informer({'guid': body.decode(encoding='UTF-8')})
+                        logger.info('%s Informer %s Update', date, body.decode(encoding='UTF-8'))
+                    except Exception as e:
+                        logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
 
                 elif key == 'account.update':
-                    loader.load_domain_category_by_account({'login': body.decode(encoding='UTF-8')})
-                    loader.load_account({'login': body.decode(encoding='UTF-8')})
-                    logger.info('%s Account %s Update', date, body.decode(encoding='UTF-8'))
+                    try:
+                        loader.load_domain_category_by_account({'login': body.decode(encoding='UTF-8')})
+                        loader.load_account({'login': body.decode(encoding='UTF-8')})
+                        logger.info('%s Account %s Update', date, body.decode(encoding='UTF-8'))
+                    except Exception as e:
+                        logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
 
                 elif key == 'rating.informer':
-                    loader.load_offer_informer_rating()
-                    logger.info('%s Rating Informer %s Update', date, body.decode(encoding='UTF-8'))
+                    try:
+                        loader.load_offer_informer_rating()
+                        logger.info('%s Rating Informer %s Update', date, body.decode(encoding='UTF-8'))
+                    except Exception as e:
+                        logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
 
                 # # elif key == 'rating.campaign':
                 # #     pass
                 # #     self.loader.load_campaign_rating()
                 #
                 elif key == 'rating.offer':
-                    loader.load_offer_rating()
-                    logger.info('%s Rating Offer %s Update', date, body.decode(encoding='UTF-8'))
+                    try:
+                        loader.load_offer_rating()
+                        logger.info('%s Rating Offer %s Update', date, body.decode(encoding='UTF-8'))
+                    except Exception as e:
+                        logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
                 else:
                     logger.debug('%s Received message # %s from %s - %s: %s %s', date, basic_deliver.delivery_tag,
                                  basic_deliver.exchange, basic_deliver.routing_key, properties.app_id, body)
@@ -230,7 +251,7 @@ class Watcher(object):
                              basic_deliver.exchange, basic_deliver.routing_key, properties.app_id, body)
             del loader
         except Exception as e:
-            logger.error(exception_message(exc=str(e), body=body, basic_deliver=basic_deliver))
+            logger.error(exception_message(exc=str(e)))
 
     def acknowledge_message(self, delivery_tag):
         logger.debug('Acknowledging message %s', delivery_tag)
