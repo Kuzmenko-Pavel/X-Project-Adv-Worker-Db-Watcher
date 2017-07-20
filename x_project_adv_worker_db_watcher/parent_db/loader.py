@@ -188,6 +188,7 @@ class Loader(object):
                 self.__to_int(data.get('%sButton' % name, {}).get('border_bottom_right_radius')),
                 self.__to_int(data.get('%sButton' % name, {}).get('border_bottom_left_radius'))
             ]
+            adv.button.background_color = self.__to_color(data.get('%sButton' % name, {}).get('backgroundColor'))
             adv.button.font.size = self.__to_int(data.get('%sButton' % name, {}).get('fontSize'))
             adv.button.font.color = self.__to_color(data.get('%sButton' % name, {}).get('fontColor'))
             adv.button.font.align = self.__to_str(data.get('%sButton' % name, {}).get('align'))
