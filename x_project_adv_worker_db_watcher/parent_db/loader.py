@@ -433,7 +433,7 @@ class Loader(object):
             for domain_category in domain_categories:
                 domains = session.query(Domains).filter(Domains.name == domain_category.get('domain', '')).all()
                 categories = session.query(Categories).filter(
-                    Categories.guid.in_(domain_category.get('categories', []))).all()
+                    Categories.guid.in_(domain_category.get('categories', ['']))).all()
                 for domain in domains:
                     domain.categories = categories
         if kwargs.get('refresh_mat_view', True):
@@ -568,12 +568,21 @@ class Loader(object):
 
                     # ------------------------sites----------------------
                     categories = conditions.get('categories', [])
-                    allowed_domains = conditions.get('allowed', {'domains': []}).get('domains', [])
-                    allowed_informers = conditions.get('allowed', {'informers': []}).get('informers', [])
-                    allowed_accounts = conditions.get('allowed', {'accounts': []}).get('accounts', [])
-                    ignored_domains = conditions.get('ignored', {'domains': []}).get('domains', [])
-                    ignored_informers = conditions.get('ignored', {'informers': []}).get('informers', [])
-                    ignored_accounts = conditions.get('ignored', {'accounts': []}).get('accounts', [])
+                    allowed_domains = conditions.get('allowed', {}).get('domains', [])
+                    allowed_informers = conditions.get('allowed', {}).get('informers', [])
+                    allowed_accounts = conditions.get('allowed', {}).get('accounts', [])
+                    ignored_domains = conditions.get('ignored', {}).get('domains', [])
+                    ignored_informers = conditions.get('ignored', {}).get('informers', [])
+                    ignored_accounts = conditions.get('ignored', {}).get('accounts', [])
+
+                    categories = categories if len(categories) > 0 else ['']
+                    allowed_domains = allowed_domains if len(allowed_domains) > 0 else ['']
+                    allowed_informers = allowed_informers if len(allowed_informers) > 0 else ['']
+                    allowed_accounts = allowed_accounts if len(allowed_accounts) > 0 else ['']
+                    ignored_domains = ignored_domains if len(ignored_domains) > 0 else ['']
+                    ignored_informers = ignored_informers if len(ignored_informers) > 0 else ['']
+                    ignored_accounts = ignored_accounts if len(ignored_accounts) > 0 else ['']
+
                     all_allowed_domains = []
                     all_allowed_informer = []
                     all_allowed_accounts = []

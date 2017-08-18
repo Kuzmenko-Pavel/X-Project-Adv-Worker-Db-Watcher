@@ -46,9 +46,7 @@ class Watcher(object):
         finally:
             self.ready = True
 
-
     def connect(self):
-
         logger.debug('Connecting to %s', self._url)
         return pika.SelectConnection(pika.URLParameters(self._url),
                                      self.on_connection_open,

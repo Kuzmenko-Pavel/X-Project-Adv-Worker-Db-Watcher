@@ -36,8 +36,10 @@ setup(
     package_data={
 
     },
+    include_package_data=True,
     install_requires=install_requires,
     zip_safe=False,
+    test_suite='x_project_adv_worker_db_watcher.tests',
     entry_points={
         'console_scripts': [
         ],
