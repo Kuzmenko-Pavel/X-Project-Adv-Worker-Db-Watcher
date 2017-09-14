@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-
-__author__ = 'kuzmenko-pavel'
 from . import metadata
 from .function import create_function
 

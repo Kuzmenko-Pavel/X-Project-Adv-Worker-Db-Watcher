@@ -13,6 +13,8 @@ from x_project_adv_worker_db_watcher.watcher import Watcher
 
 
 class Daemonize(object):
+    __slots__ = ['watcher']
+
     def __init__(self, config):
         logger.info("Creating daemon.")
         engine = get_engine(config)

@@ -11,6 +11,8 @@ server_time = datetime.now()
 
 
 class Watcher(object):
+    __slots__ = ['DBSession', 'ParentDBSession', '_connection', '_channel', '_closing', '_consumer_tag',
+                 '_url', 'ready', 'messages', 'thread']
     EXCHANGE = 'getmyad'
     EXCHANGE_TYPE = 'topic'
     DURABLE = False
@@ -21,9 +23,9 @@ class Watcher(object):
                                                                                         'rating:%s_%s']]
     ROUTING_KEYS = ['campaign.#', 'informer.#', 'account.#', 'rating.#']
 
-    def __init__(self, config, DBSession, ParentDBSession):
-        self.DBSession = DBSession
-        self.ParentDBSession = ParentDBSession
+    def __init__(self, config, db_session, parent_db_session):
+        self.DBSession = db_session
+        self.ParentDBSession = parent_db_session
         self._connection = None
         self._channel = None
         self._closing = False

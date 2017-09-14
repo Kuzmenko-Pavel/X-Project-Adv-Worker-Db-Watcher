@@ -14,6 +14,10 @@ class Device(Base):
     flag = Column(Boolean, default=False)
     campaigns = relationship('Campaign', secondary='campaign2device', back_populates="devices", passive_deletes=True)
 
+    __table_args__ = (
+        {'prefixes': ['UNLOGGED']}
+    )
+
     @classmethod
     def upsert(cls, session, data):
         acc = session.execute(

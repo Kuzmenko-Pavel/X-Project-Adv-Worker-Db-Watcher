@@ -15,6 +15,10 @@ class Domains(Base):
     categories = relationship('Categories', secondary='categories2domain', back_populates="domains",
                               passive_deletes=True)
 
+    __table_args__ = (
+        {'prefixes': ['UNLOGGED']}
+    )
+
     @classmethod
     def upsert(cls, session, data):
         acc = session.execute(

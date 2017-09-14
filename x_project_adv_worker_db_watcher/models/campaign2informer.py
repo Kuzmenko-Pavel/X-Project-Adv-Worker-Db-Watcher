@@ -11,6 +11,10 @@ class Campaign2Informer(Base):
     id_inf = Column(BigInteger, ForeignKey('informer.id', ondelete='CASCADE'), nullable=False)
     allowed = Column(Boolean, default=False, index=True)
 
+    __table_args__ = (
+        {'prefixes': ['UNLOGGED']}
+    )
+
 
 class MVCampaign2Informer(Base):
     __table__ = create_view(

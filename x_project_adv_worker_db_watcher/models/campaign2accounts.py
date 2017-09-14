@@ -1,4 +1,4 @@
-from sqlalchemy import (Column, Integer, BigInteger, UniqueConstraint, Boolean, ForeignKey, select, Index, cast)
+from sqlalchemy import (Column, Integer, BigInteger, Boolean, ForeignKey, select, Index, cast)
 
 from .__libs__.sql_view import create_view
 from .meta import Base
@@ -10,6 +10,10 @@ class Campaign2Accounts(Base):
     id_cam = Column(BigInteger, ForeignKey('campaign.id', ondelete='CASCADE'), nullable=False)
     id_acc = Column(Integer, ForeignKey('accounts.id', ondelete='CASCADE'), nullable=False)
     allowed = Column(Boolean, default=False, index=True)
+
+    __table_args__ = (
+        {'prefixes': ['UNLOGGED']}
+    )
 
 
 class MVCampaign2Accounts(Base):

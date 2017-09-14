@@ -1,3 +1,4 @@
+__all__ = ['Accounts', 'MVAccounts']
 from sqlalchemy import (Column, Integer, Boolean, String, select, Index)
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import relationship
@@ -14,9 +15,13 @@ class Accounts(Base):
     blocked = Column(Boolean, default=False)
     campaigns = relationship('Campaign', secondary='campaign2accounts', back_populates="accounts", passive_deletes=True)
 
+    __table_args__ = (
+        {'prefixes': ['UNLOGGED']}
+    )
+
     @classmethod
     def upsert(cls, session, data):
-        acc = session.execute(
+        session.execute(
             insert(cls.__table__).on_conflict_do_update(
                 index_elements=['name'],
                 set_=dict(blocked=data['blocked'])

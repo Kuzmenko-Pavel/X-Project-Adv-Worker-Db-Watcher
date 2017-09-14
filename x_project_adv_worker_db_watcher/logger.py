@@ -1,3 +1,4 @@
+__all__ = ['logger', 'exception_message']
 import linecache
 import sys
 import logging
@@ -7,10 +8,10 @@ import json
 dir_path = os.path.dirname(os.path.realpath(__file__))
 logger = logging.getLogger('x_project_adv_worker_db_watcher')
 logger.setLevel(logging.INFO)
-# fh = logging.FileHandler(dir_path + '/../test.log', 'w')
-# fh.setLevel(logging.DEBUG)
-# logger.addHandler(fh)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 consoleHandler = logging.StreamHandler()
+consoleHandler.setFormatter(formatter)
+consoleHandler.setLevel(logging.INFO)
 logger.addHandler(consoleHandler)
 
 

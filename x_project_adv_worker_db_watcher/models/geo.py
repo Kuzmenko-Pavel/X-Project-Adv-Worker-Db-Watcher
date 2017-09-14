@@ -9,6 +9,10 @@ class Geo(Base):
     id_cam = Column(BigInteger, ForeignKey('campaign.id', ondelete='CASCADE'), primary_key=True, nullable=False)
     id_geo = Column(Integer, ForeignKey('geo_lite_city.id', ondelete='CASCADE'), primary_key=True, nullable=False)
 
+    __table_args__ = (
+        {'prefixes': ['UNLOGGED']}
+    )
+
 
 class MVGeo(Base):
     __table__ = create_view(

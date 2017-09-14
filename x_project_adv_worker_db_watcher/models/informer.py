@@ -29,6 +29,10 @@ class Informer(Base):
     social_branch = Column(Boolean, default=True)
     rating_division = Column(Integer, default=1000)
 
+    __table_args__ = (
+        {'prefixes': ['UNLOGGED']}
+    )
+
     @classmethod
     def upsert(cls, session, data):
         acc = session.execute(

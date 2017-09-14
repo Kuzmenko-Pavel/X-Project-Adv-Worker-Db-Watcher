@@ -1,3 +1,4 @@
+__all__ = ['Campaign', 'MVCampaign']
 from sqlalchemy import (Column, BigInteger, String, Boolean, SmallInteger, select, Index, func, join, text, table)
 from sqlalchemy.dialects.postgresql import insert, JSON
 from sqlalchemy.orm import relationship
@@ -43,7 +44,7 @@ class Campaign(Base):
     offers = relationship('Offer', back_populates="campaigns", passive_deletes=True)
 
     __table_args__ = (
-        # {'prefixes': ['UNLOGGED']}
+        {'prefixes': ['UNLOGGED']}
     )
 
     @classmethod

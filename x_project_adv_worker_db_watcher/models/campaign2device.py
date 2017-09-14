@@ -9,6 +9,10 @@ class Campaign2Device(Base):
     id_cam = Column(BigInteger, ForeignKey('campaign.id', ondelete='CASCADE'), primary_key=True, nullable=False)
     id_dev = Column(Integer, ForeignKey('device.id', ondelete='CASCADE'), primary_key=True, nullable=False)
 
+    __table_args__ = (
+        {'prefixes': ['UNLOGGED']}
+    )
+
 
 class MVCampaign2Device(Base):
     __table__ = create_view(

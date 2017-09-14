@@ -1,4 +1,4 @@
-from sqlalchemy import (Column, BigInteger, Integer, SmallInteger, Boolean, UniqueConstraint, ForeignKey, select,
+from sqlalchemy import (Column, BigInteger, Integer, SmallInteger, Boolean, ForeignKey, select,
                         Index, cast)
 from sqlalchemy.orm import relationship
 
@@ -15,6 +15,10 @@ class Cron(Base):
     min = Column(SmallInteger)
     start_stop = Column(Boolean)
     campaign = relationship('Campaign', back_populates="cron")
+
+    __table_args__ = (
+        {'prefixes': ['UNLOGGED']}
+    )
 
 
 class MVCron(Base):

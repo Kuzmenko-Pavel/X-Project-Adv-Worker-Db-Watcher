@@ -1,3 +1,4 @@
+__all__ = ['Offer2Informer', 'MVOfferPlace2Informer', 'MVOfferSocial2Informer']
 from sqlalchemy import (Column, BigInteger, Float, ForeignKey, select, Index)
 from sqlalchemy.sql.expression import func, join, true, false, and_
 
@@ -15,7 +16,7 @@ class Offer2Informer(Base):
     rating = Column(Float)
     __table_args__ = (
         Index('ix_offer2informer_rating', rating.desc().nullslast()),
-        # {'prefixes': ['UNLOGGED']}
+        {'prefixes': ['UNLOGGED']}
     )
 
 

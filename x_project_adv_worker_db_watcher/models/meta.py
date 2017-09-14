@@ -100,6 +100,31 @@ create_function(metadata, {
 })
 
 create_function(metadata, {
+    'name': 'create_recommended',
+    'argument': 'offer_id_cam bigint',
+    'returns': 'INT',
+    'body': '''
+       DECLARE
+            brending boolean := false;
+        BEGIN
+            SELECT campaign.brending INTO brending FROM campaign WHERE id = offer_id_cam;
+            
+            UPDATE offer
+            SET recommended = recommended_to_json(subquery.recommended_ids, brending, offer_id_cam)
+            FROM (SELECT
+                    offer_sub.id,
+                    offer_sub.recommended_ids
+                  FROM offer AS offer_sub
+                  WHERE offer_sub.id_cam = offer_id_cam) AS subquery
+            WHERE offer.id = subquery.id;
+            RETURN 1;
+        END
+    ''',
+    'optimizer': 'VOLATILE',
+    'language': 'plpgsql'
+})
+
+create_function(metadata, {
     'name': 'offer_informer_rating_update',
     'argument': 'v_id_ofr bigint, v_id_inf bigint, v_rating double precision',
     'returns': 'INT',

@@ -6,11 +6,14 @@ import transaction
 from sqlalchemy import create_engine
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
+from sqlalchemy.schema import DropTable
+from sqlalchemy.ext.compiler import compiles
+
 from zope.sqlalchemy import mark_changed
 
-from x_project_adv_worker_db_watcher.logger import logger
-from .accounts import Accounts, MVAccounts
-from .campaign import Campaign, MVCampaign
+from x_project_adv_worker_db_watcher.logger import *
+from .accounts import *
+from .campaign import *
 from .campaign2accounts import Campaign2Accounts, MVCampaign2Accounts
 from .campaign2categories import Campaign2Categories, MVCampaign2Categories
 from .campaign2device import Campaign2Device, MVCampaign2Device
@@ -25,8 +28,8 @@ from .geo import Geo, MVGeo
 from .geo_lite_city import GeoLiteCity, MVGeoLiteCity
 from .informer import Informer, MVInformer
 from .meta import DBSession, metadata
-from .offer import Offer, MVOfferPlace, MVOfferSocial, MVOfferAccountRetargeting, MVOfferDynamicRetargeting
-from .offer2informer import Offer2Informer, MVOfferPlace2Informer, MVOfferSocial2Informer
+from .offer import *
+from .offer2informer import *
 
 
 def get_engine(config):
@@ -44,14 +47,12 @@ def check_table(engine):
 def clear_table(engine):
     session = DBSession()
     with transaction.manager:
-        # metadata.drop_all(engine, checkfirst=True)
-        # logger.info('Check and Create DB')
-        # metadata.create_all(engine, checkfirst=True)
+        metadata.drop_all(engine, checkfirst=True)
+        logger.info('Check and Create DB')
+        metadata.create_all(engine, checkfirst=True)
         logger.info('Truncate DB')
         session.execute('TRUNCATE {} RESTART IDENTITY CASCADE;'.format(
             ', '.join([table.name for table in reversed(metadata.sorted_tables)])))
-        # for table in reversed(metadata.sorted_tables):
-        #     DBSession.execute(table.delete())
         mark_changed(session)
         session.flush()
     session.close()
@@ -81,6 +82,12 @@ def load_default_data():
 
         session.flush()
     session.close()
+
+
+@compiles(DropTable, "postgresql")
+def _compile_drop_table(element, compiler):
+    return compiler.visit_drop_table(element) + " CASCADE"
+
 
 # @event.listens_for(Engine, "before_cursor_execute")
 # def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):

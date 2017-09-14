@@ -1,13 +1,13 @@
-import trafaret as T
+import trafaret as t
 
-TRAFARET_CONF = T.Dict({
-    T.Key('postgres'): T.Dict({
-        T.Key('uri'): T.String(),
+TRAFARET_CONF = t.Dict({
+    t.Key('postgres'): t.Dict({
+        t.Key('uri'): t.String(),
     }),
-    T.Key('mongo'): T.Dict({
-        T.Key('uri'): T.String(),
+    t.Key('mongo'): t.Dict({
+        t.Key('uri'): t.String(),
     }),
-    T.Key('amqp'): T.String(),
+    t.Key('amqp'): t.String(),
 })
 
 

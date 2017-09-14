@@ -9,6 +9,10 @@ class Categories2Domain(Base):
     id_cat = Column(Integer, ForeignKey('categories.id', ondelete='CASCADE'), primary_key=True, nullable=False)
     id_dom = Column(Integer, ForeignKey('domains.id', ondelete='CASCADE'), primary_key=True, nullable=False)
 
+    __table_args__ = (
+        {'prefixes': ['UNLOGGED']}
+    )
+
 
 class MVCategories2Domain(Base):
     __table__ = create_view(

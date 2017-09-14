@@ -1,3 +1,4 @@
+__all__ = ['Offer', 'MVOfferPlace', 'MVOfferSocial', 'MVOfferAccountRetargeting', 'MVOfferDynamicRetargeting']
 from sqlalchemy import (Column, BigInteger, String, Float, ForeignKey, select, Index, cast)
 from sqlalchemy.dialects.postgresql import ARRAY, JSON
 from sqlalchemy.orm import relationship
@@ -20,78 +21,73 @@ class Offer(Base):
     title = Column(String(length=35))
     price = Column(String(length=35))
     rating = Column(Float)
-    recommended = Column(ARRAY(String), default=[])
+    recommended_ids = Column(ARRAY(String), default=[])
+    recommended = Column(JSON, default=lambda: [])
     campaigns = relationship('Campaign', back_populates="offers", passive_deletes=True)
     __table_args__ = (
         Index('ix_offer_rating', rating.desc().nullslast()),
         Index('ix_offer_retid_id_cam', retid, id_cam.desc().nullslast()),
-        # {'prefixes': ['UNLOGGED']}
+        {'prefixes': ['UNLOGGED']}
     )
 
 
 place_sub = select([
     func.row_number().over(partition_by=Offer.id_cam).label('range_number'),
-            Offer.id,
-            Offer.guid,
-            cast(Offer.id_cam, BigInteger).label('id_cam'),
-            Offer.image,
-            Offer.description,
-            Offer.url,
-            Offer.title,
-            Offer.price,
-            func.recommended_to_json(Offer.recommended,
-                                     Campaign.brending,
-                                     Offer.id_cam).label('recommended')
-        ]).select_from(
-            join(Offer, Campaign, and_(Offer.id_cam == Campaign.id,
-                                       Campaign.social == false(),
-                                       Campaign.retargeting == false()
-                                       ), isouter=False)
-        ).where(and_(Campaign.social == false(),
-                     Campaign.retargeting == false())
-                ).order_by(Offer.rating.desc().nullslast()).alias('place_sub')
+    Offer.id,
+    Offer.guid,
+    cast(Offer.id_cam, BigInteger).label('id_cam'),
+    Offer.image,
+    Offer.description,
+    Offer.url,
+    Offer.title,
+    Offer.price,
+    Offer.recommended
+]).select_from(
+    join(Offer, Campaign, and_(Offer.id_cam == Campaign.id,
+                               Campaign.social == false(),
+                               Campaign.retargeting == false()
+                               ), isouter=False)
+).where(and_(Campaign.social == false(),
+             Campaign.retargeting == false())
+        ).order_by(Offer.rating.desc().nullslast()).alias('place_sub')
 
 social_sub = select([
     func.row_number().over(partition_by=Offer.id_cam).label('range_number'),
-            Offer.id,
-            Offer.guid,
-            cast(Offer.id_cam, BigInteger).label('id_cam'),
-            Offer.image,
-            Offer.description,
-            Offer.url,
-            Offer.title,
-            Offer.price,
-            func.recommended_to_json(Offer.recommended,
-                                     Campaign.brending,
-                                     Offer.id_cam).label('recommended')
-        ]).select_from(
-            join(Offer, Campaign, and_(Offer.id_cam == Campaign.id,
-                                       Campaign.social == true(),
-                                       Campaign.retargeting == false()
-                                       ), isouter=False)
-        ).where(and_(
-            Campaign.social == true(),
-            Campaign.retargeting == false())
+    Offer.id,
+    Offer.guid,
+    cast(Offer.id_cam, BigInteger).label('id_cam'),
+    Offer.image,
+    Offer.description,
+    Offer.url,
+    Offer.title,
+    Offer.price,
+    Offer.recommended
+]).select_from(
+    join(Offer, Campaign, and_(Offer.id_cam == Campaign.id,
+                               Campaign.social == true(),
+                               Campaign.retargeting == false()
+                               ), isouter=False)
+).where(and_(
+    Campaign.social == true(),
+    Campaign.retargeting == false())
 ).order_by(Offer.rating.desc().nullslast()).alias('social_sub')
 
 account_retargeting_sub = select([
     func.row_number().over(partition_by=Offer.id_cam).label('range_number'),
-            Offer.id,
-            Offer.guid,
-            cast(Offer.id_cam, BigInteger).label('id_cam'),
-            Offer.image,
-            Offer.description,
-            Offer.url,
-            Offer.title,
-            Offer.price,
-            func.recommended_to_json(Offer.recommended,
-                                     Campaign.brending,
-                                     Offer.id_cam).label('recommended')
-        ]).select_from(
-            join(Offer, Campaign, and_(Offer.id_cam == Campaign.id,
-                                       Campaign.retargeting == true(),
-                                       Campaign.retargeting_type == 'account'
-                                       ), isouter=False)
+    Offer.id,
+    Offer.guid,
+    cast(Offer.id_cam, BigInteger).label('id_cam'),
+    Offer.image,
+    Offer.description,
+    Offer.url,
+    Offer.title,
+    Offer.price,
+    Offer.recommended
+]).select_from(
+    join(Offer, Campaign, and_(Offer.id_cam == Campaign.id,
+                               Campaign.retargeting == true(),
+                               Campaign.retargeting_type == 'account'
+                               ), isouter=False)
 ).where(and_(Campaign.retargeting == true(), Campaign.retargeting_type == 'account')).alias('account_retargeting_sub')
 
 
@@ -176,9 +172,7 @@ class MVOfferDynamicRetargeting(Base):
             Offer.url,
             Offer.title,
             Offer.price,
-            func.recommended_to_json(Offer.recommended,
-                                     Campaign.brending,
-                                     Offer.id_cam).label('recommended')
+            Offer.recommended
         ]).select_from(
             join(Offer, Campaign, and_(Offer.id_cam == Campaign.id,
                                        Campaign.retargeting == true(),

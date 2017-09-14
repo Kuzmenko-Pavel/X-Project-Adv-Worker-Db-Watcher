@@ -12,7 +12,10 @@ class GeoLiteCity(Base):
     region = Column(String(length=2))
     city = Column(String(length=50))
     campaigns = relationship('Campaign', secondary='geo', back_populates="geos", passive_deletes=True)
-    __table_args__ = (UniqueConstraint('country', 'region', 'city', name='country_region_city_uc'),)
+    __table_args__ = (
+        UniqueConstraint('country', 'region', 'city', name='country_region_city_uc'),
+        {'prefixes': ['UNLOGGED']}
+    )
 
 
 class MVGeoLiteCity(Base):

@@ -1,8 +1,6 @@
 import transaction
-import json
 from zope.sqlalchemy import mark_changed
-from x_project_adv_worker_db_watcher.logger import logger, exception_message
-
+from x_project_adv_worker_db_watcher.logger import *
 from x_project_adv_worker_db_watcher.models import (Accounts, Device, Domains, Categories, Informer, Campaign,
                                                     GeoLiteCity, Cron, Campaign2Accounts, Campaign2Informer,
                                                     Campaign2Domains, Offer)
@@ -11,9 +9,11 @@ from .block_settings import BlockSetting
 
 
 class Loader(object):
-    def __init__(self, DBSession, ParentDBSession):
-        self.session = DBSession
-        self.parent_session = ParentDBSession['getmyad_db']
+    __slots__ = ['session', 'parent_session']
+
+    def __init__(self, db_session, parent_db_session):
+        self.session = db_session
+        self.parent_session = parent_db_session['getmyad_db']
 
     def all(self):
         logger.info('Starting Load Account')
@@ -656,9 +656,18 @@ class Loader(object):
                     new_campaign.cron = cron
                     session.flush()
         logger.info('Starting Load Offer')
+
         for camp_id in result:
             self.load_offer(query={'campaignId_int': camp_id}, **kwargs)
         logger.info('Stop Load Offer')
+
+        logger.info('Starting Create Recommended Offer')
+        with transaction.manager:
+            session.flush()
+            conn = session.connection()
+            for camp_id in result:
+                conn.execute('SELECT create_recommended(%d);' % camp_id)
+        logger.info('Stop Create Recommended Offer')
 
         if kwargs.get('refresh_mat_view', True):
             self.refresh_mat_view('mv_campaign')
@@ -714,7 +723,7 @@ class Loader(object):
             data['title'] = offer.get('title', '')
             data['price'] = offer.get('price', '')
             data['rating'] = float(offer.get('full_rating', 0.0))
-            data['recommended'] = recommended
+            data['recommended_ids'] = recommended
             images = offer.get('image', '')
             if len(images) > 5:
                 data['image'] = images.split(',')

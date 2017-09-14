@@ -16,6 +16,10 @@ class Categories(Base):
     campaigns = relationship('Campaign', secondary='campaign2categories', back_populates="categories",
                              passive_deletes=True)
 
+    __table_args__ = (
+        {'prefixes': ['UNLOGGED']}
+    )
+
     @classmethod
     def upsert(cls, session, data):
         acc = session.execute(
