@@ -96,11 +96,13 @@ class Watcher(object):
         if not self.ready:
             logger.info('Not ready')
             self._connection.add_timeout(60, self.run_saved_message)
+            logger.info('Add callback "massages"')
         else:
             logger.info('Ready')
             if len(self.messages) > 0:
                 self.message_processing(*self.messages.pop(0))
                 self._connection.add_timeout(10, self.run_saved_message)
+                logger.info('Add callback "massages"')
 
     def on_channel_open(self, channel):
 
@@ -184,7 +186,6 @@ class Watcher(object):
         self.acknowledge_message(basic_deliver.delivery_tag)
 
     def message_processing(self, unused_channel, basic_deliver, properties, body):
-        date = datetime.now().strftime("%d-%m-%Y %H:%M:%S:%f")
         try:
             loader = Loader(self.DBSession, self.ParentDBSession)
             if basic_deliver.exchange == 'getmyad':
@@ -192,21 +193,21 @@ class Watcher(object):
                 if key == 'campaign.start':
                     try:
                         loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
-                        logger.info('%s Campaign %s Start', date, body.decode(encoding='UTF-8'))
+                        logger.info('Campaign %s Start', body.decode(encoding='UTF-8'))
                     except Exception as e:
                         logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
 
                 elif key == 'campaign.stop':
                     try:
                         loader.stop_campaign(guid=body.decode(encoding='UTF-8'))
-                        logger.info('%s Campaign %s Stop', date, body.decode(encoding='UTF-8'))
+                        logger.info('Campaign %s Stop', body.decode(encoding='UTF-8'))
                     except Exception as e:
                         logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
 
                 elif key == 'campaign.update':
                     try:
                         loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
-                        logger.info('%s Campaign %s Update', date, body.decode(encoding='UTF-8'))
+                        logger.info('Campaign %s Update', body.decode(encoding='UTF-8'))
                     except Exception as e:
                         logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
 
@@ -214,7 +215,7 @@ class Watcher(object):
                     try:
                         loader.load_domain({'guid': body.decode(encoding='UTF-8')})
                         loader.load_informer({'guid': body.decode(encoding='UTF-8')})
-                        logger.info('%s Informer %s Update', date, body.decode(encoding='UTF-8'))
+                        logger.info('Informer %s Update', body.decode(encoding='UTF-8'))
                     except Exception as e:
                         logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
 
@@ -222,14 +223,14 @@ class Watcher(object):
                     try:
                         loader.load_domain_category_by_account({'login': body.decode(encoding='UTF-8')})
                         loader.load_account({'login': body.decode(encoding='UTF-8')})
-                        logger.info('%s Account %s Update', date, body.decode(encoding='UTF-8'))
+                        logger.info('Account %s Update', body.decode(encoding='UTF-8'))
                     except Exception as e:
                         logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
 
                 elif key == 'rating.informer':
                     try:
                         loader.load_offer_informer_rating()
-                        logger.info('%s Rating Informer %s Update', date, body.decode(encoding='UTF-8'))
+                        logger.info('Rating Informer %s Update', body.decode(encoding='UTF-8'))
                     except Exception as e:
                         logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
 
@@ -240,14 +241,14 @@ class Watcher(object):
                 elif key == 'rating.offer':
                     try:
                         loader.load_offer_rating()
-                        logger.info('%s Rating Offer %s Update', date, body.decode(encoding='UTF-8'))
+                        logger.info('Rating Offer %s Update', body.decode(encoding='UTF-8'))
                     except Exception as e:
                         logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
                 else:
-                    logger.debug('%s Received message # %s from %s - %s: %s %s', date, basic_deliver.delivery_tag,
+                    logger.debug('Received message # %s from %s - %s: %s %s', basic_deliver.delivery_tag,
                                  basic_deliver.exchange, basic_deliver.routing_key, properties.app_id, body)
             else:
-                logger.debug('%s Received message # %s from %s - %s: %s %s', date, basic_deliver.delivery_tag,
+                logger.debug('Received message # %s from %s - %s: %s %s', basic_deliver.delivery_tag,
                              basic_deliver.exchange, basic_deliver.routing_key, properties.app_id, body)
             del loader
         except Exception as e:

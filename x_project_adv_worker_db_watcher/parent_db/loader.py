@@ -667,6 +667,8 @@ class Loader(object):
             conn = session.connection()
             for camp_id in result:
                 conn.execute('SELECT create_recommended(%d);' % camp_id)
+            mark_changed(session)
+            session.flush()
         logger.info('Stop Create Recommended Offer')
 
         if kwargs.get('refresh_mat_view', True):
