@@ -1,5 +1,5 @@
 postgres:
-  uri: postgresql://ad_worker:ad_worker@localhost:5432/ad_worker
+  uri: postgresql://ad_worker:ad_worker@localhost:5432/ad_worker_v1
 
 mongo:
   uri: mongodb://srv-5.yottos.com:27018,srv-5.yottos.com:27019,srv-5.yottos.com:27020/getmyad_db?replicaSet=vsrv
