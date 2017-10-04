@@ -807,10 +807,10 @@ class Loader(object):
                 data['guid'] = offer.get('guid', '')
                 data['id_cam'] = offer.get('campaignId_int')
                 data['retid'] = offer.get('RetargetingID', '')
-                data['description'] = offer.get('description', '')
+                data['description'] = offer.get('description', '')[:70]
                 data['url'] = offer.get('url', '')
-                data['title'] = offer.get('title', '')
-                data['price'] = offer.get('price', '')
+                data['title'] = offer.get('title', '')[:35]
+                data['price'] = offer.get('price', '')[:35]
                 data['rating'] = float(offer.get('full_rating', 0.0))
                 data['recommended_ids'] = recommended
                 images = offer.get('image', '')
