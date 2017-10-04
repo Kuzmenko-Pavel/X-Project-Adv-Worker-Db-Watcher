@@ -24,6 +24,7 @@ class Loader(object):
         logger.info('Stopping Load Device')
         logger.info('Starting Load Domain')
         self.load_domain(refresh_mat_view=False)
+        self.load_domain_all(refresh_mat_view=False)
         logger.info('Stopping Load Domain')
         logger.info('Starting Load Categories')
         self.load_categories(refresh_mat_view=False)
@@ -276,6 +277,21 @@ class Loader(object):
                 raise
         return adv_data
 
+    def stop_informer(self, guid=None, *args, **kwargs):
+        session = self.session()
+        if guid is None:
+            session.close()
+            return
+        with transaction.manager:
+            old_informer = session.query(Informer).filter(Informer.guid == guid).one_or_none()
+            if old_informer is not None:
+                session.delete(old_informer)
+                session.flush()
+                transaction.commit()
+        if kwargs.get('refresh_mat_view', True):
+            self.refresh_mat_view('mv_informer')
+        session.close()
+
     def load_informer(self, query=None, *args, **kwargs):
         if query is None:
             query = {}
@@ -353,6 +369,40 @@ class Loader(object):
         session.close()
         return result
 
+    def stop_domain(self, name=None, *args, **kwargs):
+        session = self.session()
+        if name is None:
+            session.close()
+            return
+        with transaction.manager:
+            old_domain = session.query(Domains).filter(Domains.name == name).one_or_none()
+            if old_domain is not None:
+                session.delete(old_domain)
+                session.flush()
+                transaction.commit()
+        if kwargs.get('refresh_mat_view', True):
+            self.refresh_mat_view('mv_categories2domain')
+            self.refresh_mat_view('mv_domains')
+        session.close()
+
+    def load_domain_all(self, query=None, *args, **kwargs):
+        session = self.session()
+        result = []
+        if query is None:
+            query = {}
+        fields = {
+            'domains': 1
+        }
+        domains = self.parent_session['domain'].find(query, fields)
+        with transaction.manager:
+            for domain in domains:
+                for _, name in domain.get('domains', {}).items():
+                    result.append(Domains.upsert(session, {'name': name}))
+        if kwargs.get('refresh_mat_view', True):
+            self.refresh_mat_view('mv_domains')
+        session.close()
+        return result
+
     def stop_account(self, name=None, *args, **kwargs):
         session = self.session()
         if name is None:
@@ -412,10 +462,8 @@ class Loader(object):
     def load_domain_category_by_account(self, query=None, *args, **kwargs):
         if query is None:
             query = {}
-        else:
-            query = {'user': query.get('login', '')}
         domains = []
-        cursor = self.load_domain(query)
+        cursor = self.load_domain_all(query)
         for domain in cursor:
             domains.append(domain.get('name', ''))
         self.load_domain_category({'domain': {'$in': list(set(domains))}})
@@ -582,59 +630,60 @@ class Loader(object):
                     all_ignored_informer = []
                     all_ignored_accounts = []
                     if new_campaign.showCoverage == 'thematic':
+                        # Тематические и разрешённые, кроме запрещённых
                         new_campaign.categories = session.query(Categories).filter(
                             Categories.guid.in_(categories)).all()
 
                         for dom in session.query(Domains).filter(Domains.name.in_(allowed_domains)).all():
-                            all_allowed_domains.append(Campaign2Domains(id_cam=new_campaign.id,
+                            all_allowed_domains.append(dict(id_cam=new_campaign.id,
                                                                         id_dom=dom.id, allowed=True))
                         for inf in session.query(Informer).filter(Informer.guid.in_(allowed_informers)).all():
-                            all_allowed_informer.append(Campaign2Informer(id_cam=new_campaign.id,
+                            all_allowed_informer.append(dict(id_cam=new_campaign.id,
                                                                           id_inf=inf.id, allowed=True))
-
                         for acc in session.query(Accounts).filter(Accounts.name.in_(allowed_accounts)).all():
-                            all_allowed_accounts.append(Campaign2Accounts(id_cam=new_campaign.id,
+                            all_allowed_accounts.append(dict(id_cam=new_campaign.id,
                                                                           id_acc=acc.id, allowed=True))
                         for dom in session.query(Domains).filter(Domains.name.in_(ignored_domains)).all():
-                            all_ignored_domains.append(Campaign2Domains(id_cam=new_campaign.id,
+                            all_ignored_domains.append(dict(id_cam=new_campaign.id,
                                                                         id_dom=dom.id, allowed=False))
                         for inf in session.query(Informer).filter(Informer.guid.in_(ignored_informers)).all():
-                            all_ignored_informer.append(Campaign2Informer(id_cam=new_campaign.id,
+                            all_ignored_informer.append(dict(id_cam=new_campaign.id,
                                                                           id_inf=inf.id, allowed=False))
-
                         for acc in session.query(Accounts).filter(Accounts.name.in_(ignored_accounts)).all():
-                            all_ignored_accounts.append(Campaign2Accounts(id_cam=new_campaign.id,
+                            all_ignored_accounts.append(dict(id_cam=new_campaign.id,
                                                                           id_acc=acc.id, allowed=False))
                     elif new_campaign.showCoverage == 'allowed':
+                        #Только разрешённые
                         for dom in session.query(Domains).filter(Domains.name.in_(allowed_domains)).all():
-                            all_allowed_domains.append(Campaign2Domains(id_cam=new_campaign.id,
+                            all_allowed_domains.append(dict(id_cam=new_campaign.id,
                                                                         id_dom=dom.id, allowed=True))
                         for inf in session.query(Informer).filter(Informer.guid.in_(allowed_informers)).all():
-                            all_allowed_informer.append(Campaign2Informer(id_cam=new_campaign.id,
+                            all_allowed_informer.append(dict(id_cam=new_campaign.id,
                                                                           id_inf=inf.id, allowed=True))
-
                         for acc in session.query(Accounts).filter(Accounts.name.in_(allowed_accounts)).all():
-                            all_allowed_accounts.append(Campaign2Accounts(id_cam=new_campaign.id,
+                            all_allowed_accounts.append(dict(id_cam=new_campaign.id,
                                                                           id_acc=acc.id, allowed=True))
                     else:
-                        all_allowed_accounts.append(Campaign2Accounts(id_cam=new_campaign.id, id_acc=1, allowed=True))
+                        # Все, кроме запрещённых
+                        all_allowed_accounts.append(dict(id_cam=new_campaign.id, id_acc=1, allowed=True))
 
                         for dom in session.query(Domains).filter(Domains.name.in_(ignored_domains)).all():
-                            all_ignored_domains.append(Campaign2Domains(id_cam=new_campaign.id,
+                            all_ignored_domains.append(dict(id_cam=new_campaign.id,
                                                                         id_dom=dom.id, allowed=False))
                         for inf in session.query(Informer).filter(Informer.guid.in_(ignored_informers)).all():
-                            all_ignored_informer.append(Campaign2Informer(id_cam=new_campaign.id,
+                            all_ignored_informer.append(dict(id_cam=new_campaign.id,
                                                                           id_inf=inf.id, allowed=False))
-
                         for acc in session.query(Accounts).filter(Accounts.name.in_(ignored_accounts)).all():
-                            all_ignored_accounts.append(Campaign2Accounts(id_cam=new_campaign.id,
+                            all_ignored_accounts.append(dict(id_cam=new_campaign.id,
                                                                           id_acc=acc.id, allowed=False))
-                    session.add_all(all_allowed_domains)
-                    session.add_all(all_allowed_informer)
-                    session.add_all(all_allowed_accounts)
-                    session.add_all(all_ignored_domains)
-                    session.add_all(all_ignored_informer)
-                    session.add_all(all_ignored_accounts)
+
+                    session.bulk_insert_mappings(Campaign2Domains, all_allowed_domains)
+                    session.bulk_insert_mappings(Campaign2Informer, all_allowed_informer)
+                    session.bulk_insert_mappings(Campaign2Accounts, all_allowed_accounts)
+                    session.bulk_insert_mappings(Campaign2Domains, all_ignored_domains)
+                    session.bulk_insert_mappings(Campaign2Informer, all_ignored_informer)
+                    session.bulk_insert_mappings(Campaign2Accounts, all_ignored_accounts)
+                    mark_changed(session)
 
                     # ------------------------cron-----------------------
                     startShowTimeHours = int(conditions.get('startShowTime', {'hours': 0}).get('hours', 0))
@@ -729,9 +778,10 @@ class Loader(object):
             images = offer.get('image', '')
             if len(images) > 5:
                 data['image'] = images.split(',')
-                result.append(Offer(**data))
+                result.append(data)
         with transaction.manager:
-            session.add_all(result)
+            session.bulk_insert_mappings(Offer, result)
+            mark_changed(session)
         session.close()
         del result
 

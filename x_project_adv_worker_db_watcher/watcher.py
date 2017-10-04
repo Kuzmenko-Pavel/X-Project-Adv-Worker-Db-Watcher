@@ -20,8 +20,9 @@ class Watcher(object):
     QUEUES = [x % (server_name, server_time.strftime("%d-%m-%Y_%H:%M:%S:%f")) for x in ['campaign:%s_%s',
                                                                                         'informer:%s_%s',
                                                                                         'account:%s_%s',
-                                                                                        'rating:%s_%s']]
-    ROUTING_KEYS = ['campaign.#', 'informer.#', 'account.#', 'rating.#']
+                                                                                        'rating:%s_%s',
+                                                                                        'domain:%s_%s']]
+    ROUTING_KEYS = ['campaign.#', 'informer.#', 'account.#', 'rating.#', 'domain.#']
 
     def __init__(self, config, db_session, parent_db_session):
         self.DBSession = db_session
@@ -92,11 +93,11 @@ class Watcher(object):
         self._connection.add_timeout(60, self.run_saved_message)
 
     def run_saved_message(self):
-        logger.info('Run saved massages')
+        # logger.info('Run saved massages')
         if not self.ready:
-            logger.info('Not ready')
+            #logger.info('Not ready')
             self._connection.add_timeout(60, self.run_saved_message)
-            logger.info('Add callback "massages"')
+            #logger.info('Add callback "massages"')
         else:
             logger.info('Ready')
             if len(self.messages) > 0:
@@ -126,7 +127,7 @@ class Watcher(object):
 
         logger.debug('Declaring exchange %s', exchange_name)
         self._channel.exchange_declare(callback=self.on_exchange_declareok, exchange=exchange_name,
-                                       exchange_type=self.EXCHANGE_TYPE, passive=True)
+                                       exchange_type=self.EXCHANGE_TYPE, durable=True, auto_delete=False, passive=False)
 
     def on_exchange_declareok(self, unused_frame):
 
@@ -215,6 +216,20 @@ class Watcher(object):
                     try:
                         loader.load_domain({'guid': body.decode(encoding='UTF-8')})
                         loader.load_informer({'guid': body.decode(encoding='UTF-8')})
+                        logger.info('Informer %s Update', body.decode(encoding='UTF-8'))
+                    except Exception as e:
+                        logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
+
+                elif key == 'informer.stop':
+                    try:
+                        loader.stop_informer(body.decode(encoding='UTF-8'))
+                        logger.info('Informer %s Update', body.decode(encoding='UTF-8'))
+                    except Exception as e:
+                        logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
+
+                elif key == 'domain.stop':
+                    try:
+                        loader.stop_domain(body.decode(encoding='UTF-8'))
                         logger.info('Informer %s Update', body.decode(encoding='UTF-8'))
                     except Exception as e:
                         logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
