@@ -812,10 +812,10 @@ class Loader(object):
                 data['title'] = offer.get('title', '')[:35]
                 data['price'] = offer.get('price', '')[:35]
                 data['rating'] = float(offer.get('full_rating', 0.0))
-                data['recommended_ids'] = recommended
+                data['recommended_ids'] = recommended[:10]
                 images = offer.get('image', '')
                 if len(images) > 5:
-                    data['image'] = images.split(',')
+                    data['image'] = images.split(',')[:5]
                     result.append(data)
             with transaction.manager:
                 session.bulk_insert_mappings(Offer, result)
