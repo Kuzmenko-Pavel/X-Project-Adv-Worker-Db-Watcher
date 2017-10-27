@@ -51,11 +51,17 @@ class Loader(object):
             session.flush()
             conn = session.connection()
             if name:
+                logger.info('Mat View %s' % name)
                 conn.execute('REFRESH MATERIALIZED VIEW CONCURRENTLY %s' % name)
+                mark_changed(session)
+                session.flush()
             else:
-                conn.execute('SELECT RefreshAllMaterializedViewsConcurrently()')
-            mark_changed(session)
-            session.flush()
+                for item in conn.execute("SELECT matviewname FROM pg_matviews WHERE schemaname = 'public'"):
+                    name = item[0]
+                    logger.info('Mat View %s' % name)
+                    conn.execute('REFRESH MATERIALIZED VIEW CONCURRENTLY %s' % name)
+                    mark_changed(session)
+                    session.flush()
         session.close()
 
     @staticmethod

@@ -46,13 +46,13 @@ create_function(metadata, {
 
 create_function(metadata, {
     'name': 'recommended_to_json',
-    'argument': 'recommended_id character varying[], brending boolean, offer_id_cam bigint',
+    'argument': 'recommended_id character varying[],  offer_id_cam bigint',
     'returns': 'json',
     'body': '''
        DECLARE
         recommended json;
        BEGIN
-            IF brending AND array_length(recommended_id, 1) <= 0  THEN
+            IF array_length(recommended_id, 1) <= 0  THEN
                 recommended = json_agg(T.offer_json)
                         FROM (
                              SELECT
@@ -79,16 +79,28 @@ create_function(metadata, {
                            TT.id,
                            ROW_TO_JSON(TT) AS offer_json
                          FROM (
-                                SELECT
-                                  offer_sub.id,
-                                  offer_sub.guid,
-                                  offer_sub.title,
-                                  offer_sub.description,
-                                  offer_sub.image,
-                                  offer_sub.price,
-                                  offer_sub.url
-                                FROM public.offer AS offer_sub
-                                WHERE offer_sub.retid = ANY (recommended_id) and offer_sub.id_cam = offer_id_cam
+                         SELECT
+                                offer_sub_u.id,
+                                offer_sub_u.guid,
+                                offer_sub_u.title,
+                                offer_sub_u.description,
+                                offer_sub_u.image,
+                                offer_sub_u.price,
+                                offer_sub_u.url
+                                FROM 
+                                (
+                                    SELECT
+                                      offer_sub.id,
+                                      offer_sub.guid,
+                                      offer_sub.title,
+                                      offer_sub.description,
+                                      offer_sub.image,
+                                      offer_sub.price,
+                                      offer_sub.url,
+                                      row_number() OVER (PARTITION BY offer_sub.retid) AS range_number
+                                    FROM public.offer AS offer_sub
+                                    WHERE offer_sub.retid = ANY (recommended_id) and offer_sub.id_cam = offer_id_cam
+                                ) as offer_sub_u where offer_sub_u.range_number = 1
                               ) AS TT
                        ) AS T;
             END IF;
@@ -106,17 +118,20 @@ create_function(metadata, {
     'body': '''
        DECLARE
             brending boolean := false;
+            styling boolean := false;
         BEGIN
-            SELECT campaign.brending INTO brending FROM campaign WHERE id = offer_id_cam;
+            SELECT campaign.brending, campaign.styling INTO brending, styling FROM campaign WHERE id = offer_id_cam;
             
-            UPDATE offer
-            SET recommended = recommended_to_json(subquery.recommended_ids, brending, offer_id_cam)
-            FROM (SELECT
-                    offer_sub.id,
-                    offer_sub.recommended_ids
-                  FROM offer AS offer_sub
-                  WHERE offer_sub.id_cam = offer_id_cam) AS subquery
-            WHERE offer.id = subquery.id;
+            IF brending OR styling THEN
+                UPDATE offer
+                SET recommended = recommended_to_json(subquery.recommended_ids, offer_id_cam)
+                FROM (SELECT
+                        offer_sub.id,
+                        offer_sub.recommended_ids
+                      FROM offer AS offer_sub
+                      WHERE offer_sub.id_cam = offer_id_cam) AS subquery
+                WHERE offer.id = subquery.id;
+            END IF;
             RETURN 1;
         END
     ''',
