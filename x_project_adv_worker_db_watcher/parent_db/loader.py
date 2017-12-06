@@ -801,7 +801,7 @@ class Loader(object):
                 'full_rating': 1,
                 'Recommended': 1
             }
-            offers = self.parent_session['offer'].find(query, fields)
+            offers = self.parent_session['offer'].find(query, fields).limit(200000)
             for offer in offers:
                 data = dict()
                 rec = offer.get('Recommended', '')
