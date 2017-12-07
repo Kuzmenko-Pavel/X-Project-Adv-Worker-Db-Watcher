@@ -329,34 +329,37 @@ class Loader(object):
             session = self.session()
             with transaction.manager:
                 for informer in informers:
-                    data = dict()
-                    domains = session.query(Domains).filter(Domains.name == informer.get('domain', '')).first()
-                    account = session.query(Accounts).filter(Accounts.name == informer.get('user', '')).first()
-                    data['id'] = informer.get('guid_int', 1)
-                    data['guid'] = informer.get('guid', '')
-                    data['domain'] = domains.id
-                    data['account'] = account.id
-                    data['title'] = informer.get('title', '')
-                    data['headerHtml'] = informer.get('admaker', {}).get('MainHeader', {}).get('html', '')
-                    data['footerHtml'] = informer.get('admaker', {}).get('MainFooter', {}).get('html', '')
-                    data['dynamic'] = informer.get('dynamic', False)
-                    if not data['dynamic']:
-                        data['ad_style'] = self.ad_style(informer.get('admaker', {}))
-                    else:
-                        data['ad_style'] = None
-                    data['auto_reload'] = informer.get('auto_reload')
-                    data['blinking'] = informer.get('blinking')
-                    data['shake'] = informer.get('shake')
-                    data['blinking_reload'] = informer.get('blinking_reload')
-                    data['shake_reload'] = informer.get('shake_reload')
-                    data['shake_mouse'] = informer.get('shake_mouse')
-                    data['html_notification'] = informer.get('html_notification', True)
-                    data['place_branch'] = informer.get('plase_branch', True)
-                    data['retargeting_branch'] = informer.get('retargeting_branch', True)
-                    data['social_branch'] = informer.get('social_branch', True)
-                    data['rating_division'] = informer.get('rating_division')
+                    try:
+                        data = dict()
+                        domains = session.query(Domains).filter(Domains.name == informer.get('domain', '')).first()
+                        account = session.query(Accounts).filter(Accounts.name == informer.get('user', '')).first()
+                        data['id'] = informer.get('guid_int', 1)
+                        data['guid'] = informer.get('guid', '')
+                        data['domain'] = domains.id
+                        data['account'] = account.id
+                        data['title'] = informer.get('title', '')
+                        data['headerHtml'] = informer.get('admaker', {}).get('MainHeader', {}).get('html', '')
+                        data['footerHtml'] = informer.get('admaker', {}).get('MainFooter', {}).get('html', '')
+                        data['dynamic'] = informer.get('dynamic', False)
+                        if not data['dynamic']:
+                            data['ad_style'] = self.ad_style(informer.get('admaker', {}))
+                        else:
+                            data['ad_style'] = None
+                        data['auto_reload'] = informer.get('auto_reload')
+                        data['blinking'] = informer.get('blinking')
+                        data['shake'] = informer.get('shake')
+                        data['blinking_reload'] = informer.get('blinking_reload')
+                        data['shake_reload'] = informer.get('shake_reload')
+                        data['shake_mouse'] = informer.get('shake_mouse')
+                        data['html_notification'] = informer.get('html_notification', True)
+                        data['place_branch'] = informer.get('plase_branch', True)
+                        data['retargeting_branch'] = informer.get('retargeting_branch', True)
+                        data['social_branch'] = informer.get('social_branch', True)
+                        data['rating_division'] = informer.get('rating_division')
 
-                    Informer.upsert(session, data=data)
+                        Informer.upsert(session, data=data)
+                    except Exception as e:
+                        print(e)
             if kwargs.get('refresh_mat_view', True):
                 self.refresh_mat_view('mv_informer')
             session.close()
