@@ -359,7 +359,7 @@ class Loader(object):
 
                         Informer.upsert(session, data=data)
                     except Exception as e:
-                        print(e)
+                        logger.error(exception_message(exc=str(e)))
             if kwargs.get('refresh_mat_view', True):
                 self.refresh_mat_view('mv_informer')
             session.close()
