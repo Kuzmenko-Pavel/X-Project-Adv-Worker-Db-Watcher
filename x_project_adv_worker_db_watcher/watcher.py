@@ -12,7 +12,7 @@ server_time = datetime.now()
 
 class Watcher(object):
     __slots__ = ['DBSession', 'ParentDBSession', '_connection', '_channel', '_closing', '_consumer_tag',
-                 '_url', 'ready', 'messages', 'thread']
+                 '_url', 'ready', 'messages', 'thread', '_loader_config']
     EXCHANGE = 'getmyad'
     EXCHANGE_TYPE = 'topic'
     DURABLE = False
@@ -32,6 +32,7 @@ class Watcher(object):
         self._closing = False
         self._consumer_tag = None
         self._url = config['amqp']
+        self._loader_config = config['loader']
         self.ready = False
         self.messages = []
         thread = threading.Thread(target=self.load_all)
@@ -41,7 +42,7 @@ class Watcher(object):
     def load_all(self):
         try:
             logger.info('Start All Load')
-            loader = Loader(self.DBSession, self.ParentDBSession)
+            loader = Loader(self.DBSession, self.ParentDBSession, self._loader_config)
             loader.all()
             del loader
         except Exception as e:
@@ -188,7 +189,7 @@ class Watcher(object):
 
     def message_processing(self, unused_channel, basic_deliver, properties, body):
         try:
-            loader = Loader(self.DBSession, self.ParentDBSession)
+            loader = Loader(self.DBSession, self.ParentDBSession, self._loader_config)
             if basic_deliver.exchange == 'getmyad':
                 key = basic_deliver.routing_key
                 if key == 'campaign.start':

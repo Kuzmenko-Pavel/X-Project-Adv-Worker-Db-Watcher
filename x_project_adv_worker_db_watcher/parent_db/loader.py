@@ -9,11 +9,12 @@ from .block_settings import BlockSetting
 
 
 class Loader(object):
-    __slots__ = ['session', 'parent_session']
+    __slots__ = ['session', 'parent_session', 'config']
 
-    def __init__(self, db_session, parent_db_session):
+    def __init__(self, db_session, parent_db_session, config):
         self.session = db_session
         self.parent_session = parent_db_session['getmyad_db']
+        self.config = config
 
     def all(self):
         logger.info('Starting Load Account')
@@ -804,7 +805,8 @@ class Loader(object):
                 'full_rating': 1,
                 'Recommended': 1
             }
-            offers = self.parent_session['offer'].find(query, fields).limit(500000)
+            limit = self.config.get('offer', {}).get('limit', 1000)
+            offers = self.parent_session['offer'].find(query, fields).limit(limit)
             for offer in offers:
                 data = dict()
                 rec = offer.get('Recommended', '')
