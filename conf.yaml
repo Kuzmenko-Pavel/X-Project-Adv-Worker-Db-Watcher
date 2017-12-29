@@ -2,7 +2,7 @@ postgres:
   uri: postgresql://ad_worker:ad_worker@localhost:5432/ad_worker
 
 mongo:
-  uri: mongodb://srv-5.yottos.com:27018,srv-5.yottos.com:27019,srv-5.yottos.com:27020/getmyad_db?replicaSet=vsrv
+  uri: mongodb://srv-5.yottos.com:27018,srv-5.yottos.com:27019,srv-5.yottos.com:27020/getmyad_db?replicaSet=vsrv&readPreference=secondaryPreferred
 
 amqp: amqp://worker:worker@srv-4.yottos.com/worker?socket_timeout=1&heartbeat_interval=0
 
