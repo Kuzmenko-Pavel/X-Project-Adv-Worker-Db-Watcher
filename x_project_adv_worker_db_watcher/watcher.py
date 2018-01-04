@@ -145,9 +145,18 @@ class Watcher(object):
 
     def on_message(self, unused_channel, basic_deliver, properties, body):
         date = datetime.now().strftime("%d-%m-%Y %H:%M:%S:%f")
-        self._messages.put([unused_channel, basic_deliver, properties, body])
-        logger.debug('%s Saved message # %s from %s - %s: %s %s', date, basic_deliver.delivery_tag,
-                     basic_deliver.exchange, basic_deliver.routing_key, properties.app_id, body)
+        try:
+            if basic_deliver.exchange == 'getmyad':
+                key = basic_deliver.routing_key
+                msg = body.decode(encoding='UTF-8')
+                self._messages.put([key, msg])
+                logger.debug('%s Saved message # %s from %s - %s: %s %s', date, basic_deliver.delivery_tag,
+                             basic_deliver.exchange, basic_deliver.routing_key, properties.app_id, body)
+            else:
+                logger.debug('Received message # %s from %s - %s: %s %s', basic_deliver.delivery_tag,
+                             basic_deliver.exchange, basic_deliver.routing_key, properties.app_id, body)
+        except Exception as e:
+            logger.error(exception_message(exc=str(e)))
         self.acknowledge_message(basic_deliver.delivery_tag)
 
     def acknowledge_message(self, delivery_tag):
