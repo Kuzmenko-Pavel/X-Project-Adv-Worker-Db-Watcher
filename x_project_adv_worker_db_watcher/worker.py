@@ -19,16 +19,17 @@ class Worker(Thread):
 
     def run(self):
         try:
-            pass
-            # self.loader.all()
+            self.loader.all()
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
         finally:
             while not self.need_exit:
-                job = self.__queue.get(block=False, timeout=1)
-                self.message_processing(*job)
-                self.__queue.task_done()
-                time.sleep(0.1)
+                if not self.__queue.empty():
+                    job = self.__queue.get()
+                    self.message_processing(*job)
+                    self.__queue.task_done()
+                else:
+                    time.sleep(0.1)
 
     def message_processing(self, key, body):
         try:
