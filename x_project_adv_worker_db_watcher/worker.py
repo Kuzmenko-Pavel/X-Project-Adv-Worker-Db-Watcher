@@ -23,6 +23,7 @@ class Worker(Thread):
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
         finally:
+            logger.info('Starting Worker')
             while not self.need_exit:
                 if not self.__queue.empty():
                     job = self.__queue.get()
@@ -30,6 +31,7 @@ class Worker(Thread):
                     self.__queue.task_done()
                 else:
                     time.sleep(0.1)
+            logger.info('Stopping Worker')
 
     def message_processing(self, key, body):
         try:

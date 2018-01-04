@@ -184,6 +184,7 @@ class Watcher(object):
 
     def stop(self):
         logger.info('Stopping Listening AMQP')
+        self._worker.need_exit = True
         self._closing = True
         self.stop_consuming()
         self._connection.ioloop.start()
