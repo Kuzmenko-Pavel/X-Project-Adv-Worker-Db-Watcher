@@ -1,18 +1,18 @@
 import socket
 from datetime import datetime
-import threading
+from queue import Queue
 import pika
 
 from x_project_adv_worker_db_watcher.logger import logger, exception_message
-from x_project_adv_worker_db_watcher.parent_db.loader import Loader
+from x_project_adv_worker_db_watcher.worker import Worker
+
 
 server_name = socket.gethostname()
 server_time = datetime.now()
 
 
 class Watcher(object):
-    __slots__ = ['DBSession', 'ParentDBSession', '_connection', '_channel', '_closing', '_consumer_tag',
-                 '_url', 'ready', 'messages', 'thread', '_loader_config']
+    __slots__ = ['_connection', '_channel', '_closing', '_consumer_tag', '_url', '_messages', '_worker']
     EXCHANGE = 'getmyad'
     EXCHANGE_TYPE = 'topic'
     DURABLE = False
@@ -25,30 +25,13 @@ class Watcher(object):
     ROUTING_KEYS = ['campaign.#', 'informer.#', 'account.#', 'rating.#', 'domain.#']
 
     def __init__(self, config, db_session, parent_db_session):
-        self.DBSession = db_session
-        self.ParentDBSession = parent_db_session
         self._connection = None
         self._channel = None
         self._closing = False
         self._consumer_tag = None
         self._url = config['amqp']
-        self._loader_config = config['loader']
-        self.ready = False
-        self.messages = []
-        thread = threading.Thread(target=self.load_all)
-        thread.daemon = True
-        thread.start()
-
-    def load_all(self):
-        try:
-            logger.info('Start All Load')
-            loader = Loader(self.DBSession, self.ParentDBSession, self._loader_config)
-            loader.all()
-            del loader
-        except Exception as e:
-            logger.error(exception_message(exc=str(e)))
-        finally:
-            self.ready = True
+        self._messages = Queue()
+        self._worker = Worker(self._messages, db_session, parent_db_session, config)
 
     def connect(self):
         logger.debug('Connecting to %s', self._url)
@@ -91,20 +74,6 @@ class Watcher(object):
 
         logger.debug('Creating a new channel')
         self._connection.channel(on_open_callback=self.on_channel_open)
-        self._connection.add_timeout(60, self.run_saved_message)
-
-    def run_saved_message(self):
-        # logger.info('Run saved massages')
-        if not self.ready:
-            #logger.info('Not ready')
-            self._connection.add_timeout(60, self.run_saved_message)
-            #logger.info('Add callback "massages"')
-        else:
-            logger.info('Ready')
-            if len(self.messages) > 0:
-                self.message_processing(*self.messages.pop(0))
-                self._connection.add_timeout(10, self.run_saved_message)
-                logger.info('Add callback "massages"')
 
     def on_channel_open(self, channel):
 
@@ -176,99 +145,10 @@ class Watcher(object):
 
     def on_message(self, unused_channel, basic_deliver, properties, body):
         date = datetime.now().strftime("%d-%m-%Y %H:%M:%S:%f")
-        if not self.ready:
-            self.messages.append([unused_channel, basic_deliver, properties, body])
-            logger.debug('%s Saved message # %s from %s - %s: %s %s', date, basic_deliver.delivery_tag,
-                         basic_deliver.exchange, basic_deliver.routing_key, properties.app_id, body)
-        else:
-            for item in self.messages:
-                self.message_processing(*item)
-            self.messages = []
-            self.message_processing(unused_channel, basic_deliver, properties, body)
+        self._messages.put([unused_channel, basic_deliver, properties, body])
+        logger.debug('%s Saved message # %s from %s - %s: %s %s', date, basic_deliver.delivery_tag,
+                     basic_deliver.exchange, basic_deliver.routing_key, properties.app_id, body)
         self.acknowledge_message(basic_deliver.delivery_tag)
-
-    def message_processing(self, unused_channel, basic_deliver, properties, body):
-        try:
-            loader = Loader(self.DBSession, self.ParentDBSession, self._loader_config)
-            if basic_deliver.exchange == 'getmyad':
-                key = basic_deliver.routing_key
-                if key == 'campaign.start':
-                    try:
-                        loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
-                        logger.info('Campaign %s Start', body.decode(encoding='UTF-8'))
-                    except Exception as e:
-                        logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
-
-                elif key == 'campaign.stop':
-                    try:
-                        loader.stop_campaign(guid=body.decode(encoding='UTF-8'))
-                        logger.info('Campaign %s Stop', body.decode(encoding='UTF-8'))
-                    except Exception as e:
-                        logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
-
-                elif key == 'campaign.update':
-                    try:
-                        loader.load_campaign({'guid': body.decode(encoding='UTF-8')})
-                        logger.info('Campaign %s Update', body.decode(encoding='UTF-8'))
-                    except Exception as e:
-                        logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
-
-                elif key == 'informer.update':
-                    try:
-                        loader.load_domain({'guid': body.decode(encoding='UTF-8')})
-                        loader.load_informer({'guid': body.decode(encoding='UTF-8')})
-                        logger.info('Informer %s Update', body.decode(encoding='UTF-8'))
-                    except Exception as e:
-                        logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
-
-                elif key == 'informer.stop':
-                    try:
-                        loader.stop_informer(body.decode(encoding='UTF-8'))
-                        logger.info('Informer %s Update', body.decode(encoding='UTF-8'))
-                    except Exception as e:
-                        logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
-
-                elif key == 'domain.stop':
-                    try:
-                        loader.stop_domain(body.decode(encoding='UTF-8'))
-                        logger.info('Informer %s Update', body.decode(encoding='UTF-8'))
-                    except Exception as e:
-                        logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
-
-                elif key == 'account.update':
-                    try:
-                        loader.load_domain_category_by_account({'login': body.decode(encoding='UTF-8')})
-                        loader.load_account({'login': body.decode(encoding='UTF-8')})
-                        logger.info('Account %s Update', body.decode(encoding='UTF-8'))
-                    except Exception as e:
-                        logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
-
-                elif key == 'rating.informer':
-                    try:
-                        loader.load_offer_informer_rating()
-                        logger.info('Rating Informer %s Update', body.decode(encoding='UTF-8'))
-                    except Exception as e:
-                        logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
-
-                # # elif key == 'rating.campaign':
-                # #     pass
-                # #     self.loader.load_campaign_rating()
-                #
-                elif key == 'rating.offer':
-                    try:
-                        loader.load_offer_rating()
-                        logger.info('Rating Offer %s Update', body.decode(encoding='UTF-8'))
-                    except Exception as e:
-                        logger.error(exception_message(exc=str(e), key=str(key), body=body.decode(encoding='UTF-8')))
-                else:
-                    logger.debug('Received message # %s from %s - %s: %s %s', basic_deliver.delivery_tag,
-                                 basic_deliver.exchange, basic_deliver.routing_key, properties.app_id, body)
-            else:
-                logger.debug('Received message # %s from %s - %s: %s %s', basic_deliver.delivery_tag,
-                             basic_deliver.exchange, basic_deliver.routing_key, properties.app_id, body)
-            del loader
-        except Exception as e:
-            logger.error(exception_message(exc=str(e)))
 
     def acknowledge_message(self, delivery_tag):
         logger.debug('Acknowledging message %s', delivery_tag)
