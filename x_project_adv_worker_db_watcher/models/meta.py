@@ -52,27 +52,7 @@ create_function(metadata, {
        DECLARE
         recommended json;
        BEGIN
-            IF array_length(recommended_id, 1) <= 0  THEN
-                recommended = json_agg(T.offer_json)
-                        FROM (
-                             SELECT
-                               TT.id,
-                               ROW_TO_JSON(TT) AS offer_json
-                             FROM (
-                                    SELECT
-                                      offer_sub.id,
-                                      offer_sub.guid,
-                                      offer_sub.title,
-                                      offer_sub.description,
-                                      offer_sub.image,
-                                      offer_sub.price,
-                                      offer_sub.url
-                                    FROM public.offer AS offer_sub
-                                    WHERE offer_sub.id_cam = offer_id_cam
-                                    ORDER BY RANDOM() LIMIT 10
-                                  ) AS TT
-                           ) AS T;
-            ELSE
+            IF array_length(recommended_id, 1) > 0  THEN
                 recommended = json_agg(T.offer_json)
                     FROM (
                          SELECT
@@ -102,7 +82,27 @@ create_function(metadata, {
                                     WHERE offer_sub.retid = ANY (recommended_id) and offer_sub.id_cam = offer_id_cam
                                 ) as offer_sub_u where offer_sub_u.range_number = 1
                               ) AS TT
-                       ) AS T;
+                       ) AS T;    
+            ELSE
+                recommended = json_agg(T.offer_json)
+                        FROM (
+                             SELECT
+                               TT.id,
+                               ROW_TO_JSON(TT) AS offer_json
+                             FROM (
+                                    SELECT
+                                      offer_sub.id,
+                                      offer_sub.guid,
+                                      offer_sub.title,
+                                      offer_sub.description,
+                                      offer_sub.image,
+                                      offer_sub.price,
+                                      offer_sub.url
+                                    FROM public.offer AS offer_sub
+                                    WHERE offer_sub.id_cam = offer_id_cam
+                                    ORDER BY RANDOM() LIMIT 10
+                                  ) AS TT
+                           ) AS T;
             END IF;
         RETURN recommended;
         END
