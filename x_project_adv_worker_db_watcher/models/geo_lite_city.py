@@ -17,6 +17,9 @@ class GeoLiteCity(Base):
         {'prefixes': ['UNLOGGED']}
     )
 
+    def __repr__(self):
+        return 'GeoLiteCity %s %s' % (self.country, self.region)
+
 
 class MVGeoLiteCity(Base):
     __table__ = create_view(

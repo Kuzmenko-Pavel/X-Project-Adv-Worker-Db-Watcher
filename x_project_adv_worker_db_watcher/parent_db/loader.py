@@ -575,180 +575,193 @@ class Loader(object):
             campaigns = self.parent_session['campaign'].find(query, fields)
             with transaction.manager:
                 for campaign in campaigns:
-                    id = campaign.get('guid_int')
-                    guid = campaign.get('guid')
-                    conditions = campaign.get('showConditions', False)
-                    old_campaign = session.query(Campaign).filter(Campaign.guid == guid).one_or_none()
-                    if old_campaign is not None:
-                        session.delete(old_campaign)
-                        session.flush()
-                    if not conditions:
-                        continue
-                    data = dict()
-                    data['id'] = id
-                    data['guid'] = guid
-                    data['title'] = campaign.get('title')
-                    data['social'] = campaign.get('social')
-                    data['showCoverage'] = conditions.get('showCoverage')
-                    data['retargeting'] = conditions.get('retargeting', False)
-                    data['cost'] = conditions.get('cost', 0)
-                    data['gender'] = conditions.get('gender', 0)
-                    data['retargeting_type'] = conditions.get('retargeting_type')
-                    data['brending'] = conditions.get('brending')
-                    data['recomendet_type'] = conditions.get('recomendet_type')
-                    data['recomendet_count'] = conditions.get('recomendet_count')
-                    data['account'] = campaign.get('account')
-                    data['target'] = conditions.get('target')
-                    data['offer_by_campaign_unique'] = conditions.get('offer_by_campaign_unique')
-                    data['unique_impression_lot'] = conditions.get('UnicImpressionLot')
-                    data['html_notification'] = conditions.get('html_notification')
-                    data['styling'] = False
-                    data['style_data'] = None
-                    data['style_type'] = conditions.get('style_type', 'default')
-                    data['style_class'] = 'Block'
-                    data['style_class_recommendet'] = 'RecBlock'
-                    data['capacity'] = 1
-                    if data['style_type'] not in ['default', 'Block', 'RetBlock', 'RecBlock']:
-                        data['style_class'] = str(data['id'])
-                        data['style_data'] = conditions.get('style_data',
-                                                            {'img': '', 'head_title': '', 'button_title': ''})
-                        data['style_class_recommendet'] = str(data['id'])
-                        data['capacity'] = 2
-                        data['offer_by_campaign_unique'] = 10
-                        data['styling'] = True
-                    elif data['style_type'] in ['Block', 'RetBlock', 'RecBlock']:
-                        data['style_class'] = data['style_type']
-                        data['style_class_recommendet'] = data['style_type']
-                    else:
-                        if data['retargeting']:
-                            data['style_class'] = 'RetBlock'
+                    try:
+                        new_id = None
+                        id = campaign.get('guid_int')
+                        guid = campaign.get('guid')
+                        conditions = campaign.get('showConditions', False)
+                        old_campaign = session.query(Campaign).filter(Campaign.guid == guid).one_or_none()
+                        if old_campaign is not None:
+                            session.delete(old_campaign)
+                            session.flush()
+                        if not conditions:
+                            continue
+                        data = dict()
+                        data['id'] = id
+                        data['guid'] = guid
+                        data['title'] = campaign.get('title')
+                        data['social'] = campaign.get('social')
+                        data['showCoverage'] = conditions.get('showCoverage')
+                        data['retargeting'] = conditions.get('retargeting', False)
+                        data['cost'] = conditions.get('cost', 0)
+                        data['gender'] = conditions.get('gender', 0)
+                        data['retargeting_type'] = conditions.get('retargeting_type')
+                        data['brending'] = conditions.get('brending')
+                        data['recomendet_type'] = conditions.get('recomendet_type')
+                        data['recomendet_count'] = conditions.get('recomendet_count')
+                        data['account'] = campaign.get('account')
+                        data['target'] = conditions.get('target')
+                        data['offer_by_campaign_unique'] = conditions.get('offer_by_campaign_unique')
+                        data['unique_impression_lot'] = conditions.get('UnicImpressionLot')
+                        data['html_notification'] = conditions.get('html_notification')
+                        data['styling'] = False
+                        data['style_data'] = None
+                        data['style_type'] = conditions.get('style_type', 'default')
+                        data['style_class'] = 'Block'
+                        data['style_class_recommendet'] = 'RecBlock'
+                        data['capacity'] = 1
+                        if data['style_type'] not in ['default', 'Block', 'RetBlock', 'RecBlock']:
+                            data['style_class'] = str(data['id'])
+                            data['style_data'] = conditions.get('style_data',
+                                                                {'img': '', 'head_title': '', 'button_title': ''})
+                            data['style_class_recommendet'] = str(data['id'])
+                            data['capacity'] = 2
+                            data['offer_by_campaign_unique'] = 10
+                            data['styling'] = True
+                        elif data['style_type'] in ['Block', 'RetBlock', 'RecBlock']:
+                            data['style_class'] = data['style_type']
+                            data['style_class_recommendet'] = data['style_type']
+                        else:
+                            if data['retargeting']:
+                                data['style_class'] = 'RetBlock'
 
-                    if campaign.get('status') == 'working':
-                        new_campaign = Campaign(**data)
-                        session.add(new_campaign)
-                        if new_campaign.social:
-                            offer_social = True
-                        elif new_campaign.retargeting:
-                            if new_campaign.retargeting_type == 'offer':
-                                offer_dynamic_retargeting = True
+                        if campaign.get('status') == 'working':
+                            new_campaign = Campaign(**data)
+                            session.add(new_campaign)
+                            if new_campaign.social:
+                                offer_social = True
+                            elif new_campaign.retargeting:
+                                if new_campaign.retargeting_type == 'offer':
+                                    offer_dynamic_retargeting = True
+                                else:
+                                    offer_account_retargeting = True
                             else:
-                                offer_account_retargeting = True
-                        else:
-                            offer_place = True
+                                offer_place = True
 
-                        session.flush()
-                        result.append(new_campaign.id)
+                            session.flush()
+                            new_id = new_campaign.id
 
-                        # ------------------------regionTargeting-----------------------
-                        country_targeting = conditions.get('geoTargeting', [])
-                        region_targeting = conditions.get('regionTargeting', [])
-                        if len(country_targeting) <= 0:
-                            country_targeting.append('*')
-                        if len(region_targeting) <= 0:
-                            region_targeting.append('*')
-                        geos = list()
-                        for country in country_targeting:
-                            geos = geos + session.query(GeoLiteCity).filter(
-                                GeoLiteCity.country == country, GeoLiteCity.city.in_(region_targeting)).all()
+                            # ------------------------regionTargeting-----------------------
+                            country_targeting = conditions.get('geoTargeting', [])
+                            region_targeting = conditions.get('regionTargeting', [])
+                            if len(country_targeting) <= 0:
+                                country_targeting.append('*')
+                            if len(region_targeting) <= 0:
+                                region_targeting.append('*')
+                            country_targeting = list(set(country_targeting))
+                            region_targeting = list(set(region_targeting))
+                            geos = list()
+                            for country in country_targeting:
+                                geos = geos + session.query(GeoLiteCity).filter(
+                                    GeoLiteCity.country == country, GeoLiteCity.city.in_(region_targeting)).all()
 
-                        new_campaign.geos = geos
+                            new_campaign.geos = geos
 
-                        # ------------------------deviceTargeting-----------------------
-                        device = conditions.get('device', [])
-                        if len(device) <= 0:
-                            device.append('**')
-                        new_campaign.devices = session.query(Device).filter(Device.name.in_(device)).all()
+                            # ------------------------deviceTargeting-----------------------
+                            device = conditions.get('device', [])
+                            if len(device) <= 0:
+                                device.append('**')
+                            new_campaign.devices = session.query(Device).filter(Device.name.in_(device)).all()
 
-                        # ------------------------sites----------------------
-                        categories = conditions.get('categories', [])
-                        allowed_domains = conditions.get('allowed', {'domains': []}).get('domains', [])
-                        allowed_informers = conditions.get('allowed', {'informers': []}).get('informers', [])
-                        allowed_accounts = conditions.get('allowed', {'accounts': []}).get('accounts', [])
-                        ignored_domains = conditions.get('ignored', {'domains': []}).get('domains', [])
-                        ignored_informers = conditions.get('ignored', {'informers': []}).get('informers', [])
-                        ignored_accounts = conditions.get('ignored', {'accounts': []}).get('accounts', [])
+                            # ------------------------sites----------------------
+                            categories = conditions.get('categories', [])
+                            allowed_domains = conditions.get('allowed', {'domains': []}).get('domains', [])
+                            allowed_informers = conditions.get('allowed', {'informers': []}).get('informers', [])
+                            allowed_accounts = conditions.get('allowed', {'accounts': []}).get('accounts', [])
+                            ignored_domains = conditions.get('ignored', {'domains': []}).get('domains', [])
+                            ignored_informers = conditions.get('ignored', {'informers': []}).get('informers', [])
+                            ignored_accounts = conditions.get('ignored', {'accounts': []}).get('accounts', [])
 
-                        all_allowed_domains = []
-                        all_allowed_informer = []
-                        all_allowed_accounts = []
-                        all_ignored_domains = []
-                        all_ignored_informer = []
-                        all_ignored_accounts = []
-                        if new_campaign.showCoverage == 'thematic':
-                            # Тематические и разрешённые, кроме запрещённых
-                            new_campaign.categories = session.query(Categories).filter(
-                                Categories.guid.in_(categories)).all()
+                            all_allowed_domains = []
+                            all_allowed_informer = []
+                            all_allowed_accounts = []
+                            all_ignored_domains = []
+                            all_ignored_informer = []
+                            all_ignored_accounts = []
+                            if new_campaign.showCoverage == 'thematic':
+                                # Тематические и разрешённые, кроме запрещённых
+                                new_campaign.categories = session.query(Categories).filter(
+                                    Categories.guid.in_(categories)).all()
 
-                            for dom in session.query(Domains).filter(Domains.name.in_(allowed_domains)).all():
-                                all_allowed_domains.append(dict(id_cam=new_campaign.id,
-                                                                id_dom=dom.id, allowed=True))
-                            for inf in session.query(Informer).filter(Informer.guid.in_(allowed_informers)).all():
-                                all_allowed_informer.append(dict(id_cam=new_campaign.id,
-                                                                 id_inf=inf.id, allowed=True))
-                            for acc in session.query(Accounts).filter(Accounts.name.in_(allowed_accounts)).all():
-                                all_allowed_accounts.append(dict(id_cam=new_campaign.id,
-                                                                 id_acc=acc.id, allowed=True))
-                            for dom in session.query(Domains).filter(Domains.name.in_(ignored_domains)).all():
-                                all_ignored_domains.append(dict(id_cam=new_campaign.id,
-                                                                id_dom=dom.id, allowed=False))
-                            for inf in session.query(Informer).filter(Informer.guid.in_(ignored_informers)).all():
-                                all_ignored_informer.append(dict(id_cam=new_campaign.id,
-                                                                 id_inf=inf.id, allowed=False))
-                            for acc in session.query(Accounts).filter(Accounts.name.in_(ignored_accounts)).all():
-                                all_ignored_accounts.append(dict(id_cam=new_campaign.id,
-                                                                 id_acc=acc.id, allowed=False))
-                        elif new_campaign.showCoverage == 'allowed':
-                            # Только разрешённые
-                            for dom in session.query(Domains).filter(Domains.name.in_(allowed_domains)).all():
-                                all_allowed_domains.append(dict(id_cam=new_campaign.id,
-                                                                id_dom=dom.id, allowed=True))
-                            for inf in session.query(Informer).filter(Informer.guid.in_(allowed_informers)).all():
-                                all_allowed_informer.append(dict(id_cam=new_campaign.id,
-                                                                 id_inf=inf.id, allowed=True))
-                            for acc in session.query(Accounts).filter(Accounts.name.in_(allowed_accounts)).all():
-                                all_allowed_accounts.append(dict(id_cam=new_campaign.id,
-                                                                 id_acc=acc.id, allowed=True))
-                        else:
-                            # Все, кроме запрещённых
-                            all_allowed_accounts.append(dict(id_cam=new_campaign.id, id_acc=1, allowed=True))
+                                for dom in session.query(Domains).filter(Domains.name.in_(allowed_domains)).all():
+                                    all_allowed_domains.append(dict(id_cam=new_campaign.id,
+                                                                    id_dom=dom.id, allowed=True))
+                                for inf in session.query(Informer).filter(Informer.guid.in_(allowed_informers)).all():
+                                    all_allowed_informer.append(dict(id_cam=new_campaign.id,
+                                                                     id_inf=inf.id, allowed=True))
+                                for acc in session.query(Accounts).filter(Accounts.name.in_(allowed_accounts)).all():
+                                    all_allowed_accounts.append(dict(id_cam=new_campaign.id,
+                                                                     id_acc=acc.id, allowed=True))
+                                for dom in session.query(Domains).filter(Domains.name.in_(ignored_domains)).all():
+                                    all_ignored_domains.append(dict(id_cam=new_campaign.id,
+                                                                    id_dom=dom.id, allowed=False))
+                                for inf in session.query(Informer).filter(Informer.guid.in_(ignored_informers)).all():
+                                    all_ignored_informer.append(dict(id_cam=new_campaign.id,
+                                                                     id_inf=inf.id, allowed=False))
+                                for acc in session.query(Accounts).filter(Accounts.name.in_(ignored_accounts)).all():
+                                    all_ignored_accounts.append(dict(id_cam=new_campaign.id,
+                                                                     id_acc=acc.id, allowed=False))
+                            elif new_campaign.showCoverage == 'allowed':
+                                # Только разрешённые
+                                for dom in session.query(Domains).filter(Domains.name.in_(allowed_domains)).all():
+                                    all_allowed_domains.append(dict(id_cam=new_campaign.id,
+                                                                    id_dom=dom.id, allowed=True))
+                                for inf in session.query(Informer).filter(Informer.guid.in_(allowed_informers)).all():
+                                    all_allowed_informer.append(dict(id_cam=new_campaign.id,
+                                                                     id_inf=inf.id, allowed=True))
+                                for acc in session.query(Accounts).filter(Accounts.name.in_(allowed_accounts)).all():
+                                    all_allowed_accounts.append(dict(id_cam=new_campaign.id,
+                                                                     id_acc=acc.id, allowed=True))
+                            else:
+                                # Все, кроме запрещённых
+                                all_allowed_accounts.append(dict(id_cam=new_campaign.id, id_acc=1, allowed=True))
 
-                            for dom in session.query(Domains).filter(Domains.name.in_(ignored_domains)).all():
-                                all_ignored_domains.append(dict(id_cam=new_campaign.id,
-                                                                id_dom=dom.id, allowed=False))
-                            for inf in session.query(Informer).filter(Informer.guid.in_(ignored_informers)).all():
-                                all_ignored_informer.append(dict(id_cam=new_campaign.id,
-                                                                 id_inf=inf.id, allowed=False))
-                            for acc in session.query(Accounts).filter(Accounts.name.in_(ignored_accounts)).all():
-                                all_ignored_accounts.append(dict(id_cam=new_campaign.id,
-                                                                 id_acc=acc.id, allowed=False))
+                                for dom in session.query(Domains).filter(Domains.name.in_(ignored_domains)).all():
+                                    all_ignored_domains.append(dict(id_cam=new_campaign.id,
+                                                                    id_dom=dom.id, allowed=False))
+                                for inf in session.query(Informer).filter(Informer.guid.in_(ignored_informers)).all():
+                                    all_ignored_informer.append(dict(id_cam=new_campaign.id,
+                                                                     id_inf=inf.id, allowed=False))
+                                for acc in session.query(Accounts).filter(Accounts.name.in_(ignored_accounts)).all():
+                                    all_ignored_accounts.append(dict(id_cam=new_campaign.id,
+                                                                     id_acc=acc.id, allowed=False))
 
-                        session.bulk_insert_mappings(Campaign2Domains, all_allowed_domains)
-                        session.bulk_insert_mappings(Campaign2Informer, all_allowed_informer)
-                        session.bulk_insert_mappings(Campaign2Accounts, all_allowed_accounts)
-                        session.bulk_insert_mappings(Campaign2Domains, all_ignored_domains)
-                        session.bulk_insert_mappings(Campaign2Informer, all_ignored_informer)
-                        session.bulk_insert_mappings(Campaign2Accounts, all_ignored_accounts)
-                        mark_changed(session)
+                            session.bulk_insert_mappings(Campaign2Domains, all_allowed_domains)
+                            session.bulk_insert_mappings(Campaign2Informer, all_allowed_informer)
+                            session.bulk_insert_mappings(Campaign2Accounts, all_allowed_accounts)
+                            session.bulk_insert_mappings(Campaign2Domains, all_ignored_domains)
+                            session.bulk_insert_mappings(Campaign2Informer, all_ignored_informer)
+                            session.bulk_insert_mappings(Campaign2Accounts, all_ignored_accounts)
+                            mark_changed(session)
 
-                        # ------------------------cron-----------------------
-                        startShowTimeHours = int(conditions.get('startShowTime', {'hours': 0}).get('hours', 0))
-                        startShowTimeMinutes = int(conditions.get('startShowTime', {'minutes': 0}).get('minutes', 0))
-                        endShowTimeHours = int(conditions.get('endShowTime', {'hours': 0}).get('hours', 0))
-                        endShowTimeMinutes = int(conditions.get('endShowTime', {'minutes': 0}).get('minutes', 0))
-                        if startShowTimeHours == 0 and startShowTimeMinutes == 0 and endShowTimeHours == 0 and endShowTimeMinutes == 0:
-                            endShowTimeHours = 24
+                            # ------------------------cron-----------------------
+                            startShowTimeHours = int(conditions.get('startShowTime', {'hours': 0}).get('hours', 0))
+                            startShowTimeMinutes = int(
+                                conditions.get('startShowTime', {'minutes': 0}).get('minutes', 0))
+                            endShowTimeHours = int(conditions.get('endShowTime', {'hours': 0}).get('hours', 0))
+                            endShowTimeMinutes = int(conditions.get('endShowTime', {'minutes': 0}).get('minutes', 0))
+                            if startShowTimeHours == 0 and startShowTimeMinutes == 0 and endShowTimeHours == 0 and endShowTimeMinutes == 0:
+                                endShowTimeHours = 24
 
-                        daysOfWeek = conditions.get('daysOfWeek', [])
-                        if len(daysOfWeek) == 0:
-                            daysOfWeek = range(1, 8)
+                            daysOfWeek = conditions.get('daysOfWeek', [])
+                            if len(daysOfWeek) == 0:
+                                daysOfWeek = range(1, 8)
 
-                        cron = list()
-                        for x in daysOfWeek:
-                            cron.append(Cron(day=x, hour=startShowTimeHours, min=startShowTimeMinutes, start_stop=True))
-                            cron.append(Cron(day=x, hour=endShowTimeHours, min=endShowTimeMinutes, start_stop=False))
+                            cron = list()
+                            for x in daysOfWeek:
+                                cron.append(
+                                    Cron(day=x, hour=startShowTimeHours, min=startShowTimeMinutes, start_stop=True))
+                                cron.append(
+                                    Cron(day=x, hour=endShowTimeHours, min=endShowTimeMinutes, start_stop=False))
 
-                        new_campaign.cron = cron
-                        session.flush()
+                            new_campaign.cron = cron
+                            session.flush()
+                    except Exception as e:
+                        logger.info('Camp error %s' % campaign.get('guid'))
+                    else:
+                        if new_id:
+                            result.append(new_id)
+
             logger.info('Starting Load Offer')
 
             for camp_id in result:
