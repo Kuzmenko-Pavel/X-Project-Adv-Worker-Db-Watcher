@@ -879,10 +879,13 @@ class Loader(object):
                 session.flush()
                 conn = session.connection()
                 for offer_rating in offer_ratings:
-                    id_ofr = offer_rating.get('guid_int')
-                    rating = offer_rating.get('full_rating', 0.0)
-                    if id_ofr:
-                        conn.execute('SELECT offer_rating_update(%d::bigint,%f);' % (id_ofr, rating))
+                    try:
+                        id_ofr = int(offer_rating.get('guid_int'))
+                        rating = float(offer_rating.get('full_rating', 0.0))
+                        if id_ofr:
+                            conn.execute('SELECT offer_rating_update(%d::bigint,%f);' % (id_ofr, rating))
+                    except Exception as e:
+                        logger.error(exception_message(exc=str(e)))
 
                 mark_changed(session)
                 session.flush()
@@ -924,11 +927,14 @@ class Loader(object):
                 session.flush()
                 conn = session.connection()
                 for offer_informer_rating in offer_informer_ratings:
-                    id_ofr = offer_informer_rating.get('guid_int')
-                    id_inf = offer_informer_rating.get('adv_int')
-                    rating = offer_informer_rating.get('full_rating', 0.0)
-                    if id_ofr and id_inf:
-                        conn.execute('SELECT offer_informer_rating_update(%d,%d,%f);' % (id_ofr, id_inf, rating))
+                    try:
+                        id_ofr = int(offer_informer_rating.get('guid_int'))
+                        id_inf = int(offer_informer_rating.get('adv_int'))
+                        rating = float(offer_informer_rating.get('full_rating', 0.0))
+                        if id_ofr and id_inf:
+                            conn.execute('SELECT offer_informer_rating_update(%d,%d,%f);' % (id_ofr, id_inf, rating))
+                    except Exception as e:
+                        logger.error(exception_message(exc=str(e)))
 
                 mark_changed(session)
                 session.flush()
