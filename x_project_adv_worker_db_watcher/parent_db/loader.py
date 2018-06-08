@@ -841,9 +841,17 @@ class Loader(object):
                 if len(images) > 5:
                     data['image'] = images.split(',')[:5]
                     result.append(data)
-            with transaction.manager:
-                session.bulk_insert_mappings(Offer, result)
-                mark_changed(session)
+
+                if len(result) >= 50000:
+                    with transaction.manager:
+                        session.bulk_insert_mappings(Offer, result)
+                        mark_changed(session)
+                    result = []
+
+            if result:
+                with transaction.manager:
+                    session.bulk_insert_mappings(Offer, result)
+                    mark_changed(session)
             session.close()
             del result
         except Exception as e:
