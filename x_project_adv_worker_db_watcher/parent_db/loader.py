@@ -889,6 +889,9 @@ class Loader(object):
 
                 mark_changed(session)
                 session.flush()
+                conn.execute('SELECT create_recommended(id) FROM campaign;')
+                mark_changed(session)
+                session.flush()
             session.close()
         except Exception as e:
             logger.error(exception_message(exc=str(e)))

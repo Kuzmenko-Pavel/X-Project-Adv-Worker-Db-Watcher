@@ -80,6 +80,7 @@ create_function(metadata, {
                                       row_number() OVER (PARTITION BY offer_sub.retid) AS range_number
                                     FROM public.offer AS offer_sub
                                     WHERE offer_sub.retid = ANY (recommended_id) and offer_sub.id_cam = offer_id_cam
+                                    ORDER BY offer_sub.rating desc
                                 ) as offer_sub_u where offer_sub_u.range_number = 1
                               ) AS TT
                        ) AS T;    
@@ -100,7 +101,7 @@ create_function(metadata, {
                                       offer_sub.url
                                     FROM public.offer AS offer_sub
                                     WHERE offer_sub.id_cam = offer_id_cam
-                                    ORDER BY RANDOM() LIMIT 10
+                                    ORDER BY offer_sub.rating desc, RANDOM() LIMIT 10
                                   ) AS TT
                            ) AS T;
             END IF;
