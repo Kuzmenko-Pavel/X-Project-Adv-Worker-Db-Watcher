@@ -80,7 +80,7 @@ create_function(metadata, {
                                       row_number() OVER (PARTITION BY offer_sub.retid) AS range_number
                                     FROM public.offer AS offer_sub
                                     WHERE offer_sub.retid = ANY (recommended_id) and offer_sub.id_cam = offer_id_cam
-                                    ORDER BY offer_sub.rating desc
+                                    ORDER BY offer_sub.rating desc LIMIT 10
                                 ) as offer_sub_u where offer_sub_u.range_number = 1
                               ) AS TT
                        ) AS T;    
@@ -108,7 +108,7 @@ create_function(metadata, {
         RETURN recommended;
         END
     ''',
-    'optimizer': 'STABLE',
+    'optimizer': 'VOLATILE',
     'language': 'plpgsql'
 })
 

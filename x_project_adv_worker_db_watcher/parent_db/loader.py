@@ -897,7 +897,8 @@ class Loader(object):
 
                 mark_changed(session)
                 session.flush()
-                conn.execute('SELECT create_recommended(id) FROM campaign WHERE retargeting = TRUE;')
+                conn.execute('SELECT create_recommended(id) FROM campaign WHERE retargeting = FALSE '
+                             'AND (brending = FALSE OR styling = FALSE);')
                 mark_changed(session)
                 session.flush()
             session.close()
