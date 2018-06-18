@@ -14,6 +14,10 @@ class Domains(Base):
     flag = Column(Boolean, default=False)
     categories = relationship('Categories', secondary='categories2domain', back_populates="domains",
                               passive_deletes=True)
+    campaigns_allowed = relationship('Campaign', secondary='campaign2domains_allowed', back_populates="domains_allowed",
+                                     passive_deletes=True)
+    campaigns_disallowed = relationship('Campaign', secondary='campaign2domains_disallowed',
+                                        back_populates="domains_disallowed", passive_deletes=True)
 
     __table_args__ = (
         {'prefixes': ['UNLOGGED']}

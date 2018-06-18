@@ -1,5 +1,6 @@
 from sqlalchemy import (Column, Integer, String, Boolean, SmallInteger, BigInteger, ForeignKey, select, Index, cast)
 from sqlalchemy.dialects.postgresql import insert, JSON
+from sqlalchemy.orm import relationship
 from zope.sqlalchemy import mark_changed
 
 from .__libs__.sql_view import create_view
@@ -28,6 +29,13 @@ class Informer(Base):
     retargeting_branch = Column(Boolean, default=True)
     social_branch = Column(Boolean, default=True)
     rating_division = Column(Integer, default=1000)
+
+    campaigns_allowed = relationship('Campaign', secondary='campaign2informer_allowed',
+                                     back_populates="informers_allowed",
+                                     passive_deletes=True)
+    campaigns_disallowed = relationship('Campaign', secondary='campaign2informer_disallowed',
+                                        back_populates="informers_disallowed",
+                                        passive_deletes=True)
 
     __table_args__ = (
         {'prefixes': ['UNLOGGED']}

@@ -2,8 +2,10 @@ import transaction
 from zope.sqlalchemy import mark_changed
 from x_project_adv_worker_db_watcher.logger import *
 from x_project_adv_worker_db_watcher.models import (Accounts, Device, Domains, Categories, Informer, Campaign,
-                                                    GeoLiteCity, Cron, Campaign2Accounts, Campaign2Informer,
-                                                    Campaign2Domains, Offer)
+                                                    GeoLiteCity, Cron, Offer, Campaign2AccountsAllowed,
+                                                    Campaign2AccountsDisallowed, Campaign2DomainsAllowed,
+                                                    Campaign2DomainsDisallowed, Campaign2InformerAllowed,
+                                                    Campaign2InformerDisallowed)
 from .adv_settings import AdvSetting
 from .block_settings import BlockSetting
 
@@ -684,54 +686,53 @@ class Loader(object):
                                     Categories.guid.in_(categories)).all()
 
                                 for dom in session.query(Domains).filter(Domains.name.in_(allowed_domains)).all():
-                                    all_allowed_domains.append(dict(id_cam=new_campaign.id,
-                                                                    id_dom=dom.id, allowed=True))
+                                    all_allowed_domains.append(dict(id_cam=new_campaign.id, id_dom=dom.id))
+
                                 for inf in session.query(Informer).filter(Informer.guid.in_(allowed_informers)).all():
-                                    all_allowed_informer.append(dict(id_cam=new_campaign.id,
-                                                                     id_inf=inf.id, allowed=True))
+                                    all_allowed_informer.append(dict(id_cam=new_campaign.id, id_inf=inf.id))
+
                                 for acc in session.query(Accounts).filter(Accounts.name.in_(allowed_accounts)).all():
-                                    all_allowed_accounts.append(dict(id_cam=new_campaign.id,
-                                                                     id_acc=acc.id, allowed=True))
+                                    all_allowed_accounts.append(dict(id_cam=new_campaign.id, id_acc=acc.id))
+
                                 for dom in session.query(Domains).filter(Domains.name.in_(ignored_domains)).all():
-                                    all_ignored_domains.append(dict(id_cam=new_campaign.id,
-                                                                    id_dom=dom.id, allowed=False))
+                                    all_ignored_domains.append(dict(id_cam=new_campaign.id, id_dom=dom.id))
+
                                 for inf in session.query(Informer).filter(Informer.guid.in_(ignored_informers)).all():
-                                    all_ignored_informer.append(dict(id_cam=new_campaign.id,
-                                                                     id_inf=inf.id, allowed=False))
+                                    all_ignored_informer.append(dict(id_cam=new_campaign.id, id_inf=inf.id))
+
                                 for acc in session.query(Accounts).filter(Accounts.name.in_(ignored_accounts)).all():
-                                    all_ignored_accounts.append(dict(id_cam=new_campaign.id,
-                                                                     id_acc=acc.id, allowed=False))
+                                    all_ignored_accounts.append(dict(id_cam=new_campaign.id, id_acc=acc.id))
+
                             elif new_campaign.showCoverage == 'allowed':
                                 # Только разрешённые
                                 for dom in session.query(Domains).filter(Domains.name.in_(allowed_domains)).all():
-                                    all_allowed_domains.append(dict(id_cam=new_campaign.id,
-                                                                    id_dom=dom.id, allowed=True))
+                                    all_allowed_domains.append(dict(id_cam=new_campaign.id, id_dom=dom.id))
+
                                 for inf in session.query(Informer).filter(Informer.guid.in_(allowed_informers)).all():
-                                    all_allowed_informer.append(dict(id_cam=new_campaign.id,
-                                                                     id_inf=inf.id, allowed=True))
+                                    all_allowed_informer.append(dict(id_cam=new_campaign.id, id_inf=inf.id))
+
                                 for acc in session.query(Accounts).filter(Accounts.name.in_(allowed_accounts)).all():
-                                    all_allowed_accounts.append(dict(id_cam=new_campaign.id,
-                                                                     id_acc=acc.id, allowed=True))
+                                    all_allowed_accounts.append(dict(id_cam=new_campaign.id, id_acc=acc.id))
+
                             else:
                                 # Все, кроме запрещённых
-                                all_allowed_accounts.append(dict(id_cam=new_campaign.id, id_acc=1, allowed=True))
+                                all_allowed_accounts.append(dict(id_cam=new_campaign.id, id_acc=1))
 
                                 for dom in session.query(Domains).filter(Domains.name.in_(ignored_domains)).all():
-                                    all_ignored_domains.append(dict(id_cam=new_campaign.id,
-                                                                    id_dom=dom.id, allowed=False))
-                                for inf in session.query(Informer).filter(Informer.guid.in_(ignored_informers)).all():
-                                    all_ignored_informer.append(dict(id_cam=new_campaign.id,
-                                                                     id_inf=inf.id, allowed=False))
-                                for acc in session.query(Accounts).filter(Accounts.name.in_(ignored_accounts)).all():
-                                    all_ignored_accounts.append(dict(id_cam=new_campaign.id,
-                                                                     id_acc=acc.id, allowed=False))
+                                    all_ignored_domains.append(dict(id_cam=new_campaign.id, id_dom=dom.id))
 
-                            session.bulk_insert_mappings(Campaign2Domains, all_allowed_domains)
-                            session.bulk_insert_mappings(Campaign2Informer, all_allowed_informer)
-                            session.bulk_insert_mappings(Campaign2Accounts, all_allowed_accounts)
-                            session.bulk_insert_mappings(Campaign2Domains, all_ignored_domains)
-                            session.bulk_insert_mappings(Campaign2Informer, all_ignored_informer)
-                            session.bulk_insert_mappings(Campaign2Accounts, all_ignored_accounts)
+                                for inf in session.query(Informer).filter(Informer.guid.in_(ignored_informers)).all():
+                                    all_ignored_informer.append(dict(id_cam=new_campaign.id, id_inf=inf.id))
+
+                                for acc in session.query(Accounts).filter(Accounts.name.in_(ignored_accounts)).all():
+                                    all_ignored_accounts.append(dict(id_cam=new_campaign.id, id_acc=acc.id))
+
+                            session.bulk_insert_mappings(Campaign2DomainsAllowed, all_allowed_domains)
+                            session.bulk_insert_mappings(Campaign2InformerAllowed, all_allowed_informer)
+                            session.bulk_insert_mappings(Campaign2AccountsAllowed, all_allowed_accounts)
+                            session.bulk_insert_mappings(Campaign2DomainsDisallowed, all_ignored_domains)
+                            session.bulk_insert_mappings(Campaign2InformerDisallowed, all_ignored_informer)
+                            session.bulk_insert_mappings(Campaign2AccountsDisallowed, all_ignored_accounts)
                             mark_changed(session)
 
                             # ------------------------cron-----------------------

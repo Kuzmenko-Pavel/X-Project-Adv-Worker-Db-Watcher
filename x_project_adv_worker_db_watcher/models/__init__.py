@@ -14,11 +14,8 @@ from zope.sqlalchemy import mark_changed
 from x_project_adv_worker_db_watcher.logger import *
 from .accounts import *
 from .campaign import *
-from .campaign2accounts import Campaign2Accounts, MVCampaign2Accounts
 from .campaign2categories import Campaign2Categories, MVCampaign2Categories
 from .campaign2device import Campaign2Device, MVCampaign2Device
-from .campaign2domains import Campaign2Domains, MVCampaign2Domains
-from .campaign2informer import Campaign2Informer, MVCampaign2Informer
 from .categories import Categories, MVCategories
 from .categories2domain import Categories2Domain, MVCategories2Domain
 from .cron import Cron, MVCron

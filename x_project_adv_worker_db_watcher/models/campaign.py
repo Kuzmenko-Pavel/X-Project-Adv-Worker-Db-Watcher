@@ -38,7 +38,21 @@ class Campaign(Base):
     geos = relationship('GeoLiteCity', secondary='geo', back_populates="campaigns", passive_deletes=True)
     devices = relationship('Device', secondary='campaign2device', back_populates="campaigns", passive_deletes=True)
     cron = relationship('Cron', back_populates="campaign", passive_deletes=True)
-    accounts = relationship('Accounts', secondary='campaign2accounts', back_populates="campaigns", passive_deletes=True)
+    accounts_allowed = relationship('Accounts', secondary='campaign2accounts_allowed',
+                                    back_populates="campaigns_allowed", passive_deletes=True)
+    accounts_disallowed = relationship('Accounts', secondary='campaign2accounts_disallowed',
+                                       back_populates="campaigns_disallowed",
+                                       passive_deletes=True)
+    informers_allowed = relationship('Informer', secondary='campaign2informer_allowed',
+                                     back_populates="campaigns_allowed",
+                                     passive_deletes=True)
+    informers_disallowed = relationship('Informer', secondary='campaign2informer_disallowed',
+                                        back_populates="campaigns_disallowed",
+                                        passive_deletes=True)
+    domains_allowed = relationship('Domains', secondary='campaign2domains_allowed', back_populates="campaigns_allowed",
+                                   passive_deletes=True)
+    domains_disallowed = relationship('Domains', secondary='campaign2domains_disallowed',
+                                      back_populates="campaigns_disallowed", passive_deletes=True)
     categories = relationship('Categories', secondary='campaign2categories', back_populates="campaigns",
                               passive_deletes=True)
     offers = relationship('Offer', back_populates="campaigns", passive_deletes=True)
