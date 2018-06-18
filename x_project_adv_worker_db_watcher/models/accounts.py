@@ -1,5 +1,5 @@
 __all__ = ['Accounts', 'MVAccounts']
-from sqlalchemy import (Column, Integer, Boolean, String, select, Index)
+from sqlalchemy import (Column, BigInteger, Boolean, String, select, Index)
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import relationship
 from zope.sqlalchemy import mark_changed
@@ -10,7 +10,7 @@ from .meta import Base
 
 class Accounts(Base):
     __tablename__ = 'accounts'
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
     name = Column(String(length=2048), unique=True)
     blocked = Column(Boolean, default=False)
     campaigns = relationship('Campaign', secondary='campaign2accounts', back_populates="accounts", passive_deletes=True)

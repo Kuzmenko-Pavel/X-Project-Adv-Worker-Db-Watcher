@@ -19,10 +19,10 @@ class MVGeo(Base):
         Base.metadata,
         'mv_geo',
         select([
-            cast(Geo.id_cam, BigInteger).label('id_cam_pk'),
-            cast(Geo.id_geo, Integer).label('id_geo_pk')
+            Geo.id_cam,
+            Geo.id_geo
         ]).select_from(Geo),
         is_mat=True)
 
 
-Index('ix_mv_domains_id_cam_pk_id_geo_pk', MVGeo.id_cam_pk, MVGeo.id_geo_pk, unique=True)
+Index('ix_mv_domains_id_cam_pk_id_geo_pk', MVGeo.id_cam, MVGeo.id_geo, unique=True)
