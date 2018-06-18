@@ -15,7 +15,7 @@ class Offer(Base):
     guid = Column(String(length=64))
     retid = Column(String, default='')
     id_cam = Column(BigInteger, ForeignKey('campaign.id', ondelete='CASCADE'), nullable=False)
-    image = Column(ARRAY(String), default=[])
+    images = Column(ARRAY(String), default=[])
     description = Column(String(length=70))
     url = Column(String)
     title = Column(String(length=35))
@@ -36,7 +36,7 @@ place_sub = select([
     Offer.id,
     Offer.guid,
     cast(Offer.id_cam, BigInteger).label('id_cam'),
-    Offer.image,
+    Offer.images,
     Offer.description,
     Offer.url,
     Offer.title,
@@ -56,7 +56,7 @@ social_sub = select([
     Offer.id,
     Offer.guid,
     cast(Offer.id_cam, BigInteger).label('id_cam'),
-    Offer.image,
+    Offer.images,
     Offer.description,
     Offer.url,
     Offer.title,
@@ -77,7 +77,7 @@ account_retargeting_sub = select([
     Offer.id,
     Offer.guid,
     cast(Offer.id_cam, BigInteger).label('id_cam'),
-    Offer.image,
+    Offer.images,
     Offer.description,
     Offer.url,
     Offer.title,
@@ -99,7 +99,7 @@ class MVOfferPlace(Base):
             place_sub.c.id,
             place_sub.c.guid,
             place_sub.c.id_cam,
-            place_sub.c.image,
+            place_sub.c.images,
             place_sub.c.description,
             place_sub.c.url,
             place_sub.c.title,
@@ -121,7 +121,7 @@ class MVOfferSocial(Base):
             social_sub.c.id,
             social_sub.c.guid,
             social_sub.c.id_cam,
-            social_sub.c.image,
+            social_sub.c.images,
             social_sub.c.description,
             social_sub.c.url,
             social_sub.c.title,
@@ -143,7 +143,7 @@ class MVOfferAccountRetargeting(Base):
             account_retargeting_sub.c.id,
             account_retargeting_sub.c.guid,
             account_retargeting_sub.c.id_cam,
-            account_retargeting_sub.c.image,
+            account_retargeting_sub.c.images,
             account_retargeting_sub.c.description,
             account_retargeting_sub.c.url,
             account_retargeting_sub.c.title,
@@ -167,7 +167,7 @@ class MVOfferDynamicRetargeting(Base):
             Offer.retid,
             cast(Offer.id_cam, BigInteger).label('id_cam'),
             cast(Campaign.account, String).label('accounts_cam'),
-            Offer.image,
+            Offer.images,
             Offer.description,
             Offer.url,
             Offer.title,
