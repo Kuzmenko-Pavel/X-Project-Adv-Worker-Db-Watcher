@@ -1,4 +1,4 @@
-from sqlalchemy import (Column, Integer, String, select, Index)
+from sqlalchemy import (Column, BigInteger, String, select, Index)
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import relationship
 from zope.sqlalchemy import mark_changed
@@ -9,7 +9,7 @@ from .meta import Base
 
 class Categories(Base):
     __tablename__ = 'categories'
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
     guid = Column(String(length=64), unique=True, index=True)
     title = Column(String(length=1024))
     domains = relationship('Domains', secondary='categories2domain', back_populates="categories", passive_deletes=True)

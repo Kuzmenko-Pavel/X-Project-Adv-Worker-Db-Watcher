@@ -19,11 +19,11 @@ class MVCampaign2Device(Base):
         Base.metadata,
         'mv_campaign2device',
         select([
-            cast(Campaign2Device.id_cam, BigInteger).label('id_cam_pk'),
-            cast(Campaign2Device.id_dev, Integer).label('id_dev_pk')
+            Campaign2Device.id_cam,
+            Campaign2Device.id_dev
         ]).select_from(Campaign2Device),
         is_mat=True)
 
 
-Index('ix_mv_campaign2device_id_cam_pk_id_dev_pk',
-      MVCampaign2Device.id_cam_pk, MVCampaign2Device.id_dev_pk, unique=True)
+Index('ix_mv_campaign2device__id_cam__id_dev',
+      MVCampaign2Device.id_cam, MVCampaign2Device.id_dev, unique=True)
