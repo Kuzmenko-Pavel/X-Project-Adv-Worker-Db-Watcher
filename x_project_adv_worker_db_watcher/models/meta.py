@@ -30,16 +30,18 @@ create_function(metadata, {
     'drop_argument': 'schema_arg TEXT',
     'returns': 'INT',
     'body': '''
-                DECLARE
-                    r RECORD;
-                BEGIN
-                    FOR r IN SELECT matviewname FROM pg_matviews WHERE schemaname = schema_arg
-                    LOOP
-                        EXECUTE 'REFRESH MATERIALIZED VIEW CONCURRENTLY ' || schema_arg || '.' || r.matviewname;
-                    END LOOP;
-
-                    RETURN 1;
-                END
+            DECLARE
+              r RECORD;
+            BEGIN
+              FOR r IN SELECT matviewname
+                       FROM pg_matviews
+                       WHERE schemaname = schema_arg
+              LOOP
+                EXECUTE 'REFRESH MATERIALIZED VIEW CONCURRENTLY ' || schema_arg || '.' || r.matviewname;
+              END LOOP;
+            
+              RETURN 1;
+            END
             ''',
     'language': 'plpgsql'
 })
@@ -47,63 +49,25 @@ create_function(metadata, {
 create_function(metadata, {
     'name': 'recommended_to_json',
     'argument': 'recommended_id character varying[],  offer_id_cam bigint',
-    'returns': 'json',
+    'returns': 'bigint[]',
     'body': '''
        DECLARE
-        recommended json;
+        recommended bigint[];
        BEGIN
             IF array_length(recommended_id, 1) > 0  THEN
-                recommended = json_agg(T.offer_json)
-                    FROM (
-                         SELECT
-                           TT.id,
-                           ROW_TO_JSON(TT) AS offer_json
-                         FROM (
-                         SELECT
-                                offer_sub_u.id,
-                                offer_sub_u.guid,
-                                offer_sub_u.title,
-                                offer_sub_u.description,
-                                offer_sub_u.image,
-                                offer_sub_u.price,
-                                offer_sub_u.url
-                                FROM 
-                                (
-                                    SELECT
-                                      offer_sub.id,
-                                      offer_sub.guid,
-                                      offer_sub.title,
-                                      offer_sub.description,
-                                      offer_sub.image,
-                                      offer_sub.price,
-                                      offer_sub.url,
-                                      row_number() OVER (PARTITION BY offer_sub.retid) AS range_number
-                                    FROM public.offer AS offer_sub
-                                    WHERE offer_sub.retid = ANY (recommended_id) and offer_sub.id_cam = offer_id_cam
-                                    ORDER BY offer_sub.rating desc LIMIT 10
-                                ) as offer_sub_u where offer_sub_u.range_number = 1
-                              ) AS TT
-                       ) AS T;    
+                recommended = array_agg(offer_sub.id)
+                                    from ( select offer.id
+                                            FROM public.offer
+                                            WHERE offer.retid = ANY (recommended_id) and offer.id_cam = offer_id_cam
+                                            ORDER BY offer.rating DESC LIMIT 10
+                                    ) as offer_sub;     
             ELSE
-                recommended = json_agg(T.offer_json)
-                        FROM (
-                             SELECT
-                               TT.id,
-                               ROW_TO_JSON(TT) AS offer_json
-                             FROM (
-                                    SELECT
-                                      offer_sub.id,
-                                      offer_sub.guid,
-                                      offer_sub.title,
-                                      offer_sub.description,
-                                      offer_sub.image,
-                                      offer_sub.price,
-                                      offer_sub.url
-                                    FROM public.offer AS offer_sub
-                                    WHERE offer_sub.id_cam = offer_id_cam
-                                    ORDER BY offer_sub.rating desc, RANDOM() LIMIT 10
-                                  ) AS TT
-                           ) AS T;
+                recommended = array_agg(offer_sub.id)
+                                    from ( select offer.id
+                                            FROM public.offer
+                                            WHERE offer.id_cam = offer_id_cam
+                                            ORDER BY offer.rating desc, RANDOM() LIMIT 10
+                                        ) as offer_sub;
             END IF;
         RETURN recommended;
         END

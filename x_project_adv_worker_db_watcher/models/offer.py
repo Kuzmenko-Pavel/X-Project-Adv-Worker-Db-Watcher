@@ -1,6 +1,6 @@
 __all__ = ['Offer', 'MVOfferPlace', 'MVOfferSocial', 'MVOfferAccountRetargeting', 'MVOfferDynamicRetargeting']
 from sqlalchemy import (Column, BigInteger, String, Float, ForeignKey, select, Index, cast)
-from sqlalchemy.dialects.postgresql import ARRAY, JSON
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func, join, true, false, and_
 
@@ -22,7 +22,7 @@ class Offer(Base):
     price = Column(String(length=35))
     rating = Column(Float)
     recommended_ids = Column(ARRAY(String), default=[])
-    recommended = Column(JSON, default=lambda: [])
+    recommended = Column(ARRAY(BigInteger), default=[])
     campaigns = relationship('Campaign', back_populates="offers", passive_deletes=True)
     __table_args__ = (
         Index('ix_offer_rating', rating.desc().nullslast()),
