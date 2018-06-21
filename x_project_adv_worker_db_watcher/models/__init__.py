@@ -14,16 +14,16 @@ from zope.sqlalchemy import mark_changed
 from x_project_adv_worker_db_watcher.logger import *
 from .accounts import *
 from .campaign import *
-from .campaign2categories import Campaign2Categories, MVCampaign2Categories
-from .campaign2device import Campaign2Device, MVCampaign2Device
 from .categories import Categories, MVCategories
-from .categories2domain import Categories2Domain, MVCategories2Domain
 from .cron import Cron, MVCron
 from .device import Device, MVDevice
 from .domains import Domains, MVDomains
 from .geo_lite_city import GeoLiteCity, MVGeoLiteCity
 from .geo import Geo, MVGeo
 from .informer import Informer, MVInformer
+from .campaign2categories import Campaign2Categories, MVCampaign2Categories
+from .campaign2device import Campaign2Device, MVCampaign2Device
+from .categories2domain import Categories2Domain, MVCategories2Domain
 from .campaign2accounts_allowed import *
 from .campaign2domains_allowed import *
 from .campaign2informer_allowed import *
@@ -50,9 +50,9 @@ def check_table(engine):
 def clear_table(engine):
     session = DBSession()
     with transaction.manager:
-        metadata.drop_all(engine, checkfirst=True)
-        logger.info('Check and Create DB')
-        metadata.create_all(engine, checkfirst=True)
+        # metadata.drop_all(engine, checkfirst=True)
+        # logger.info('Check and Create DB')
+        # metadata.create_all(engine, checkfirst=True)
         logger.info('Truncate DB')
         session.execute('TRUNCATE {} RESTART IDENTITY CASCADE;'.format(
             ', '.join([table.name for table in reversed(metadata.sorted_tables)])))

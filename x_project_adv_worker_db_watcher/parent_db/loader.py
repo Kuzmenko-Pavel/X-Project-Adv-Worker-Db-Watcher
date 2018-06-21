@@ -544,10 +544,13 @@ class Loader(object):
                 self.refresh_mat_view('mv_campaign')
                 self.refresh_mat_view('mv_geo')
                 self.refresh_mat_view('mv_campaign2device')
-                self.refresh_mat_view('mv_campaign2accounts')
+                self.refresh_mat_view('mv_campaign2accounts_allowed')
+                self.refresh_mat_view('mv_campaign2accounts_disallowed')
                 self.refresh_mat_view('mv_campaign2categories')
-                self.refresh_mat_view('mv_campaign2domains')
-                self.refresh_mat_view('mv_campaign2informer')
+                self.refresh_mat_view('mv_campaign2domains_allowed')
+                self.refresh_mat_view('mv_campaign2domains_disallowed')
+                self.refresh_mat_view('mv_campaign2informer_allowed')
+                self.refresh_mat_view('mv_campaign2informer_disallowed')
                 self.refresh_mat_view('mv_cron')
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
@@ -618,7 +621,7 @@ class Loader(object):
                                                                 {'img': '', 'head_title': '', 'button_title': ''})
                             data['style_class_recommendet'] = str(data['id'])
                             data['capacity'] = 2
-                            data['offer_by_campaign_unique'] = 10
+                            data['offer_by_campaign_unique'] = 1
                             data['styling'] = True
                         elif data['style_type'] in ['Block', 'RetBlock', 'RecBlock']:
                             data['style_class'] = data['style_type']
@@ -783,10 +786,13 @@ class Loader(object):
                 self.refresh_mat_view('mv_campaign')
                 self.refresh_mat_view('mv_geo')
                 self.refresh_mat_view('mv_campaign2device')
-                self.refresh_mat_view('mv_campaign2accounts')
+                self.refresh_mat_view('mv_campaign2accounts_allowed')
+                self.refresh_mat_view('mv_campaign2accounts_disallowed')
                 self.refresh_mat_view('mv_campaign2categories')
-                self.refresh_mat_view('mv_campaign2domains')
-                self.refresh_mat_view('mv_campaign2informer')
+                self.refresh_mat_view('mv_campaign2domains_allowed')
+                self.refresh_mat_view('mv_campaign2domains_disallowed')
+                self.refresh_mat_view('mv_campaign2informer_allowed')
+                self.refresh_mat_view('mv_campaign2informer_disallowed')
                 self.refresh_mat_view('mv_cron')
                 if offer_place:
                     self.refresh_mat_view('mv_offer_place')
@@ -840,7 +846,7 @@ class Loader(object):
                 data['recommended_ids'] = recommended[:10]
                 images = offer.get('image', '')
                 if len(images) > 5:
-                    data['image'] = images.split(',')[:5]
+                    data['images'] = images.split(',')[:5]
                     result.append(data)
 
                 if len(result) >= 50000:
