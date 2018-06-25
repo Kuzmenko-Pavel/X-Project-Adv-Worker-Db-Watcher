@@ -32,7 +32,7 @@ class Offer(Base):
 
 
 place_sub = select([
-    func.row_number().over(partition_by=Offer.id_cam).label('range_number'),
+    func.row_number().over(partition_by=Offer.id_cam).label('campaign_range_number'),
     Offer.id,
     Offer.guid,
     Offer.id_cam,
@@ -52,7 +52,7 @@ place_sub = select([
         ).order_by(Offer.rating.desc().nullslast()).alias('place_sub')
 
 social_sub = select([
-    func.row_number().over(partition_by=Offer.id_cam).label('range_number'),
+    func.row_number().over(partition_by=Offer.id_cam).label('campaign_range_number'),
     Offer.id,
     Offer.guid,
     Offer.id_cam,
@@ -73,7 +73,7 @@ social_sub = select([
 ).order_by(Offer.rating.desc().nullslast()).alias('social_sub')
 
 account_retargeting_sub = select([
-    func.row_number().over(partition_by=Offer.id_cam).label('range_number'),
+    func.row_number().over(partition_by=Offer.id_cam).label('campaign_range_number'),
     Offer.id,
     Offer.guid,
     Offer.id_cam,
@@ -104,9 +104,9 @@ class MVOfferPlace(Base):
             place_sub.c.url,
             place_sub.c.title,
             place_sub.c.price,
-            place_sub.c.recommended
-        ]).select_from(place_sub).where(place_sub.c.range_number < 31)
-        , is_mat=True)
+            place_sub.c.recommended,
+            place_sub.c.campaign_range_number
+        ]).select_from(place_sub), is_mat=True)
 
 
 Index('ix_mv_offer_place_id', MVOfferPlace.id, unique=True)
@@ -126,9 +126,9 @@ class MVOfferSocial(Base):
             social_sub.c.url,
             social_sub.c.title,
             social_sub.c.price,
-            social_sub.c.recommended
-        ]).select_from(social_sub).where(social_sub.c.range_number < 31),
-        is_mat=True)
+            social_sub.c.recommended,
+            social_sub.c.campaign_range_number
+        ]).select_from(social_sub), is_mat=True)
 
 
 Index('ix_mv_offer_social_id', MVOfferSocial.id, unique=True)
@@ -148,9 +148,9 @@ class MVOfferAccountRetargeting(Base):
             account_retargeting_sub.c.url,
             account_retargeting_sub.c.title,
             account_retargeting_sub.c.price,
-            account_retargeting_sub.c.recommended
-        ]).select_from(account_retargeting_sub).where(account_retargeting_sub.c.range_number < 31),
-        is_mat=True)
+            account_retargeting_sub.c.recommended,
+            account_retargeting_sub.c.campaign_range_number
+        ]).select_from(account_retargeting_sub), is_mat=True)
 
 
 Index('ix_mv_offer_account_retargeting_id', MVOfferAccountRetargeting.id, unique=True)
