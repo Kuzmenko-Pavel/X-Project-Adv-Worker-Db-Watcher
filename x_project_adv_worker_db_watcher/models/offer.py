@@ -110,7 +110,7 @@ class MVOfferPlace(Base):
 
 
 Index('ix_mv_offer_place_id', MVOfferPlace.id, unique=True)
-Index('ix_mv_offer_place_id_cam', MVOfferPlace.id_cam)
+Index('ix_mv_offer_place_id_cam_range_number', MVOfferPlace.id_cam, MVOfferPlace.campaign_range_number)
 
 
 class MVOfferSocial(Base):
@@ -132,7 +132,7 @@ class MVOfferSocial(Base):
 
 
 Index('ix_mv_offer_social_id', MVOfferSocial.id, unique=True)
-Index('ix_mv_offer_social_id_cam', MVOfferSocial.id_cam)
+Index('ix_mv_offer_social_id_cam_range_number', MVOfferSocial.id_cam, MVOfferSocial.campaign_range_number)
 
 
 class MVOfferAccountRetargeting(Base):
@@ -154,7 +154,8 @@ class MVOfferAccountRetargeting(Base):
 
 
 Index('ix_mv_offer_account_retargeting_id', MVOfferAccountRetargeting.id, unique=True)
-Index('ix_mv_offer_account_retargeting_id_cam', MVOfferAccountRetargeting.id_cam)
+Index('ix_mv_offer_account_retargeting_id_cam_range_number', MVOfferAccountRetargeting.id_cam,
+      MVOfferAccountRetargeting.campaign_range_number)
 
 
 class MVOfferDynamicRetargeting(Base):
