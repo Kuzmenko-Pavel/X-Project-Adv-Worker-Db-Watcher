@@ -601,7 +601,6 @@ class Loader(object):
                         data['cost'] = conditions.get('cost', 0)
                         data['gender'] = conditions.get('gender', 0)
                         data['retargeting_type'] = conditions.get('retargeting_type')
-                        data['brending'] = conditions.get('brending')
                         data['recomendet_type'] = conditions.get('recomendet_type')
                         data['recomendet_count'] = conditions.get('recomendet_count')
                         data['account'] = campaign.get('account')
@@ -629,6 +628,9 @@ class Loader(object):
                         else:
                             if data['retargeting']:
                                 data['style_class'] = 'RetBlock'
+                        data['brending'] = conditions.get('brending')
+                        if data['brending']:
+                            data['offer_by_campaign_unique'] = 1
 
                         if campaign.get('status') == 'working':
                             new_campaign = Campaign(**data)
