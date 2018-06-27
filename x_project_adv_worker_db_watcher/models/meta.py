@@ -48,7 +48,7 @@ create_function(metadata, {
 
 create_function(metadata, {
     'name': 'recommended_to_json',
-    'argument': 'recommended_id character varying[],  offer_id_cam bigint',
+    'argument': 'recommended_id character varying[],  offer_id_cam bigint, offer_id bigint',
     'returns': 'bigint[]',
     'body': '''
        DECLARE
@@ -59,13 +59,14 @@ create_function(metadata, {
                                     from ( select offer.id
                                             FROM public.offer
                                             WHERE offer.retid = ANY (recommended_id) and offer.id_cam = offer_id_cam
+                                            and offer.id != offer_id
                                             ORDER BY offer.rating DESC LIMIT 10
                                     ) as offer_sub;     
             ELSE
                 recommended = array_agg(offer_sub.id)
                                     from ( select offer.id
                                             FROM public.offer
-                                            WHERE offer.id_cam = offer_id_cam
+                                            WHERE offer.id_cam = offer_id_cam and offer.id != offer_id
                                             ORDER BY offer.rating desc, RANDOM() LIMIT 10
                                         ) as offer_sub;
             END IF;
@@ -89,7 +90,7 @@ create_function(metadata, {
             
             IF brending OR styling THEN
                 UPDATE offer
-                SET recommended = recommended_to_json(subquery.recommended_ids, offer_id_cam)
+                SET recommended = recommended_to_json(subquery.recommended_ids, offer_id_cam, offer.id)
                 FROM (SELECT
                         offer_sub.id,
                         offer_sub.recommended_ids
