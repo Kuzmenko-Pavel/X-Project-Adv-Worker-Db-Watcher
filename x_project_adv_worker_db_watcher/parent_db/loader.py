@@ -79,7 +79,7 @@ class Loader(object):
             else:
                 val = val.replace('px', '')
                 val = val.replace('x', '')
-        return int(val)
+        return int(float(val))
 
     @staticmethod
     def __to_color(val):
