@@ -325,7 +325,7 @@ class Loader(object):
                 'html_notification': 1,
                 'plase_branch': 1,
                 'retargeting_branch': 1,
-                'social_branch': 1,
+                'nonRelevant': 1,
                 'rating_division': 1
             }
             informers = self.parent_session['informer'].find(query, fields)
@@ -357,8 +357,13 @@ class Loader(object):
                         data['html_notification'] = informer.get('html_notification', True)
                         data['place_branch'] = informer.get('plase_branch', True)
                         data['retargeting_branch'] = informer.get('retargeting_branch', True)
-                        data['social_branch'] = informer.get('social_branch', True)
+                        data['social_branch'] = True
+                        data['userCode'] = ''
                         data['rating_division'] = informer.get('rating_division')
+                        nonRelevant = informer.get('nonRelevant', {})
+                        if nonRelevant.get('action', '') == 'usercode':
+                            data['social_branch'] = False
+                            data['userCode'] = nonRelevant.get('userCode', '')
 
                         Informer.upsert(session, data=data)
                     except Exception as e:

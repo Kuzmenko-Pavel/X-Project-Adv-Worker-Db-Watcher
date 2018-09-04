@@ -16,6 +16,7 @@ class Informer(Base):
     account = Column(Integer, ForeignKey('accounts.id', ondelete='CASCADE'), nullable=False)
     headerHtml = Column(String, default='')
     footerHtml = Column(String, default='')
+    userCode = Column(String, default='')
     ad_style = Column(JSON, default=lambda: {})
     auto_reload = Column(SmallInteger, default=0)
     blinking = Column(SmallInteger, default=0)
@@ -53,6 +54,7 @@ class Informer(Base):
                     account=data['account'],
                     headerHtml=data['headerHtml'],
                     footerHtml=data['footerHtml'],
+                    userCode=data['userCode'],
                     ad_style=data['ad_style'],
                     auto_reload=data['auto_reload'],
                     blinking=data['blinking'],
@@ -75,6 +77,7 @@ class Informer(Base):
                 account=data['account'],
                 headerHtml=data['headerHtml'],
                 footerHtml=data['footerHtml'],
+                userCode=data['userCode'],
                 ad_style=data['ad_style'],
                 auto_reload=data['auto_reload'],
                 blinking=data['blinking'],
@@ -106,6 +109,7 @@ class MVInformer(Base):
             cast(Informer.account, Integer).label('account'),
             Informer.headerHtml,
             Informer.footerHtml,
+            Informer.userCode,
             Informer.ad_style,
             Informer.auto_reload,
             Informer.blinking,
