@@ -36,7 +36,9 @@ from .offer2informer import *
 
 
 def get_engine(config):
-    engine = create_engine(config['postgres']['uri'], echo=False, pool_recycle=300, pool_pre_ping=True, max_overflow=5)
+    application_name = 'AdvWorkerDbWatcher pid=%s' % os.getpid()
+    engine = create_engine(config['postgres']['uri'], echo=False, pool_recycle=300, pool_pre_ping=True, max_overflow=5,
+                           connect_args={"application_name": application_name})
     DBSession.configure(bind=engine)
     metadata.bind = engine
     return engine
