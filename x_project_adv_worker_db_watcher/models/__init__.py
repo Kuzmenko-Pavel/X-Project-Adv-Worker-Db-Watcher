@@ -36,7 +36,7 @@ from .offer2informer import *
 
 
 def get_engine(config):
-    engine = create_engine(config['postgres']['uri'], echo=False, pool_recycle=600)
+    engine = create_engine(config['postgres']['uri'], echo=False, pool_recycle=300, pool_pre_ping=True, max_overflow=5)
     DBSession.configure(bind=engine)
     metadata.bind = engine
     return engine
