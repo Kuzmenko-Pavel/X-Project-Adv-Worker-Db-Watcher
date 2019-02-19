@@ -10,7 +10,7 @@ TRAFARET_CONF = t.Dict({
     t.Key('amqp'): t.String(),
     t.Key('loader'): t.Dict({
         t.Key('offer'): t.Dict({
-            t.Key('limit'): t.Int(gte=100, lte=2000000),
+            t.Key('limit'): t.Int(gte=1, lte=2000000),
         }),
     }),
 })

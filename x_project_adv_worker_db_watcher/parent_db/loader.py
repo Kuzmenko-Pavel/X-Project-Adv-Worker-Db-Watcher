@@ -1,4 +1,5 @@
 import transaction
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from zope.sqlalchemy import mark_changed
 from x_project_adv_worker_db_watcher.logger import *
 from x_project_adv_worker_db_watcher.models import (Accounts, Device, Domains, Categories, Informer, Campaign,
@@ -19,6 +20,9 @@ class Loader(object):
         self.config = config
 
     def all(self):
+        logger.info('Starting VACUUM')
+        self.vacuum()
+        logger.info('Stopping VACUUM')
         logger.info('Starting Load Account')
         self.load_account(refresh_mat_view=False)
         logger.info('Stopping Load Account')
@@ -47,6 +51,9 @@ class Loader(object):
         logger.info('Starting Reload Mat View')
         self.refresh_mat_view()
         logger.info('Stopping Reload Mat View')
+        logger.info('Starting VACUUM')
+        self.vacuum()
+        logger.info('Stopping VACUUM')
 
     def refresh_mat_view(self, name=None):
         session = self.session()
@@ -66,6 +73,14 @@ class Loader(object):
                     mark_changed(session)
                     session.flush()
         session.close()
+
+    def vacuum(self):
+        engine = self.session.bind
+        connection = engine.raw_connection()
+        connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        cursor = connection.cursor()
+        logger.info('VACUUM')
+        cursor.execute("VACUUM VERBOSE ANALYZE;")
 
     @staticmethod
     def __to_int(val):
@@ -947,15 +962,19 @@ class Loader(object):
 
     def load_offer_informer_rating(self, query=None, *args, **kwargs):
         try:
-            session = self.session()
             if query is None:
                 query = {}
             query['full_rating'] = {'$gte': 0}
             fields = {'guid_int': 1, 'adv_int': 1, 'full_rating': 1}
             offer_informer_ratings = self.parent_session['stats_daily.rating'].find(query, fields)
+            session = self.session()
             with transaction.manager:
                 session.query(Offer2Informer).update({Offer2Informer.is_deleted: True})
                 session.flush()
+            session.close()
+
+            session = self.session()
+            with transaction.manager:
                 conn = session.connection()
                 for offer_informer_rating in offer_informer_ratings:
                     try:
@@ -968,13 +987,20 @@ class Loader(object):
                         logger.error(exception_message(exc=str(e)))
 
                 mark_changed(session)
+                session.flush()
+            session.close()
+
+            session = self.session()
+            with transaction.manager:
                 session.query(Offer2Informer).filter(Offer2Informer.is_deleted == True).delete()
                 session.flush()
+            session.close()
+
             if kwargs.get('refresh_mat_view', True):
                 self.refresh_mat_view('mv_offer_place')
                 self.refresh_mat_view('mv_offer_social')
                 self.refresh_mat_view('mv_offer_place2informer')
                 self.refresh_mat_view('mv_offer_social2informer')
-            session.close()
+                self.vacuum()
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
