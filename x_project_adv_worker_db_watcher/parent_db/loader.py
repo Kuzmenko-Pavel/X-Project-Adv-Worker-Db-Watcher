@@ -5,7 +5,7 @@ from x_project_adv_worker_db_watcher.models import (Accounts, Device, Domains, C
                                                     GeoLiteCity, Cron, Offer, Campaign2AccountsAllowed,
                                                     Campaign2AccountsDisallowed, Campaign2DomainsAllowed,
                                                     Campaign2DomainsDisallowed, Campaign2InformerAllowed,
-                                                    Campaign2InformerDisallowed)
+                                                    Campaign2InformerDisallowed, Offer2Informer)
 from .adv_settings import AdvSetting
 from .block_settings import BlockSetting
 
@@ -326,7 +326,8 @@ class Loader(object):
                 'plase_branch': 1,
                 'retargeting_branch': 1,
                 'nonRelevant': 1,
-                'rating_division': 1
+                'rating_division': 1,
+                'rating_hard_limit': 1
             }
             informers = self.parent_session['informer'].find(query, fields)
             session = self.session()
@@ -360,6 +361,7 @@ class Loader(object):
                         data['social_branch'] = True
                         data['userCode'] = ''
                         data['rating_division'] = informer.get('rating_division')
+                        data['rating_hard_limit'] = informer.get('rating_hard_limit', False)
                         nonRelevant = informer.get('nonRelevant', {})
                         if nonRelevant.get('action', '') == 'usercode':
                             data['social_branch'] = False
@@ -803,8 +805,10 @@ class Loader(object):
                 self.refresh_mat_view('mv_cron')
                 if offer_place:
                     self.refresh_mat_view('mv_offer_place')
+                    self.refresh_mat_view('mv_offer_place2informer')
                 if offer_social:
                     self.refresh_mat_view('mv_offer_social')
+                    self.refresh_mat_view('mv_offer_social2informer')
                 if offer_account_retargeting:
                     self.refresh_mat_view('mv_offer_account_retargeting')
                 if offer_dynamic_retargeting:
@@ -946,10 +950,11 @@ class Loader(object):
             session = self.session()
             if query is None:
                 query = {}
-            query['full_rating'] = {'$exists': True}
+            query['full_rating'] = {'$gte': 0}
             fields = {'guid_int': 1, 'adv_int': 1, 'full_rating': 1}
             offer_informer_ratings = self.parent_session['stats_daily.rating'].find(query, fields)
             with transaction.manager:
+                session.query(Offer2Informer).update({Offer2Informer.is_deleted: True})
                 session.flush()
                 conn = session.connection()
                 for offer_informer_rating in offer_informer_ratings:
@@ -963,6 +968,7 @@ class Loader(object):
                         logger.error(exception_message(exc=str(e)))
 
                 mark_changed(session)
+                session.query(Offer2Informer).filter(Offer2Informer.is_deleted == True).delete()
                 session.flush()
             if kwargs.get('refresh_mat_view', True):
                 self.refresh_mat_view('mv_offer_place')

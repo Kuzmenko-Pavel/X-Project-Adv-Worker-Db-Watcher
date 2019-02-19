@@ -30,6 +30,7 @@ class Informer(Base):
     retargeting_branch = Column(Boolean, default=True)
     social_branch = Column(Boolean, default=True)
     rating_division = Column(Integer, default=1000)
+    rating_hard_limit = Column(Boolean, default=False)
 
     campaigns_allowed = relationship('Campaign', secondary='campaign2informer_allowed',
                                      back_populates="informers_allowed",
@@ -67,7 +68,8 @@ class Informer(Base):
                     place_branch=data['place_branch'],
                     retargeting_branch=data['retargeting_branch'],
                     social_branch=data['social_branch'],
-                    rating_division=data['rating_division']
+                    rating_division=data['rating_division'],
+                    rating_hard_limit=data['rating_hard_limit']
                 )
             ).values(dict(
                 id=data['id'],
@@ -90,7 +92,8 @@ class Informer(Base):
                 place_branch=data['place_branch'],
                 retargeting_branch=data['retargeting_branch'],
                 social_branch=data['social_branch'],
-                rating_division=data['rating_division']
+                rating_division=data['rating_division'],
+                rating_hard_limit=data['rating_hard_limit']
             )).returning()
         )
         mark_changed(session)
@@ -123,6 +126,7 @@ class MVInformer(Base):
             Informer.retargeting_branch,
             Informer.social_branch,
             Informer.rating_division,
+            Informer.rating_hard_limit,
         ]).select_from(Informer),
         is_mat=True)
 

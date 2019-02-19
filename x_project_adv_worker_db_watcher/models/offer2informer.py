@@ -1,5 +1,5 @@
 __all__ = ['Offer2Informer', 'MVOfferPlace2Informer', 'MVOfferSocial2Informer']
-from sqlalchemy import (Column, BigInteger, Float, ForeignKey, select, Index)
+from sqlalchemy import (Column, BigInteger, Float, ForeignKey, select, Index, Boolean)
 from sqlalchemy.sql.expression import func, join, true, false, and_
 
 from .__libs__.sql_view import create_view
@@ -13,6 +13,7 @@ class Offer2Informer(Base):
     __tablename__ = 'offer2informer'
     id_ofr = Column(BigInteger, ForeignKey('offer.id', ondelete='CASCADE'), nullable=False, primary_key=True)
     id_inf = Column(BigInteger, ForeignKey('informer.id', ondelete='CASCADE'), nullable=False, primary_key=True)
+    is_deleted = Column(Boolean, default=False)
     rating = Column(Float)
     __table_args__ = (
         Index('ix_offer2informer_rating', rating.desc().nullslast()),

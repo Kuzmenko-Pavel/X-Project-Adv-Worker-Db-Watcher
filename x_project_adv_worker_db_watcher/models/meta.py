@@ -112,11 +112,12 @@ create_function(metadata, {
     'body': '''
         DECLARE
         BEGIN
-            INSERT INTO offer2informer (id_ofr, id_inf, rating)
-            VALUES (v_id_ofr, v_id_inf, v_rating)
+            INSERT INTO offer2informer (id_ofr, id_inf, rating, is_deleted)
+            VALUES (v_id_ofr, v_id_inf, v_rating, true)
             ON CONFLICT (id_ofr, id_inf)
             DO UPDATE SET
-            rating=v_rating;
+            rating=v_rating,
+            is_deleted=true;
             RETURN 1;
         EXCEPTION WHEN OTHERS THEN
             RETURN 1;
