@@ -30,7 +30,7 @@ class Worker(Thread):
                     self.message_processing(*job)
                     self.__queue.task_done()
                 else:
-                    time.sleep(0.1)
+                    time.sleep(1)
             logger.info('Stopping Worker')
 
     def message_processing(self, key, body):
