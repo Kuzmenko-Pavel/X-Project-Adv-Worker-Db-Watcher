@@ -1,6 +1,7 @@
 import transaction
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from zope.sqlalchemy import mark_changed
+from datetime import datetime
 from x_project_adv_worker_db_watcher.logger import *
 from x_project_adv_worker_db_watcher.models import (Accounts, Device, Domains, Categories, Informer, Campaign,
                                                     GeoLiteCity, Cron, Offer, Campaign2AccountsAllowed,
@@ -577,6 +578,13 @@ class Loader(object):
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
 
+    def thematic_range(self, started_time, thematic_day_new_auditory, thematic_day_off_new_auditory):
+        now = datetime.now()
+        days = (started_time - now).days
+        if days > thematic_day_new_auditory:
+            pass
+        return 1
+
     def load_campaign(self, query=None, *args, **kwargs):
         try:
             session = self.session()
@@ -597,7 +605,8 @@ class Loader(object):
                 'disabled_retargiting_style': 1,
                 'disabled_recomendet_style': 1,
                 'status': 1,
-                'account': 1
+                'account': 1,
+                'started_time': 1,
             }
             campaigns = self.parent_session['campaign'].find(query, fields)
             with transaction.manager:
@@ -653,6 +662,18 @@ class Loader(object):
                         data['brending'] = conditions.get('brending')
                         if data['brending']:
                             data['offer_by_campaign_unique'] = 1
+
+                        data['started_time'] = campaign.get('started_time')
+                        if data['started_time'] is None:
+                            data['started_time'] = datetime.now()
+
+                        data['thematic'] = conditions.get('thematic', False)
+                        data['thematic_day_new_auditory'] = conditions.get('thematic_day_new_auditory', 10)
+                        data['thematic_day_off_new_auditory'] = conditions.get('thematic_day_off_new_auditory', 10)
+                        data['thematic_range'] = self.thematic_range(data['started_time'],
+                                                                     data['thematic_day_new_auditory'],
+                                                                     data['thematic_day_off_new_auditory'])
+                        data['thematics'] = conditions.get('thematics', [])
 
                         if campaign.get('status') == 'working':
                             new_campaign = Campaign(**data)

@@ -1,8 +1,10 @@
 __all__ = ['Campaign', 'MVCampaign']
-from sqlalchemy import (Column, BigInteger, String, Boolean, SmallInteger, select, Index, func, join, text, table)
-from sqlalchemy.dialects.postgresql import insert, JSON
+from sqlalchemy import (Column, BigInteger, String, Boolean, SmallInteger, select, Index, func, join, text, table,
+                        DateTime)
+from sqlalchemy.dialects.postgresql import insert, JSON, ARRAY
 from sqlalchemy.orm import relationship
 from zope.sqlalchemy import mark_changed
+from datetime import datetime
 
 from .__libs__.sql_view import create_view
 from .meta import Base
@@ -35,6 +37,12 @@ class Campaign(Base):
     html_notification = Column(Boolean, default=True)
     disabled_retargiting_style = Column(Boolean, default=False)
     disabled_recomendet_style = Column(Boolean, default=False)
+    started_time = Column(DateTime, default=datetime.now)
+    thematic = Column(Boolean, default=False)
+    thematic_range = Column(SmallInteger, default=1)
+    thematics = Column(ARRAY(String), default=[])
+    thematic_day_new_auditory = Column(SmallInteger, default=10)
+    thematic_day_off_new_auditory = Column(SmallInteger, default=10)
     geos = relationship('GeoLiteCity', secondary='geo', back_populates="campaigns", passive_deletes=True)
     devices = relationship('Device', secondary='campaign2device', back_populates="campaigns", passive_deletes=True)
     cron = relationship('Cron', back_populates="campaign", passive_deletes=True)
@@ -88,7 +96,13 @@ class Campaign(Base):
                     target=data['target'],
                     offer_by_campaign_unique=data['offer_by_campaign_unique'],
                     unique_impression_lot=data['unique_impression_lot'],
-                    html_notification=data['html_notification']
+                    html_notification=data['html_notification'],
+                    started_time=data['started_time'],
+                    thematic=data['thematic'],
+                    thematic_range=data['thematic'],
+                    thematics=data['thematics'],
+                    thematic_day_new_auditory=data['thematic_day_new_auditory'],
+                    thematic_day_off_new_auditory=data['thematic_day_off_new_auditory']
                 )
             ).values(dict(
                 id=data['id'],
@@ -113,7 +127,13 @@ class Campaign(Base):
                 target=data['target'],
                 offer_by_campaign_unique=data['offer_by_campaign_unique'],
                 unique_impression_lot=data['unique_impression_lot'],
-                html_notification=data['html_notification']
+                html_notification=data['html_notification'],
+                started_time=data['started_time'],
+                thematic=data['thematic'],
+                thematic_range=data['thematic'],
+                thematics=data['thematics'],
+                thematic_day_new_auditory=data['thematic_day_new_auditory'],
+                thematic_day_off_new_auditory=data['thematic_day_off_new_auditory']
 
             )).returning()
         )
@@ -142,7 +162,13 @@ class Campaign(Base):
             target=data['target'],
             offer_by_campaign_unique=data['offer_by_campaign_unique'],
             unique_impression_lot=data['unique_impression_lot'],
-            html_notification=data['html_notification']
+            html_notification=data['html_notification'],
+            started_time=data['started_time'],
+            thematic=data['thematic'],
+            thematic_range=data['thematic'],
+            thematics=data['thematics'],
+            thematic_day_new_auditory=data['thematic_day_new_auditory'],
+            thematic_day_off_new_auditory=data['thematic_day_off_new_auditory']
         )
 
 
@@ -172,7 +198,10 @@ class MVCampaign(Base):
             Campaign.target,
             Campaign.offer_by_campaign_unique,
             Campaign.unique_impression_lot,
-            Campaign.html_notification
+            Campaign.html_notification,
+            Campaign.thematic,
+            Campaign.thematics,
+            Campaign.thematic_range
         ], distinct=Campaign.id).select_from(
             join(Campaign, table('offer'), Campaign.id == text('offer.id_cam'), isouter=True)
         )

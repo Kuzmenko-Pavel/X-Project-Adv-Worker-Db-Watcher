@@ -56,6 +56,13 @@ class Worker(Thread):
                 except Exception as e:
                     logger.error(exception_message(exc=str(e), key=str(key), body=body))
 
+            elif key == 'campaign.thematic':
+                try:
+                    # self.loader.load_campaign({'guid': body})
+                    logger.info('Campaign %s Thematic Update', body)
+                except Exception as e:
+                    logger.error(exception_message(exc=str(e), key=str(key), body=body))
+
             elif key == 'informer.update':
                 try:
                     self.loader.load_domain({'guid': body})
