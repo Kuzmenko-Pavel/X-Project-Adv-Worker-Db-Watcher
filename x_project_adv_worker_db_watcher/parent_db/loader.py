@@ -579,11 +579,15 @@ class Loader(object):
             logger.error(exception_message(exc=str(e)))
 
     def thematic_range(self, started_time, thematic_day_new_auditory, thematic_day_off_new_auditory):
+        range = 0
         now = datetime.now()
-        days = (started_time - now).days
+        days = (now - started_time).days
         if days > thematic_day_new_auditory:
-            pass
-        return 1
+            thematic_persent = (1000.0 / thematic_day_off_new_auditory) * (days - thematic_day_new_auditory)
+            if thematic_persent > 90:
+                thematic_persent = 90
+            range = int(thematic_persent)
+        return range
 
     def load_campaign(self, query=None, *args, **kwargs):
         try:
