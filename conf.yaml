@@ -8,4 +8,4 @@ amqp: amqp://worker:worker@amqp.yottos.com/worker?socket_timeout=1&heartbeat_int
 
 loader:
   offer:
-    limit: 10
+    limit: 2000000
