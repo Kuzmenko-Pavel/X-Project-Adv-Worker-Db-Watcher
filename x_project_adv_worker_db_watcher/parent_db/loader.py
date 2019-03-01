@@ -1,7 +1,9 @@
+from datetime import datetime
+
 import transaction
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from zope.sqlalchemy import mark_changed
-from datetime import datetime
+
 from x_project_adv_worker_db_watcher.logger import *
 from x_project_adv_worker_db_watcher.models import (Accounts, Device, Domains, Categories, Informer, Campaign,
                                                     GeoLiteCity, Cron, Offer, Campaign2AccountsAllowed,
@@ -588,6 +590,24 @@ class Loader(object):
                 thematic_persent = 90
             range = int(thematic_persent)
         return range
+
+    def thematic_campaign(self, guid=None, *args, **kwargs):
+        try:
+            session = self.session()
+            if guid is None:
+                guid = ''
+            with transaction.manager:
+                campaign = session.query(Campaign).filter(Campaign.guid == guid).one_or_none()
+                if campaign is not None:
+                    campaign.thematic_range = self.thematic_range(campaign.started_time,
+                                                                  campaign.thematic_day_new_auditory,
+                                                                  campaign.thematic_day_off_new_auditory)
+                    session.flush()
+                    transaction.commit()
+            if kwargs.get('refresh_mat_view', True):
+                self.refresh_mat_view('mv_campaign')
+        except Exception as e:
+            logger.error(exception_message(exc=str(e)))
 
     def load_campaign(self, query=None, *args, **kwargs):
         try:
