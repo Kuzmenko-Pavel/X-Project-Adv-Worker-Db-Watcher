@@ -11,13 +11,13 @@ NAMING_CONVENTION = {
     "pk": "pk_%(table_name)s"
 }
 
-metadata = MetaData(naming_convention=NAMING_CONVENTION)
+parent_metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
 
 class ClsBase(object):
     pass
 
 
-Base = declarative_base(cls=ClsBase, metadata=metadata)
+ParentBase = declarative_base(cls=ClsBase, metadata=parent_metadata)
 
 ParentDBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))

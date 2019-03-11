@@ -13,10 +13,6 @@ class Accounts(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     name = Column(String(length=2048), unique=True)
     blocked = Column(Boolean, default=False)
-    campaigns_allowed = relationship('Campaign', secondary='campaign2accounts_allowed',
-                                     back_populates="accounts_allowed", passive_deletes=True)
-    campaigns_disallowed = relationship('Campaign', secondary='campaign2accounts_disallowed',
-                                        back_populates="accounts_disallowed", passive_deletes=True)
 
     __table_args__ = (
         {'prefixes': ['UNLOGGED']}
