@@ -7,7 +7,7 @@ from trafaret_config import commandline
 
 from x_project_adv_worker_db_watcher.logger import logger, exception_message  # ,ft
 from x_project_adv_worker_db_watcher.models import DBSession, get_engine, check_table
-from x_project_adv_worker_db_watcher.parent_db import get_parent_engine
+from x_project_adv_worker_db_watcher.parent_models import ParentDBSession, get_parent_engine
 from x_project_adv_worker_db_watcher.utils import TRAFARET_CONF
 from x_project_adv_worker_db_watcher.watcher import Watcher
 
@@ -25,7 +25,7 @@ class Daemonize(object):
             logger.error(exception_message(exc=str(e)))
             sys.exit(1)
         try:
-            self.watcher = Watcher(config, DBSession, parent_engine)
+            self.watcher = Watcher(config, DBSession, ParentDBSession)
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
             sys.exit(1)

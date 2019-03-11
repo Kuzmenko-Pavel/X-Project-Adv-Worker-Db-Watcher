@@ -2,7 +2,7 @@ import time
 from threading import Thread
 
 from x_project_adv_worker_db_watcher.logger import logger, exception_message
-from x_project_adv_worker_db_watcher.parent_db.loader import Loader
+from x_project_adv_worker_db_watcher.loader import Loader
 
 
 class Worker(Thread):
