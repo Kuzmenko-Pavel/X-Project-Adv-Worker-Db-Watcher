@@ -10,11 +10,11 @@ from .meta import ParentBase
 
 class SitePricing(ParentBase):
     __tablename__ = 'sites_pricing'
-    id = Column(ForeignKey('sites.id', ondelete='CASCADE'), primary_key=True, nullable=False)
+    id = Column(ForeignKey('sites.id'), primary_key=True)
     site = relationship('Site', foreign_keys=[id], uselist=False)
-    click_cost_min = Column(Float, default=0.1)
-    click_cost_proportion = Column(Integer, default=50)
-    click_cost_max = Column(Float, default=100)
-    impression_cost_min = Column(Float, default=0.1)
-    impression_cost_proportion = Column(Integer, default=50)
-    impression_cost_max = Column(Float, default=100)
+    click_cost_min = Column(Float)
+    click_cost_proportion = Column(Integer)
+    click_cost_max = Column(Float)
+    impression_cost_min = Column(Float)
+    impression_cost_proportion = Column(Integer)
+    impression_cost_max = Column(Float)

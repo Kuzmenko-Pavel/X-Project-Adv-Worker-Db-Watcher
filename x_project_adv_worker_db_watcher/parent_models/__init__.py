@@ -2,7 +2,6 @@ import os
 
 from sqlalchemy import create_engine
 
-from .meta import ParentDBSession, parent_metadata
 from .Accounts import Account
 from .AccountsRates import AccountRates
 from .AdvCategories import AdvCategory
@@ -24,6 +23,7 @@ from .OffersByImages import OfferByImages
 from .Sites import Site
 from .SitesByBlockingAdvCategories import SiteByBlockingAdvCategory
 from .SitesPricing import SitePricing
+from .meta import ParentDBSession, parent_metadata
 
 
 def get_parent_engine(config):

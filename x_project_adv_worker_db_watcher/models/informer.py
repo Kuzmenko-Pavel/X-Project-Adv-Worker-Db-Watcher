@@ -1,4 +1,5 @@
-from sqlalchemy import (Column, Integer, String, Boolean, SmallInteger, BigInteger, ForeignKey, select, Index, cast)
+from sqlalchemy import (Column, Integer, String, Boolean, SmallInteger, BigInteger, ForeignKey, select, Index, cast,
+                        Float)
 from sqlalchemy.dialects.postgresql import insert, JSON
 from sqlalchemy.orm import relationship
 from zope.sqlalchemy import mark_changed
@@ -31,6 +32,12 @@ class Informer(Base):
     social_branch = Column(Boolean, default=True)
     rating_division = Column(Integer, default=1000)
     rating_hard_limit = Column(Boolean, default=False)
+    click_cost_min = Column(Float, default=0.1)
+    click_cost_proportion = Column(Integer, default=50)
+    click_cost_max = Column(Float, default=100)
+    impression_cost_min = Column(Float, default=0.1)
+    impression_cost_proportion = Column(Integer, default=50)
+    impression_cost_max = Column(Float, default=100)
 
     __table_args__ = (
         {'prefixes': ['UNLOGGED']}

@@ -14,11 +14,11 @@ force_instant_defaults()
 
 class BlockPricing(ParentBase):
     __tablename__ = 'blocks_pricing'
-    id = Column(ForeignKey('blocks.id', ondelete='CASCADE'), primary_key=True, nullable=False)
+    id = Column(ForeignKey('blocks.id'), primary_key=True)
     block = relationship('Block', foreign_keys=[id], uselist=False)
-    click_cost_min = Column(Float, default=0.1)
-    click_cost_proportion = Column(Integer, default=50)
-    click_cost_max = Column(Float, default=100)
-    impression_cost_min = Column(Float, default=0.1)
-    impression_cost_proportion = Column(Integer, default=50)
-    impression_cost_max = Column(Float, default=100)
+    click_cost_min = Column(Float)
+    click_cost_proportion = Column(Integer)
+    click_cost_max = Column(Float)
+    impression_cost_min = Column(Float)
+    impression_cost_proportion = Column(Integer)
+    impression_cost_max = Column(Float)

@@ -7,5 +7,5 @@ from .meta import ParentBase
 
 class Image(ParentBase):
     __tablename__ = 'images'
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
-    url = Column(URLType, nullable=False)
+    id = Column(BigInteger, primary_key=True)
+    url = Column(URLType)
