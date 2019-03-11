@@ -1,11 +1,8 @@
 import csv
 import os
-import time
 
 import transaction
 from sqlalchemy import create_engine
-from sqlalchemy import event
-from sqlalchemy.engine import Engine
 from sqlalchemy.schema import DropTable
 from sqlalchemy.ext.compiler import compiles
 
@@ -14,22 +11,12 @@ from zope.sqlalchemy import mark_changed
 from x_project_adv_worker_db_watcher.logger import *
 from .accounts import *
 from .campaign import *
-from .categories import Categories, MVCategories
 from .cron import Cron, MVCron
 from .device import Device, MVDevice
-from .domains import Domains, MVDomains
 from .geo_lite_city import GeoLiteCity, MVGeoLiteCity
 from .geo import Geo, MVGeo
 from .informer import Informer, MVInformer
-from .campaign2categories import Campaign2Categories, MVCampaign2Categories
 from .campaign2device import Campaign2Device, MVCampaign2Device
-from .categories2domain import Categories2Domain, MVCategories2Domain
-from .campaign2accounts_allowed import *
-from .campaign2domains_allowed import *
-from .campaign2informer_allowed import *
-from .campaign2accounts_disallowed import *
-from .campaign2domains_disallowed import *
-from .campaign2informer_disallowed import *
 from .meta import DBSession, metadata
 from .offer import *
 from .offer2informer import *
@@ -67,13 +54,9 @@ def load_default_data():
     session = DBSession()
     with transaction.manager:
         default_account = Accounts(name='')
-        default_category = Categories(guid='', title='')
         default_device = Device(name='**')
-        default_domain = Domains(name='')
         session.add(default_account)
-        session.add(default_category)
         session.add(default_device)
-        session.add(default_domain)
 
         dir_path = os.path.dirname(os.path.realpath(__file__))
         with open(dir_path + '/fixture/GEO', newline='') as geo_file:
@@ -93,7 +76,9 @@ def load_default_data():
 def _compile_drop_table(element, compiler):
     return compiler.visit_drop_table(element) + " CASCADE"
 
-
+# from sqlalchemy import event
+# from sqlalchemy.engine import Engine
+# import time
 # @event.listens_for(Engine, "before_cursor_execute")
 # def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
 #     conn.info.setdefault('query_start_time', []).append(time.time())

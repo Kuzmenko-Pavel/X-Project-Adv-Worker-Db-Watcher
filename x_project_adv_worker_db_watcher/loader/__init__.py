@@ -5,11 +5,8 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from zope.sqlalchemy import mark_changed
 
 from x_project_adv_worker_db_watcher.logger import *
-from x_project_adv_worker_db_watcher.models import (Accounts, Device, Domains, Categories, Informer, Campaign,
-                                                    GeoLiteCity, Cron, Offer, Campaign2AccountsAllowed,
-                                                    Campaign2AccountsDisallowed, Campaign2DomainsAllowed,
-                                                    Campaign2DomainsDisallowed, Campaign2InformerAllowed,
-                                                    Campaign2InformerDisallowed, Offer2Informer)
+from x_project_adv_worker_db_watcher.models import (Accounts, Device, Informer, Campaign,
+                                                    GeoLiteCity, Cron, Offer, Offer2Informer)
 from .adv_settings import AdvSetting
 from .block_settings import BlockSetting
 

@@ -21,8 +21,7 @@ def read_version():
 install_requires = ['pika',
                     'sqlalchemy',
                     'psycopg2',
-                    'pymongo',
-                    'mongodbproxy',
+                    'sqlalchemy-utils',
                     'zope.sqlalchemy',
                     'trafaret-config',
                     'transaction'

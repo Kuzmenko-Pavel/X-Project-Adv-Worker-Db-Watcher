@@ -3,7 +3,27 @@ import os
 from sqlalchemy import create_engine
 
 from .meta import ParentDBSession, parent_metadata
+from .Accounts import Account
+from .AccountsRates import AccountRates
+from .AdvCategories import AdvCategory
+from .Blocks import Block
+from .BlocksPricing import BlockPricing
+from .Campaigns import Campaign
+from .CampaignsByBlockingBlock import CampaignByBlockingBlock
+from .CampaignsByDevices import CampaignByDevices
+from .CampaignsByGeos import CampaignsByGeo
+from .CampaignsByThematicCategories import CampaignByThematicCategories
+from .CampaignsCron import CampaignCron
 from .Devices import Device
+from .GeoLite import Geo
+from .Images import Image
+from .Offers import Offer
+from .OffersBody import OfferBody
+from .OffersByAdvCategories import OfferByAdvCategories
+from .OffersByImages import OfferByImages
+from .Sites import Site
+from .SitesByBlockingAdvCategories import SiteByBlockingAdvCategory
+from .SitesPricing import SitePricing
 
 
 def get_parent_engine(config):
