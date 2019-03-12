@@ -9,7 +9,7 @@ from x_project_adv_worker_db_watcher.logger import *
 from x_project_adv_worker_db_watcher.models import (Accounts, Device, Informer, Campaign,
                                                     GeoLiteCity, Cron, Offer, Offer2Informer)
 from x_project_adv_worker_db_watcher.parent_models.choiceTypes import AccountType, ProjectType
-from x_project_adv_worker_db_watcher.parent_models import ParentAccount
+from x_project_adv_worker_db_watcher.parent_models import (ParentAccount, ParentDevice)
 from .adv_settings import AdvSetting
 from .block_settings import BlockSetting
 
@@ -338,9 +338,13 @@ class Loader(object):
             logger.error(exception_message(exc=str(e)))
         return result
 
-    def stop_account(self, name=None, *args, **kwargs):
+    def stop_account(self, id=None, *args, **kwargs):
         try:
-            pass
+            if id:
+                session = self.session()
+                with transaction.manager:
+                    session.query(Accounts).filtel(Accounts.id == id).delete()
+                session.close()
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
 
@@ -432,9 +436,20 @@ class Loader(object):
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
 
-    def load_device(self, query=None, *args, **kwargs):
+    def load_device(self, *args, **kwargs):
         try:
-            pass
+            parent_session = self.parent_session()
+            session = self.session()
+            with transaction.manager:
+                q = parent_session.query(ParentDevice)
+                for parent_device in q.all():
+                    print(parent_device)
+
+            if kwargs.get('refresh_mat_view', True):
+                self.refresh_mat_view('mv_accounts')
+
+            parent_session.close()
+            session.close()
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
 

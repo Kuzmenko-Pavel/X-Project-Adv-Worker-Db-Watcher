@@ -26,6 +26,8 @@ class Accounts(Base):
                 index_elements=['id'],
                 set_=dict(guid=data['guid'], blocked=data['blocked'])
             ).values({
+                'id': data['id'],
+                'guid': data['guid'],
                 'blocked': data['blocked']
             }).returning()
         )
