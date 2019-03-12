@@ -9,9 +9,9 @@ force_auto_coercion()
 force_instant_defaults()
 
 
-class OfferByImages(ParentBase):
+class ParentOfferByImages(ParentBase):
     __tablename__ = 'offers_by_images'
     id_offer = Column(ForeignKey('offers.id'), primary_key=True)
-    offer = relationship('Offer', foreign_keys=[id_offer], uselist=False)
+    offer = relationship('ParentOffer', foreign_keys=[id_offer], uselist=False)
     id_image = Column(ForeignKey('images.id'), primary_key=True)
-    image = relationship('Image', foreign_keys=[id_image], uselist=False)
+    image = relationship('ParentImage', foreign_keys=[id_image], uselist=False)

@@ -12,11 +12,11 @@ force_auto_coercion()
 force_instant_defaults()
 
 
-class CampaignByDevices(ParentBase):
-    __tablename__ = 'campaigns_by_devices'
+class ParentCampaignsByGeo(ParentBase):
+    __tablename__ = 'campaigns_by_geo'
 
     id_campaign = Column(ForeignKey('campaigns.id'), primary_key=True)
-    id_device = Column(ForeignKey('devices.id'), primary_key=True)
+    id_geo = Column(ForeignKey('geo.id'), primary_key=True)
 
-    campaign = relationship('Campaign', foreign_keys=[id_campaign], uselist=False)
-    device = relationship('Device', foreign_keys=[id_device], uselist=False)
+    campaign = relationship('ParentCampaign', foreign_keys=[id_campaign], uselist=False)
+    geo = relationship('ParentGeo', foreign_keys=[id_geo], uselist=False)

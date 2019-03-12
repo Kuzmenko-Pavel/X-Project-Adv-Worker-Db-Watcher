@@ -2,27 +2,27 @@ import os
 
 from sqlalchemy import create_engine
 
-from .Accounts import Account
-from .AccountsRates import AccountRates
-from .AdvCategories import AdvCategory
-from .Blocks import Block
-from .BlocksPricing import BlockPricing
-from .Campaigns import Campaign
-from .CampaignsByBlockingBlock import CampaignByBlockingBlock
-from .CampaignsByDevices import CampaignByDevices
-from .CampaignsByGeos import CampaignsByGeo
-from .CampaignsByThematicCategories import CampaignByThematicCategories
-from .CampaignsCron import CampaignCron
-from .Devices import Device
-from .GeoLite import Geo
-from .Images import Image
-from .Offers import Offer
-from .OffersBody import OfferBody
-from .OffersByAdvCategories import OfferByAdvCategories
-from .OffersByImages import OfferByImages
-from .Sites import Site
-from .SitesByBlockingAdvCategories import SiteByBlockingAdvCategory
-from .SitesPricing import SitePricing
+from .ParentAccounts import ParentAccount
+from .ParentAccountsRates import ParentAccountRates
+from .ParentAdvCategories import ParentAdvCategory
+from .ParentBlocks import ParentBlock
+from .ParentBlocksPricing import ParentBlockPricing
+from .ParentCampaigns import ParentCampaign
+from .ParentCampaignsByBlockingBlock import ParentCampaignByBlockingBlock
+from .ParentCampaignsByDevices import ParentCampaignByDevices
+from .ParentCampaignsByGeos import ParentCampaignsByGeo
+from .ParentCampaignsByThematicCategories import ParentCampaignByThematicCategories
+from .ParentCampaignsCron import ParentCampaignCron
+from .ParentDevices import ParentDevice
+from .ParentGeoLite import ParentGeo
+from .ParentImages import ParentImage
+from .ParentOffers import ParentOffer
+from .ParentOffersBody import ParentOfferBody
+from .ParentOffersByAdvCategories import ParentOfferByAdvCategories
+from .ParentOffersByImages import ParentOfferByImages
+from .ParentSites import ParentSite
+from .ParentSitesByBlockingAdvCategories import ParentSiteByBlockingAdvCategory
+from .ParentSitesPricing import ParentSitePricing
 from .meta import ParentDBSession, parent_metadata
 
 

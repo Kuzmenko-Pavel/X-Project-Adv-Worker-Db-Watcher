@@ -53,9 +53,7 @@ def clear_table(engine):
 def load_default_data():
     session = DBSession()
     with transaction.manager:
-        default_account = Accounts(name='')
         default_device = Device(name='**')
-        session.add(default_account)
         session.add(default_device)
 
         dir_path = os.path.dirname(os.path.realpath(__file__))

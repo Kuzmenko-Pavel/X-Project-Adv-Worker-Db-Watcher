@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
 __author__ = 'kuzmenko-pavel'
@@ -12,11 +12,11 @@ force_auto_coercion()
 force_instant_defaults()
 
 
-class CampaignsByGeo(ParentBase):
-    __tablename__ = 'campaigns_by_geo'
+class ParentCampaignByBlockingBlock(ParentBase):
+    __tablename__ = 'campaigns_by_blocking_block'
 
     id_campaign = Column(ForeignKey('campaigns.id'), primary_key=True)
-    id_geo = Column(ForeignKey('geo.id'), primary_key=True)
+    id_block = Column(ForeignKey('blocks.id'), primary_key=True)
 
-    campaign = relationship('Campaign', foreign_keys=[id_campaign], uselist=False)
-    geo = relationship('Geo', foreign_keys=[id_geo], uselist=False)
+    campaign = relationship('ParentCampaign', foreign_keys=[id_campaign], uselist=False)
+    block = relationship('ParentBlock', foreign_keys=[id_block], uselist=False)

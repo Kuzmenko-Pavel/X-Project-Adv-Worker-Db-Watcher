@@ -5,7 +5,7 @@ from sqlalchemy_utils import URLType
 from .meta import ParentBase
 
 
-class Image(ParentBase):
+class ParentImage(ParentBase):
     __tablename__ = 'images'
     id = Column(BigInteger, primary_key=True)
     url = Column(URLType)

@@ -1,5 +1,6 @@
 __all__ = ['Accounts', 'MVAccounts']
 from sqlalchemy import (Column, BigInteger, Boolean, String, select, Index)
+from sqlalchemy_utils import UUIDType
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import relationship
 from zope.sqlalchemy import mark_changed
@@ -10,8 +11,8 @@ from .meta import Base
 
 class Accounts(Base):
     __tablename__ = 'accounts'
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
-    name = Column(String(length=2048), unique=True)
+    id = Column(BigInteger, primary_key=True)
+    guid = Column(UUIDType(binary=True))
     blocked = Column(Boolean, default=False)
 
     __table_args__ = (
@@ -22,10 +23,9 @@ class Accounts(Base):
     def upsert(cls, session, data):
         session.execute(
             insert(cls.__table__).on_conflict_do_update(
-                index_elements=['name'],
-                set_=dict(blocked=data['blocked'])
+                index_elements=['id'],
+                set_=dict(guid=data['guid'], blocked=data['blocked'])
             ).values({
-                'name': data['name'],
                 'blocked': data['blocked']
             }).returning()
         )
@@ -39,11 +39,9 @@ class MVAccounts(Base):
         'mv_accounts',
         select([
             Accounts.id,
-            Accounts.name,
             Accounts.blocked
         ]).select_from(Accounts),
         is_mat=True)
 
 
 Index('ix_mv_accounts_id', MVAccounts.id, unique=True)
-Index('ix_mv_accounts_name', MVAccounts.name)

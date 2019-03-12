@@ -2,11 +2,14 @@ from datetime import datetime
 
 import transaction
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+from sqlalchemy import or_
 from zope.sqlalchemy import mark_changed
 
 from x_project_adv_worker_db_watcher.logger import *
 from x_project_adv_worker_db_watcher.models import (Accounts, Device, Informer, Campaign,
                                                     GeoLiteCity, Cron, Offer, Offer2Informer)
+from x_project_adv_worker_db_watcher.parent_models.choiceTypes import AccountType, ProjectType
+from x_project_adv_worker_db_watcher.parent_models import ParentAccount
 from .adv_settings import AdvSetting
 from .block_settings import BlockSetting
 
@@ -341,9 +344,24 @@ class Loader(object):
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
 
-    def load_account(self, query=None, *args, **kwargs):
+    def load_account(self, id=None, *args, **kwargs):
         try:
-            pass
+            parent_session = self.parent_session()
+            session = self.session()
+            with transaction.manager:
+                q = parent_session.query(ParentAccount).filter(or_(ParentAccount.project == ProjectType.Getmyad,
+                                                                   ParentAccount.project == ProjectType.Adload),
+                                                               ParentAccount.account_type == AccountType.Customer)
+                if id:
+                    q = q.filter(ParentAccount.id == id)
+                for parent_account in q.all():
+                    Accounts.upsert(session, {'id': parent_account.id, 'guid': parent_account.guid, 'blocked': False})
+
+            if kwargs.get('refresh_mat_view', True):
+                self.refresh_mat_view('mv_accounts')
+
+            parent_session.close()
+            session.close()
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
 

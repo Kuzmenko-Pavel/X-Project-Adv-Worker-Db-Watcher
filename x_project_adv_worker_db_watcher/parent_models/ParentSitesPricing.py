@@ -8,10 +8,10 @@ from sqlalchemy.orm import relationship
 from .meta import ParentBase
 
 
-class SitePricing(ParentBase):
+class ParentSitePricing(ParentBase):
     __tablename__ = 'sites_pricing'
     id = Column(ForeignKey('sites.id'), primary_key=True)
-    site = relationship('Site', foreign_keys=[id], uselist=False)
+    site = relationship('ParentSite', foreign_keys=[id], uselist=False)
     click_cost_min = Column(Float)
     click_cost_proportion = Column(Integer)
     click_cost_max = Column(Float)

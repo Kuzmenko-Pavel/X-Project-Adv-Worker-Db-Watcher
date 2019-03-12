@@ -13,10 +13,10 @@ force_auto_coercion()
 force_instant_defaults()
 
 
-class CampaignCron(ParentBase):
+class ParentCampaignCron(ParentBase):
     __tablename__ = 'campaigns_cron'
     id = Column(ForeignKey('campaigns.id'), primary_key=True)
-    campaign = relationship('Campaign', foreign_keys=[id], uselist=False)
+    campaign = relationship('ParentCampaign', foreign_keys=[id], uselist=False)
     monday = Column(ARRAY(Integer))
     tuesday = Column(ARRAY(Integer))
     wednesday = Column(ARRAY(Integer))

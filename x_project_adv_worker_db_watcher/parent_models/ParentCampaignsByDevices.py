@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: UTF-8 -*-
 from __future__ import absolute_import, unicode_literals
 
 __author__ = 'kuzmenko-pavel'
@@ -12,11 +12,11 @@ force_auto_coercion()
 force_instant_defaults()
 
 
-class CampaignByBlockingBlock(ParentBase):
-    __tablename__ = 'campaigns_by_blocking_block'
+class ParentCampaignByDevices(ParentBase):
+    __tablename__ = 'campaigns_by_devices'
 
     id_campaign = Column(ForeignKey('campaigns.id'), primary_key=True)
-    id_block = Column(ForeignKey('blocks.id'), primary_key=True)
+    id_device = Column(ForeignKey('devices.id'), primary_key=True)
 
-    campaign = relationship('Campaign', foreign_keys=[id_campaign], uselist=False)
-    block = relationship('Block', foreign_keys=[id_block], uselist=False)
+    campaign = relationship('ParentCampaign', foreign_keys=[id_campaign], uselist=False)
+    device = relationship('ParentDevice', foreign_keys=[id_device], uselist=False)

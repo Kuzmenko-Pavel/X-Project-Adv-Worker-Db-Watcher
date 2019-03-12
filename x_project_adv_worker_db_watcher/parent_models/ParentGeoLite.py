@@ -11,7 +11,7 @@ force_auto_coercion()
 force_instant_defaults()
 
 
-class Geo(ParentBase):
+class ParentGeo(ParentBase):
     __tablename__ = 'geo'
     id = Column(BigInteger, primary_key=True)
     country = Column(String(length=9))

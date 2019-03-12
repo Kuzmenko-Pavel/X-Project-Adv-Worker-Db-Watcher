@@ -10,11 +10,11 @@ force_auto_coercion()
 force_instant_defaults()
 
 
-class OfferBody(ParentBase):
+class ParentOfferBody(ParentBase):
     __tablename__ = 'offers_body'
 
     id = Column(ForeignKey('offers.id'), primary_key=True)
-    offer = relationship('Offer', back_populates='body', foreign_keys=[id], uselist=False)
+    offer = relationship('ParentOffer', back_populates='body', foreign_keys=[id], uselist=False)
     title = Column(String)
     description = Column(String)
     price = Column(String)

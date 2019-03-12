@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
 __author__ = 'kuzmenko-pavel'
@@ -12,13 +12,13 @@ force_auto_coercion()
 force_instant_defaults()
 
 
-class CampaignByThematicCategories(ParentBase):
-    __tablename__ = 'campaigns_by_thematic_categories'
+class ParentSiteByBlockingAdvCategory(ParentBase):
+    """
+    """
+    __tablename__ = 'sites_by_block_adv_categories'
 
-    id_campaign = Column(ForeignKey('campaigns.id'), primary_key=True)
-
+    id_site = Column(ForeignKey('sites.id'), primary_key=True)
     id_adv_category = Column(ForeignKey('adv_categories.id'), primary_key=True)
 
-    campaign = relationship('Campaign', foreign_keys=[id_campaign], uselist=False)
-
-    thematic_category = relationship('AdvCategory', foreign_keys=[id_adv_category], uselist=False)
+    site = relationship("ParentSite", foreign_keys=[id_site], uselist=False)
+    category = relationship("ParentAdvCategory", foreign_keys=[id_adv_category], uselist=False)

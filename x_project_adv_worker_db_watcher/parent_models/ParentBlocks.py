@@ -12,7 +12,7 @@ from .choiceTypes import AMQPStatusType, BlockType
 from .meta import ParentBase
 
 
-class Block(ParentBase):
+class ParentBlock(ParentBase):
     __tablename__ = 'blocks'
     id = Column(BigInteger, primary_key=True)
     guid = Column(UUIDType(binary=True), index=True)
@@ -38,6 +38,8 @@ class Block(ParentBase):
 
     id_account = Column(ForeignKey('accounts.id'), index=True)
     id_site = Column(ForeignKey('sites.id'), index=True)
-    account = relationship('Account', back_populates='blocks', foreign_keys='Block.id_account', uselist=False)
-    site = relationship('Site', back_populates='blocks', foreign_keys='Block.id_site', uselist=False)
-    pricing = relationship("BlockPricing", back_populates="block", foreign_keys='BlockPricing.id', uselist=False)
+    account = relationship('ParentAccount', back_populates='blocks', foreign_keys='ParentBlock.id_account',
+                           uselist=False)
+    site = relationship('ParentSite', back_populates='blocks', foreign_keys='ParentBlock.id_site', uselist=False)
+    pricing = relationship("ParentBlockPricing", back_populates="block", foreign_keys='ParentBlockPricing.id',
+                           uselist=False)

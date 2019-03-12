@@ -11,6 +11,6 @@ force_auto_coercion()
 force_instant_defaults()
 
 
-class AdvCategory(ParentBase):
+class ParentAdvCategory(ParentBase):
     __tablename__ = 'adv_categories'
     id = Column(BigInteger, primary_key=True)

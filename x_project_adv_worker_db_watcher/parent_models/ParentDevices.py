@@ -7,7 +7,7 @@ from sqlalchemy import Column, String, BigInteger
 from .meta import ParentBase
 
 
-class Device(ParentBase):
+class ParentDevice(ParentBase):
     __tablename__ = 'devices'
     id = Column(BigInteger, primary_key=True)
     code = Column(String)
