@@ -6,9 +6,10 @@ from sqlalchemy import or_
 from zope.sqlalchemy import mark_changed
 
 from x_project_adv_worker_db_watcher.logger import *
-from x_project_adv_worker_db_watcher.models import (Accounts, Device, GeoLiteCity, Site)
-from x_project_adv_worker_db_watcher.parent_models.choiceTypes import AccountType, ProjectType
-from x_project_adv_worker_db_watcher.parent_models import (ParentAccount, ParentDevice, ParentGeo, ParentSite)
+from x_project_adv_worker_db_watcher.models import (Accounts, Device, GeoLiteCity, Site, Informer)
+from x_project_adv_worker_db_watcher.parent_models import (ParentAccount, ParentDevice, ParentGeo, ParentSite,
+                                                           ParentBlock)
+from x_project_adv_worker_db_watcher.parent_models.choiceTypes import AccountType, ProjectType, BlockType
 from .adv_settings import AdvSetting
 from .block_settings import BlockSetting
 from .upsert import upsert
@@ -38,6 +39,9 @@ class Loader(object):
         logger.info('Starting Load Sites')
         self.load_sites(refresh_mat_view=False)
         logger.info('Stopping Load Sites')
+        logger.info('Starting Load Informer')
+        self.load_informer(refresh_mat_view=False)
+        logger.info('Stopping Load Informer')
         logger.info('Starting Reload Mat View')
         self.refresh_mat_view()
         logger.info('Stopping Reload Mat View')
@@ -167,6 +171,45 @@ class Loader(object):
             with transaction.manager:
                 upsert(session, Site, rows, cols)
             if kwargs.get('refresh_mat_view', True):
-                self.refresh_mat_view('mv_accounts')
+                self.refresh_mat_view('mv_site')
+        except Exception as e:
+            logger.error(exception_message(exc=str(e)))
+
+    def load_informer(self, id=None, *args, **kwargs):
+        try:
+            cols = ['id', 'guid', 'title', 'site', 'account', 'headerHtml', 'footerHtml', 'userCode', 'ad_style',
+                    'dynamic', 'place_branch', 'retargeting_branch', 'social_branch', 'rating_division',
+                    'rating_hard_limit', 'disable_filter']
+            rows = []
+            parent_session = self.parent_session()
+            blocks = parent_session.query(ParentBlock)
+            if id:
+                blocks = blocks.filter(ParentBlock.id == id)
+            rows = [[
+                x.id,
+                x.guid,
+                x.name,
+                x.id_site,
+                x.id_account,
+                x.headerHtml,
+                x.footerHtml,
+                x.userCode,
+                x.ad_style,
+                True if x.block_type == BlockType.adaptive else False,
+                x.place_branch,
+                x.retargeting_branch,
+                x.social_branch,
+                x.rating_division,
+                x.rating_hard_limit,
+                x.disable_filter
+
+            ] for x in blocks.all()]
+            parent_session.close()
+
+            session = self.session()
+            with transaction.manager:
+                upsert(session, Informer, rows, cols)
+            if kwargs.get('refresh_mat_view', True):
+                self.refresh_mat_view('mv_informer')
         except Exception as e:
             logger.error(exception_message(exc=str(e)))

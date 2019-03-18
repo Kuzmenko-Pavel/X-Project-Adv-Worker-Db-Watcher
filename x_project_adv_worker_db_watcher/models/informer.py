@@ -1,8 +1,6 @@
 from sqlalchemy import (Column, Integer, String, Boolean, SmallInteger, BigInteger, ForeignKey, select, Index, cast,
                         Float)
-from sqlalchemy.dialects.postgresql import insert, JSON
-from sqlalchemy.orm import relationship
-from zope.sqlalchemy import mark_changed
+from sqlalchemy.dialects.postgresql import JSONB
 
 from .__libs__.sql_view import create_view
 from .meta import Base
@@ -11,14 +9,14 @@ from .meta import Base
 class Informer(Base):
     __tablename__ = 'informer'
     id = Column(BigInteger, primary_key=True, unique=True)
-    guid = Column(String(length=64), unique=True, index=True)
+    guid = Column(String(length=64), unique=True)
     title = Column(String(length=100))
     site = Column(Integer, ForeignKey('site.id', ondelete='CASCADE'), nullable=False)
     account = Column(Integer, ForeignKey('accounts.id', ondelete='CASCADE'), nullable=False)
     headerHtml = Column(String, default='')
     footerHtml = Column(String, default='')
     userCode = Column(String, default='')
-    ad_style = Column(JSON, default=lambda: {})
+    ad_style = Column(JSONB, default=lambda: {})
     auto_reload = Column(SmallInteger, default=0)
     blinking = Column(SmallInteger, default=0)
     shake = Column(SmallInteger, default=0)
@@ -32,6 +30,7 @@ class Informer(Base):
     social_branch = Column(Boolean, default=True)
     rating_division = Column(Integer, default=1000)
     rating_hard_limit = Column(Boolean, default=False)
+    disable_filter = Column(Boolean, default=False)
     click_cost_min = Column(Float, default=0.1)
     click_cost_proportion = Column(Integer, default=50)
     click_cost_max = Column(Float, default=100)

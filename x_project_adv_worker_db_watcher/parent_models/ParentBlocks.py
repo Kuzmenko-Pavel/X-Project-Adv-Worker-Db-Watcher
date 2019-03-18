@@ -35,6 +35,8 @@ class ParentBlock(ParentBase):
     retargeting_branch = Column(Boolean)
     social_branch = Column(Boolean)
     rating_division = Column(Integer)
+    rating_hard_limit = Column(Boolean)
+    disable_filter = Column(Boolean)
 
     id_account = Column(ForeignKey('accounts.id'), index=True)
     id_site = Column(ForeignKey('sites.id'), index=True)
