@@ -25,5 +25,4 @@ class MVCampaign2Device(Base):
         is_mat=True)
 
 
-Index('ix_mv_campaign2device__id_cam__id_dev',
-      MVCampaign2Device.id_cam, MVCampaign2Device.id_dev, unique=True)
+Index('ix_mv_campaign2device__id_cam__id_dev', MVCampaign2Device.id_cam, MVCampaign2Device.id_dev, unique=True)

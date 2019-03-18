@@ -33,7 +33,6 @@ def get_engine(config):
 
 def check_table(engine):
     clear_table(engine)
-    load_default_data()
 
 
 def clear_table(engine):
@@ -46,26 +45,6 @@ def clear_table(engine):
         session.execute('TRUNCATE {} RESTART IDENTITY CASCADE;'.format(
             ', '.join([table.name for table in reversed(metadata.sorted_tables)])))
         mark_changed(session)
-        session.flush()
-    session.close()
-
-
-def load_default_data():
-    session = DBSession()
-    with transaction.manager:
-        default_device = Device(name='**')
-        session.add(default_device)
-
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        with open(dir_path + '/fixture/GEO', newline='') as geo_file:
-            geo_reader = csv.reader(geo_file, delimiter=',')
-            for row in geo_reader:
-                session.add(GeoLiteCity(country=row[0], region=row[1], city=row[2]))
-        with open(dir_path + '/fixture/GEO_NOT_FOUND', newline='') as geo_file:
-            geo_reader = csv.reader(geo_file, delimiter=',')
-            for row in geo_reader:
-                session.add(GeoLiteCity(country=row[0], region=row[1], city=row[2]))
-
         session.flush()
     session.close()
 

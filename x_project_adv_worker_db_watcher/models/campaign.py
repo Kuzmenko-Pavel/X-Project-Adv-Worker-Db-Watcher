@@ -12,8 +12,8 @@ from .meta import Base
 
 class Campaign(Base):
     __tablename__ = 'campaign'
-    id = Column(BigInteger, primary_key=True, unique=True)
-    guid = Column(String(length=64), index=True)
+    id = Column(BigInteger, primary_key=True)
+    guid = Column(String(length=64), index=True, unique=True)
     title = Column(String(length=100))
     social = Column(Boolean, default=False)
     showCoverage = Column(String(length=70))

@@ -1,5 +1,5 @@
 postgres:
-  uri: postgresql://ad_worker:ad_worker@localhost:5432/ad_worker_v2
+  uri: postgresql://ad_worker:ad_worker@localhost:5432/ad_worker_v2?client_encoding=utf8
 
 parent_postgres:
   uri: postgresql://x_project:x_project@localhost:5432/x_project?client_encoding=utf8
