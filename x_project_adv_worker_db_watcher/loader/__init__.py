@@ -6,10 +6,9 @@ from sqlalchemy import or_
 from zope.sqlalchemy import mark_changed
 
 from x_project_adv_worker_db_watcher.logger import *
-from x_project_adv_worker_db_watcher.models import (Accounts, Device, Informer, Campaign, Geo, GeoLiteCity,
-                                                    GeoLiteCity, Cron, Offer, Offer2Informer)
+from x_project_adv_worker_db_watcher.models import (Accounts, Device, GeoLiteCity, Site)
 from x_project_adv_worker_db_watcher.parent_models.choiceTypes import AccountType, ProjectType
-from x_project_adv_worker_db_watcher.parent_models import (ParentAccount, ParentDevice, ParentGeo)
+from x_project_adv_worker_db_watcher.parent_models import (ParentAccount, ParentDevice, ParentGeo, ParentSite)
 from .adv_settings import AdvSetting
 from .block_settings import BlockSetting
 from .upsert import upsert
@@ -150,22 +149,23 @@ class Loader(object):
 
     def load_sites(self, id=None, *args, **kwargs):
         try:
-            cols = ['id', 'guid', 'blocked']
+            cols = ['id', 'account', 'guid', 'name']
             rows = []
             parent_session = self.parent_session()
-            accounts = parent_session.query(ParentAccount)
+            sites = parent_session.query(ParentSite)
             if id:
-                accounts = accounts.filter(ParentAccount.id == id)
+                sites = sites.filter(ParentSite.id == id)
             rows = [[
                 x.id,
+                x.id_account,
                 x.guid,
-                False
-            ] for x in accounts.all()]
+                x.name,
+            ] for x in sites.all()]
             parent_session.close()
 
             session = self.session()
             with transaction.manager:
-                upsert(session, Accounts, rows, cols)
+                upsert(session, Site, rows, cols)
             if kwargs.get('refresh_mat_view', True):
                 self.refresh_mat_view('mv_accounts')
         except Exception as e:

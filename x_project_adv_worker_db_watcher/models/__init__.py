@@ -11,6 +11,7 @@ from zope.sqlalchemy import mark_changed
 from x_project_adv_worker_db_watcher.logger import *
 from .accounts import *
 from .campaign import *
+from .site import Site
 from .cron import Cron, MVCron
 from .device import Device, MVDevice
 from .geo_lite_city import GeoLiteCity, MVGeoLiteCity

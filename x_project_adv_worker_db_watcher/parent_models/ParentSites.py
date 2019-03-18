@@ -5,7 +5,7 @@ __author__ = 'kuzmenko-pavel'
 
 from sqlalchemy import Column, Integer, String, ForeignKey, BigInteger
 from sqlalchemy.orm import relationship
-from sqlalchemy_utils import URLType, ChoiceType
+from sqlalchemy_utils import URLType, ChoiceType, UUIDType
 
 from .choiceTypes import AMQPStatusType
 from .meta import ParentBase
@@ -15,6 +15,7 @@ class ParentSite(ParentBase):
     __tablename__ = 'sites'
     id = Column(BigInteger, primary_key=True)
     id_account = Column(ForeignKey('accounts.id'), index=True)
+    guid = Column(UUIDType(binary=True), index=True)
     url = Column(URLType)
     name = Column(String)
     amqp_status = Column(ChoiceType(AMQPStatusType, impl=Integer()))

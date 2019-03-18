@@ -13,7 +13,7 @@ class Informer(Base):
     id = Column(BigInteger, primary_key=True, unique=True)
     guid = Column(String(length=64), unique=True, index=True)
     title = Column(String(length=100))
-    # domain = Column(Integer, ForeignKey('domains.id', ondelete='CASCADE'), nullable=False)
+    site = Column(Integer, ForeignKey('site.id', ondelete='CASCADE'), nullable=False)
     account = Column(Integer, ForeignKey('accounts.id', ondelete='CASCADE'), nullable=False)
     headerHtml = Column(String, default='')
     footerHtml = Column(String, default='')
@@ -43,62 +43,6 @@ class Informer(Base):
         {'prefixes': ['UNLOGGED']}
     )
 
-    @classmethod
-    def upsert(cls, session, data):
-        acc = session.execute(
-            insert(cls.__table__).on_conflict_do_update(
-                index_elements=['id'],
-                set_=dict(
-                    guid=data['guid'],
-                    title=data['title'],
-                    # domain=data['domain'],
-                    account=data['account'],
-                    headerHtml=data['headerHtml'],
-                    footerHtml=data['footerHtml'],
-                    userCode=data['userCode'],
-                    ad_style=data['ad_style'],
-                    auto_reload=data['auto_reload'],
-                    blinking=data['blinking'],
-                    shake=data['shake'],
-                    dynamic=data['dynamic'],
-                    blinking_reload=data['blinking_reload'],
-                    shake_reload=data['shake_reload'],
-                    shake_mouse=data['shake_mouse'],
-                    html_notification=data['html_notification'],
-                    place_branch=data['place_branch'],
-                    retargeting_branch=data['retargeting_branch'],
-                    social_branch=data['social_branch'],
-                    rating_division=data['rating_division'],
-                    rating_hard_limit=data['rating_hard_limit']
-                )
-            ).values(dict(
-                id=data['id'],
-                guid=data['guid'],
-                title=data['title'],
-                # domain=data['domain'],
-                account=data['account'],
-                headerHtml=data['headerHtml'],
-                footerHtml=data['footerHtml'],
-                userCode=data['userCode'],
-                ad_style=data['ad_style'],
-                auto_reload=data['auto_reload'],
-                blinking=data['blinking'],
-                shake=data['shake'],
-                dynamic=data['dynamic'],
-                blinking_reload=data['blinking_reload'],
-                shake_reload=data['shake_reload'],
-                shake_mouse=data['shake_mouse'],
-                html_notification=data['html_notification'],
-                place_branch=data['place_branch'],
-                retargeting_branch=data['retargeting_branch'],
-                social_branch=data['social_branch'],
-                rating_division=data['rating_division'],
-                rating_hard_limit=data['rating_hard_limit']
-            )).returning()
-        )
-        mark_changed(session)
-        session.flush()
-
 
 class MVInformer(Base):
     __table__ = create_view(
@@ -108,8 +52,8 @@ class MVInformer(Base):
             Informer.id,
             Informer.guid,
             Informer.title,
-            # cast(Informer.domain, Integer).label('domain'),
-            cast(Informer.account, Integer).label('account'),
+            Informer.site,
+            Informer.account,
             Informer.headerHtml,
             Informer.footerHtml,
             Informer.userCode,
