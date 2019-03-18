@@ -2,17 +2,19 @@ from datetime import datetime
 
 import transaction
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT, ISOLATION_LEVEL_DEFAULT
-from sqlalchemy import or_
 from zope.sqlalchemy import mark_changed
 
 from x_project_adv_worker_db_watcher.logger import *
-from x_project_adv_worker_db_watcher.models import (Accounts, Device, GeoLiteCity, Site, Informer)
+from x_project_adv_worker_db_watcher.models import (Accounts, Device, GeoLiteCity, Site, Informer, Campaign)
 from x_project_adv_worker_db_watcher.parent_models import (ParentAccount, ParentDevice, ParentGeo, ParentSite,
-                                                           ParentBlock)
-from x_project_adv_worker_db_watcher.parent_models.choiceTypes import AccountType, ProjectType, BlockType
+                                                           ParentBlock, ParentCampaign)
+from x_project_adv_worker_db_watcher.parent_models.choiceTypes import (CampaignType, BlockType,
+                                                                       CampaignRemarketingType, CampaignStylingType,
+                                                                       CampaignRecommendedAlgorithmType)
 from .adv_settings import AdvSetting
 from .block_settings import BlockSetting
 from .upsert import upsert
+from .utils import thematic_range
 
 
 class Loader(object):
@@ -42,6 +44,9 @@ class Loader(object):
         logger.info('Starting Load Informer')
         self.load_informer(refresh_mat_view=False)
         logger.info('Stopping Load Informer')
+        logger.info('Starting Load Campaign')
+        self.load_campaign(refresh_mat_view=False)
+        logger.info('Stopping Load Campaign')
         logger.info('Starting Reload Mat View')
         self.refresh_mat_view()
         logger.info('Stopping Reload Mat View')
@@ -211,5 +216,178 @@ class Loader(object):
                 upsert(session, Informer, rows, cols)
             if kwargs.get('refresh_mat_view', True):
                 self.refresh_mat_view('mv_informer')
+        except Exception as e:
+            logger.error(exception_message(exc=str(e)))
+
+    def load_campaign(self, id=None, *args, **kwargs):
+        try:
+            offer_place = False
+            offer_social = False
+            offer_account_retargeting = False
+            offer_dynamic_retargeting = False
+            cols = ['id', 'guid', 'account', 'title', 'social', 'retargeting', 'capacity', 'retargeting_type',
+                    'styling', 'style_data', 'style_type', 'style_class', 'style_class_recommendet', 'recomendet_type',
+                    'recomendet_count', 'offer_by_campaign_unique', 'unique_impression_lot',
+                    'started_time', 'thematic',
+                    'thematic_range', 'thematics', 'thematic_day_new_auditory', 'thematic_day_off_new_auditory']
+            rows = []
+            camps = {}
+            parent_session = self.parent_session()
+            campaigns = parent_session.query(ParentCampaign)
+            if id:
+                campaigns = campaigns.filter(ParentCampaign.id == id)
+            for campaign in campaigns.all():
+                data = {}
+                data['id'] = campaign.id
+                data['guid'] = campaign.guid
+                data['account'] = campaign.id_account
+                data['title'] = campaign.name
+                data['social'] = False
+                data['retargeting'] = False
+                data['thematic'] = False
+                data['capacity'] = 1
+                data['offer_by_campaign_unique'] = campaign.lot_concurrency
+                data['unique_impression_lot'] = campaign.unique_impression_lot
+                data['recomendet_count'] = campaign.recommended_count
+                data['recomendet_type'] = 'all'
+                if campaign.recommended_algorithm == CampaignRecommendedAlgorithmType.descending:
+                    data['recomendet_type'] = 'min'
+                elif campaign.recommended_algorithm == CampaignRecommendedAlgorithmType.ascending:
+                    data['recomendet_type'] = 'max'
+
+                if campaign.campaign_type == CampaignType.remarketing:
+                    data['retargeting'] = True
+                elif campaign.campaign_type == CampaignType.thematic:
+                    data['thematic'] = True
+                elif campaign.campaign_type == CampaignType.social:
+                    data['social'] = True
+                data['retargeting_type'] = 'offer'
+                if campaign.remarketing_type == CampaignRemarketingType.account:
+                    data['retargeting_type'] = 'account'
+                data['styling'] = False
+                data['style_data'] = None
+                data['style_type'] = 'default'
+                if campaign.campaign_style == CampaignStylingType.common:
+                    data['style_type'] = 'Block'
+                elif campaign.campaign_style == CampaignStylingType.remarketing:
+                    data['style_type'] = 'RetBlock'
+                elif campaign.campaign_style == CampaignStylingType.recommended:
+                    data['style_type'] = 'RecBlock'
+                elif campaign.campaign_style == CampaignStylingType.style_1:
+                    data['style_type'] = 'Style_1'
+                elif campaign.campaign_style == CampaignStylingType.style_2:
+                    data['style_type'] = 'Style_2'
+                elif campaign.campaign_style == CampaignStylingType.style_3:
+                    data['style_type'] = 'Style_3'
+
+                data['style_class'] = 'Block'
+                data['style_class_recommendet'] = 'RecBlock'
+                data['capacity'] = 1
+                if data['style_type'] not in ['default', 'Block', 'RetBlock', 'RecBlock']:
+                    data['style_class'] = str(data['id'])
+                    data['style_data'] = {
+                        'img': campaign.campaign_style_logo,
+                        'head_title': campaign.campaign_style_head_title,
+                        'button_title': campaign.campaign_style_button_title}
+                    data['style_class_recommendet'] = str(data['id'])
+                    data['capacity'] = 2
+                    data['offer_by_campaign_unique'] = 1
+                    data['styling'] = True
+                elif data['style_type'] in ['Block', 'RetBlock', 'RecBlock']:
+                    data['style_class'] = data['style_type']
+                    data['style_class_recommendet'] = data['style_type']
+                else:
+                    if data['retargeting']:
+                        data['style_class'] = 'RetBlock'
+
+                data['started_time'] = datetime.now()
+                data['thematic_day_new_auditory'] = campaign.thematic_day_new_auditory
+                data['thematic_day_off_new_auditory'] = campaign.thematic_day_off_new_auditory
+                data['thematic_range'] = thematic_range(data['started_time'],
+                                                        data['thematic_day_new_auditory'],
+                                                        data['thematic_day_off_new_auditory'])
+                data['thematics'] = []
+
+                camps[str(campaign.id)] = data
+                if data['social']:
+                    offer_social = True
+                elif data['retargeting']:
+                    if data['retargeting_type'] == 'offer':
+                        offer_dynamic_retargeting = True
+                    else:
+                        offer_account_retargeting = True
+                else:
+                    offer_place = True
+
+            rows = [[
+                v['id'],
+                v['guid'],
+                v['account'],
+                v['title'],
+                v['social'],
+                v['retargeting'],
+                v['capacity'],
+                v['retargeting_type'],
+                v['styling'],
+                v['style_data'],
+                v['style_type'],
+                v['style_class'],
+                v['style_class_recommendet'],
+                v['recomendet_type'],
+                v['recomendet_count'],
+                v['offer_by_campaign_unique'],
+                v['unique_impression_lot'],
+                v['started_time'],
+                v['thematic'],
+                v['thematic_range'],
+                v['thematics'],
+                v['thematic_day_new_auditory'],
+                v['thematic_day_off_new_auditory'],
+            ] for k, v in camps.items()]
+            parent_session.close()
+
+            session = self.session()
+            with transaction.manager:
+                upsert(session, Campaign, rows, cols)
+
+            # ------------------------regionTargeting-----------------------
+            # ------------------------deviceTargeting-----------------------
+            # ------------------------cron-----------------------
+            for camp_id in camps:
+                self.load_offer(campaign_id=camp_id, **kwargs)
+            logger.info('Stop Load Offer')
+
+            logger.info('Starting Create Recommended Offer')
+            with transaction.manager:
+                session.flush()
+                conn = session.connection()
+                for camp_id in camps:
+                    conn.execute('SELECT create_recommended(%d);' % camp_id)
+                mark_changed(session)
+                session.flush()
+            logger.info('Stop Create Recommended Offer')
+
+            if kwargs.get('refresh_mat_view', True):
+                self.refresh_mat_view('mv_campaign')
+                self.refresh_mat_view('mv_geo')
+                self.refresh_mat_view('mv_campaign2device')
+                self.refresh_mat_view('mv_campaign2accounts_allowed')
+                self.refresh_mat_view('mv_campaign2accounts_disallowed')
+                self.refresh_mat_view('mv_campaign2categories')
+                self.refresh_mat_view('mv_campaign2domains_allowed')
+                self.refresh_mat_view('mv_campaign2domains_disallowed')
+                self.refresh_mat_view('mv_campaign2informer_allowed')
+                self.refresh_mat_view('mv_campaign2informer_disallowed')
+                self.refresh_mat_view('mv_cron')
+                if offer_place:
+                    self.refresh_mat_view('mv_offer_place')
+                    self.refresh_mat_view('mv_offer_place2informer')
+                if offer_social:
+                    self.refresh_mat_view('mv_offer_social')
+                    self.refresh_mat_view('mv_offer_social2informer')
+                if offer_account_retargeting:
+                    self.refresh_mat_view('mv_offer_account_retargeting')
+                if offer_dynamic_retargeting:
+                    self.refresh_mat_view('mv_offer_dynamic_retargeting')
         except Exception as e:
             logger.error(exception_message(exc=str(e)))

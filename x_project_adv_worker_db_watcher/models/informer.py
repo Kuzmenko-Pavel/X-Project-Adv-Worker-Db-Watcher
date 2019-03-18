@@ -1,6 +1,7 @@
 from sqlalchemy import (Column, Integer, String, Boolean, SmallInteger, BigInteger, ForeignKey, select, Index, cast,
                         Float)
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy_utils import UUIDType
 
 from .__libs__.sql_view import create_view
 from .meta import Base
@@ -9,10 +10,10 @@ from .meta import Base
 class Informer(Base):
     __tablename__ = 'informer'
     id = Column(BigInteger, primary_key=True, unique=True)
-    guid = Column(String(length=64), unique=True)
+    guid = Column(UUIDType(binary=True), unique=True)
     title = Column(String(length=100))
-    site = Column(Integer, ForeignKey('site.id', ondelete='CASCADE'), nullable=False)
-    account = Column(Integer, ForeignKey('accounts.id', ondelete='CASCADE'), nullable=False)
+    site = Column(BigInteger, ForeignKey('site.id', ondelete='CASCADE'), nullable=False)
+    account = Column(BigInteger, ForeignKey('accounts.id', ondelete='CASCADE'), nullable=False)
     headerHtml = Column(String, default='')
     footerHtml = Column(String, default='')
     userCode = Column(String, default='')

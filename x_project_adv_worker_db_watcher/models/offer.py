@@ -1,6 +1,7 @@
 __all__ = ['Offer', 'MVOfferPlace', 'MVOfferSocial', 'MVOfferAccountRetargeting', 'MVOfferDynamicRetargeting']
 from sqlalchemy import (Column, BigInteger, String, Float, ForeignKey, select, Index, cast)
 from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy_utils import UUIDType
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func, join, true, false, and_
 
@@ -12,7 +13,7 @@ from .meta import Base
 class Offer(Base):
     __tablename__ = 'offer'
     id = Column(BigInteger, primary_key=True, unique=True)
-    guid = Column(String(length=64))
+    guid = Column(UUIDType(binary=True), unique=True)
     retid = Column(String, default='')
     id_cam = Column(BigInteger, ForeignKey('campaign.id', ondelete='CASCADE'), nullable=False)
     images = Column(ARRAY(String), default=[])

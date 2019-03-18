@@ -68,6 +68,7 @@ class CampaignStylingType(Enum):
     recommended = 4
     style_1 = 5
     style_2 = 6
+    style_3 = 7
 
 
 class CampaignType(Enum):

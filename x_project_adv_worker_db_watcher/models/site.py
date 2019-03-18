@@ -1,4 +1,5 @@
 from sqlalchemy import (Column, BigInteger, String, ForeignKey, select, Index)
+from sqlalchemy_utils import UUIDType
 
 from .__libs__.sql_view import create_view
 from .meta import Base
@@ -8,7 +9,7 @@ class Site(Base):
     __tablename__ = 'site'
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     account = Column(BigInteger, ForeignKey('accounts.id', ondelete='CASCADE'), nullable=False)
-    guid = Column(String(length=64), index=True, unique=True)
+    guid = Column(UUIDType(binary=True), unique=True)
     name = Column(String(length=2048), unique=True)
 
     __table_args__ = (

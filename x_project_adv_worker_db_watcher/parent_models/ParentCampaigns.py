@@ -4,7 +4,7 @@ from __future__ import absolute_import, unicode_literals
 __author__ = 'kuzmenko-pavel'
 
 from sqlalchemy import Column, ForeignKey, String, Integer, Float, Boolean, SmallInteger, BigInteger
-from sqlalchemy_utils import ChoiceType
+from sqlalchemy_utils import UUIDType, ChoiceType
 from sqlalchemy.orm import relationship
 
 from .choiceTypes import (AMQPStatusType, CampaignType, CampaignStylingType,
@@ -15,6 +15,7 @@ from .meta import ParentBase
 class ParentCampaign(ParentBase):
     __tablename__ = 'campaigns'
     id = Column(BigInteger, primary_key=True)
+    guid = Column(UUIDType(binary=True))
     id_account = Column(ForeignKey('accounts.id'), index=True)
     name = Column(String)
     amqp_status = Column(ChoiceType(AMQPStatusType, impl=Integer()))
@@ -24,12 +25,14 @@ class ParentCampaign(ParentBase):
     campaign_style_head_title = Column(String)
     campaign_style_button_title = Column(String)
     utm = Column(Boolean)
-    auto_run = Column(Boolean)
+    utm_human_data = Column(Boolean)
     unique_impression_lot = Column(SmallInteger)
     lot_concurrency = Column(SmallInteger)
     remarketing_type = Column(ChoiceType(CampaignRemarketingType, impl=Integer()))
     recommended_algorithm = Column(ChoiceType(CampaignRecommendedAlgorithmType, impl=Integer()))
     recommended_count = Column(SmallInteger)
+    thematic_day_new_auditory = Column(SmallInteger)
+    thematic_day_off_new_auditory = Column(SmallInteger)
     click_cost = Column(Float)
     impression_cost = Column(Float)
     account = relationship('ParentAccount', back_populates='campaigns', foreign_keys='ParentCampaign.id_account',

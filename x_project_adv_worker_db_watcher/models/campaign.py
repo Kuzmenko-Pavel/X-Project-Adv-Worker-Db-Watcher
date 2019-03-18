@@ -1,9 +1,9 @@
 __all__ = ['Campaign', 'MVCampaign']
 from sqlalchemy import (Column, BigInteger, String, Boolean, SmallInteger, select, Index, func, join, text, table,
-                        DateTime)
-from sqlalchemy.dialects.postgresql import insert, JSON, ARRAY
+                        DateTime, ForeignKey)
+from sqlalchemy.dialects.postgresql import JSONB, ARRAY
+from sqlalchemy_utils import UUIDType
 from sqlalchemy.orm import relationship
-from zope.sqlalchemy import mark_changed
 from datetime import datetime
 
 from .__libs__.sql_view import create_view
@@ -13,18 +13,16 @@ from .meta import Base
 class Campaign(Base):
     __tablename__ = 'campaign'
     id = Column(BigInteger, primary_key=True)
-    guid = Column(String(length=64), index=True, unique=True)
+    guid = Column(UUIDType(binary=True), unique=True)
+    account = Column(BigInteger, ForeignKey('accounts.id', ondelete='CASCADE'), nullable=False)
     title = Column(String(length=100))
     social = Column(Boolean, default=False)
-    showCoverage = Column(String(length=70))
     retargeting = Column(Boolean, default=False)
     capacity = Column(SmallInteger, default=1)
-    cost = Column(SmallInteger, default=0)
-    gender = Column(SmallInteger, default=0)
     retargeting_type = Column(String(length=10), default='offer')
     brending = Column(Boolean, default=False)
     styling = Column(Boolean, default=False)
-    style_data = Column(JSON, default=lambda: {'img': '', 'head_title': '', 'button_title': ''})
+    style_data = Column(JSONB, default=lambda: {'img': '', 'head_title': '', 'button_title': ''})
     style_type = Column(String(length=50), default='default')
     style_class = Column(String(length=50), default='Block')
     style_class_recommendet = Column(String(length=50), default='RecBlock')
@@ -52,108 +50,6 @@ class Campaign(Base):
         {'prefixes': ['UNLOGGED']}
     )
 
-    @classmethod
-    def upsert(cls, session, data):
-        acc = session.execute(
-            insert(cls.__table__).on_conflict_do_update(
-                index_elements=['id'],
-                set_=dict(
-                    guid=data['guid'],
-                    title=data['title'],
-                    social=data['social'],
-                    showCoverage=data['showCoverage'],
-                    retargeting=data['retargeting'],
-                    capacity=data['capacity'],
-                    cost=data['cost'],
-                    gender=data['gender'],
-                    retargeting_type=data['retargeting_type'],
-                    brending=data['brending'],
-                    styling=data['styling'],
-                    style_data=data['style_data'],
-                    style_type=data['style_type'],
-                    style_class=data['style_class'],
-                    style_class_recommendet=data['style_class_recommendet'],
-                    recomendet_type=data['recomendet_type'],
-                    recomendet_count=data['recomendet_count'],
-                    account=data['account'],
-                    target=data['target'],
-                    offer_by_campaign_unique=data['offer_by_campaign_unique'],
-                    unique_impression_lot=data['unique_impression_lot'],
-                    html_notification=data['html_notification'],
-                    started_time=data['started_time'],
-                    thematic=data['thematic'],
-                    thematic_range=data['thematic'],
-                    thematics=data['thematics'],
-                    thematic_day_new_auditory=data['thematic_day_new_auditory'],
-                    thematic_day_off_new_auditory=data['thematic_day_off_new_auditory']
-                )
-            ).values(dict(
-                id=data['id'],
-                guid=data['guid'],
-                title=data['title'],
-                social=data['social'],
-                showCoverage=data['showCoverage'],
-                retargeting=data['retargeting'],
-                capacity=data['capacity'],
-                cost=data['cost'],
-                gender=data['gender'],
-                retargeting_type=data['retargeting_type'],
-                brending=data['brending'],
-                styling=data['styling'],
-                style_data=data['style_data'],
-                style_type=data['style_type'],
-                style_class=data['style_class'],
-                style_class_recommendet=data['style_class_recommendet'],
-                recomendet_type=data['recomendet_type'],
-                recomendet_count=data['recomendet_count'],
-                account=data['account'],
-                target=data['target'],
-                offer_by_campaign_unique=data['offer_by_campaign_unique'],
-                unique_impression_lot=data['unique_impression_lot'],
-                html_notification=data['html_notification'],
-                started_time=data['started_time'],
-                thematic=data['thematic'],
-                thematic_range=data['thematic'],
-                thematics=data['thematics'],
-                thematic_day_new_auditory=data['thematic_day_new_auditory'],
-                thematic_day_off_new_auditory=data['thematic_day_off_new_auditory']
-
-            )).returning()
-        )
-        mark_changed(session)
-        session.flush()
-        return dict(
-            id=acc.inserted_primary_key[0],
-            guid=data['guid'],
-            title=data['title'],
-            social=data['social'],
-            showCoverage=data['showCoverage'],
-            retargeting=data['retargeting'],
-            capacity=data['capacity'],
-            cost=data['cost'],
-            gender=data['gender'],
-            retargeting_type=data['retargeting_type'],
-            brending=data['brending'],
-            styling=data['styling'],
-            style_data=data['style_data'],
-            style_type=data['style_type'],
-            style_class=data['style_class'],
-            style_class_recommendet=data['style_class_recommendet'],
-            recomendet_type=data['recomendet_type'],
-            recomendet_count=data['recomendet_count'],
-            account=data['account'],
-            target=data['target'],
-            offer_by_campaign_unique=data['offer_by_campaign_unique'],
-            unique_impression_lot=data['unique_impression_lot'],
-            html_notification=data['html_notification'],
-            started_time=data['started_time'],
-            thematic=data['thematic'],
-            thematic_range=data['thematic'],
-            thematics=data['thematics'],
-            thematic_day_new_auditory=data['thematic_day_new_auditory'],
-            thematic_day_off_new_auditory=data['thematic_day_off_new_auditory']
-        )
-
 
 class MVCampaign(Base):
     __table__ = create_view(
@@ -163,11 +59,10 @@ class MVCampaign(Base):
             func.count('offer.id').over(partition_by=Campaign.id).label('offer_count'),
             Campaign.id,
             Campaign.guid,
+            Campaign.account,
             Campaign.social,
             Campaign.retargeting,
             Campaign.capacity,
-            Campaign.cost,
-            Campaign.gender,
             Campaign.retargeting_type,
             Campaign.brending,
             Campaign.styling,
@@ -177,8 +72,6 @@ class MVCampaign(Base):
             Campaign.style_class_recommendet,
             Campaign.recomendet_type,
             Campaign.recomendet_count,
-            Campaign.account,
-            Campaign.target,
             Campaign.offer_by_campaign_unique,
             Campaign.unique_impression_lot,
             Campaign.html_notification,
