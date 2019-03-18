@@ -5,9 +5,9 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT, ISOLATION_LEVEL_DEFA
 from zope.sqlalchemy import mark_changed
 
 from x_project_adv_worker_db_watcher.logger import *
-from x_project_adv_worker_db_watcher.models import (Accounts, Device, GeoLiteCity, Site, Informer, Campaign)
+from x_project_adv_worker_db_watcher.models import (Accounts, Device, GeoLiteCity, Site, Informer, Campaign, Offer)
 from x_project_adv_worker_db_watcher.parent_models import (ParentAccount, ParentDevice, ParentGeo, ParentSite,
-                                                           ParentBlock, ParentCampaign)
+                                                           ParentBlock, ParentCampaign, ParentOffer)
 from x_project_adv_worker_db_watcher.parent_models.choiceTypes import (CampaignType, BlockType,
                                                                        CampaignRemarketingType, CampaignStylingType,
                                                                        CampaignRecommendedAlgorithmType)
@@ -362,7 +362,7 @@ class Loader(object):
                 session.flush()
                 conn = session.connection()
                 for camp_id in camps:
-                    conn.execute('SELECT create_recommended(%d);' % camp_id)
+                    conn.execute('SELECT create_recommended(%s);' % camp_id)
                 mark_changed(session)
                 session.flush()
             logger.info('Stop Create Recommended Offer')
@@ -389,5 +389,41 @@ class Loader(object):
                     self.refresh_mat_view('mv_offer_account_retargeting')
                 if offer_dynamic_retargeting:
                     self.refresh_mat_view('mv_offer_dynamic_retargeting')
+        except Exception as e:
+            logger.error(exception_message(exc=str(e)))
+
+    def load_offer(self, id=None, campaign_id=None, *args, **kwargs):
+        try:
+            from uuid import uuid4
+            limit = self.config.get('offer', {}).get('limit', 1000)
+            cols = ['id', 'guid', 'retid', 'id_cam', 'description', 'url', 'title', 'price']
+            rows = []
+            parent_session = self.parent_session()
+            offers = parent_session.query(ParentOffer)
+            if campaign_id:
+                offers = offers.filter(ParentOffer.id_campaign == campaign_id)
+            if id:
+                offers = offers.filter(ParentOffer.id == id)
+            for x in offers.limit(limit).all():
+                print(x.id_campaign)
+                rows.append(
+                    [
+                        x.id,
+                        uuid4(),
+                        x.body.id_retargeting,
+                        x.id_campaign,
+                        x.body.description,
+                        x.body.url,
+                        x.body.title,
+                        x.body.price,
+                    ]
+                )
+            parent_session.close()
+
+            session = self.session()
+            with transaction.manager:
+                upsert(session, Offer, rows, cols)
+            if kwargs.get('refresh_mat_view', True):
+                self.refresh_mat_view('mv_informer')
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
