@@ -363,7 +363,7 @@ class Loader(object):
                 session = self.session()
                 for d, t in v['cron'].items():
                     id_cam = int(k)
-                    day = int(v)
+                    day = int(d)
                     hour = to_hour(t[0])
                     min = to_min(t[0])
                     c = Cron(id_cam=id_cam, day=day, hour=hour, min=min, start_stop=True)
