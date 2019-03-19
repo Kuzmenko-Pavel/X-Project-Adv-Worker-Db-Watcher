@@ -58,7 +58,7 @@ create_function(metadata, {
                 recommended = array_agg(offer_sub.id)
                                     from ( select offer.id
                                             FROM public.offer
-                                            WHERE offer.retid = ANY (recommended_id) and offer.campaign = offer_id_cam
+                                            WHERE offer.retid = ANY (recommended_id) and offer.id_cam = offer_id_cam
                                             and offer.id != offer_id
                                             ORDER BY offer.rating DESC LIMIT 10
                                     ) as offer_sub;     
@@ -66,7 +66,7 @@ create_function(metadata, {
                 recommended = array_agg(offer_sub.id)
                                     from ( select offer.id
                                             FROM public.offer
-                                            WHERE offer.campaign = offer_id_cam and offer.id != offer_id
+                                            WHERE offer.id_cam = offer_id_cam and offer.id != offer_id
                                             ORDER BY offer.rating desc, RANDOM() LIMIT 10
                                         ) as offer_sub;
             END IF;
@@ -95,7 +95,7 @@ create_function(metadata, {
                         offer_sub.id,
                         offer_sub.recommended_ids
                       FROM offer AS offer_sub
-                      WHERE offer_sub.campaign = offer_id_cam) AS subquery
+                      WHERE offer_sub.id_cam = offer_id_cam) AS subquery
                 WHERE offer.id = subquery.id;
             END IF;
             RETURN 1;

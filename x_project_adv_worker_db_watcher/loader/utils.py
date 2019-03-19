@@ -246,3 +246,11 @@ def ad_style(data=None):
             logger.error(exception_message(exc=str(e), data=data))
             raise
     return adv_data
+
+
+def to_hour(t):
+    return t / 60
+
+
+def to_min(t):
+    return t % 60

@@ -5,14 +5,15 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT, ISOLATION_LEVEL_DEFA
 from zope.sqlalchemy import mark_changed
 
 from x_project_adv_worker_db_watcher.logger import *
-from x_project_adv_worker_db_watcher.models import (Accounts, Device, GeoLiteCity, Site, Informer, Campaign, Offer)
+from x_project_adv_worker_db_watcher.models import (Accounts, Device, GeoLiteCity, Site, Informer, Campaign, Offer,
+                                                    Cron)
 from x_project_adv_worker_db_watcher.parent_models import (ParentAccount, ParentDevice, ParentGeo, ParentSite,
                                                            ParentBlock, ParentCampaign, ParentOffer)
 from x_project_adv_worker_db_watcher.parent_models.choiceTypes import (CampaignType, BlockType,
                                                                        CampaignRemarketingType, CampaignStylingType,
                                                                        CampaignRecommendedAlgorithmType)
 from .upsert import upsert
-from .utils import thematic_range, trim_by_words, ad_style
+from .utils import thematic_range, trim_by_words, ad_style, to_hour, to_min
 
 
 class Loader(object):
@@ -301,6 +302,16 @@ class Loader(object):
                                                         data['thematic_day_off_new_auditory'])
                 data['thematics'] = []
 
+                data['cron'] = {
+                    '1': campaign.cron.monday,
+                    '2': campaign.cron.tuesday,
+                    '3': campaign.cron.wednesday,
+                    '4': campaign.cron.thursday,
+                    '5': campaign.cron.friday,
+                    '6': campaign.cron.saturday,
+                    '7': campaign.cron.sunday,
+                }
+
                 camps[str(campaign.id)] = data
                 if data['social']:
                     offer_social = True
@@ -348,6 +359,30 @@ class Loader(object):
             # ------------------------regionTargeting-----------------------
             # ------------------------deviceTargeting-----------------------
             # ------------------------cron-----------------------
+            for k, v in camps.items():
+                session = self.session()
+                for d, t in v['cron'].items():
+                    id_cam = int(k)
+                    day = int(v)
+                    hour = to_hour(t[0])
+                    min = to_min(t[0])
+                    c = Cron(id_cam=id_cam, day=day, hour=hour, min=min, start_stop=True)
+                    session.add(c)
+                    hour = to_hour(t[1])
+                    min = to_min(t[1])
+                    c = Cron(id_cam=id_cam, day=day, hour=hour, min=min, start_stop=False)
+                    session.add(c)
+                    hour = to_hour(t[2])
+                    min = to_min(t[2])
+                    c = Cron(id_cam=id_cam, day=day, hour=hour, min=min, start_stop=True)
+                    session.add(c)
+                    hour = to_hour(t[3])
+                    min = to_min(t[3])
+                    c = Cron(id_cam=id_cam, day=day, hour=hour, min=min, start_stop=False)
+                    session.add(c)
+                session.flush()
+                session.close()
+
             logger.info('Start Load Offer')
             for camp_id in camps:
                 self.load_offer(id_campaign=camp_id, **kwargs)
@@ -392,7 +427,7 @@ class Loader(object):
     def load_offer(self, id=None, id_campaign=None, *args, **kwargs):
         try:
             limit = self.config.get('offer', {}).get('limit', 1000)
-            cols = ['id', 'guid', 'campaign',
+            cols = ['id', 'guid', 'id_cam',
                     'retid', 'description', 'url', 'title', 'price', 'rating',
                     'images', 'recommended_ids', 'recommended'
                     ]

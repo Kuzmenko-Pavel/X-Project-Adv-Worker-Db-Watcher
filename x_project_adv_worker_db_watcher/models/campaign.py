@@ -1,10 +1,11 @@
 __all__ = ['Campaign', 'MVCampaign']
+from datetime import datetime
+
 from sqlalchemy import (Column, BigInteger, String, Boolean, SmallInteger, select, Index, func, join, text, table,
                         DateTime, ForeignKey)
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY
-from sqlalchemy_utils import UUIDType
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from sqlalchemy_utils import UUIDType
 
 from .__libs__.sql_view import create_view
 from .meta import Base
@@ -78,7 +79,7 @@ class MVCampaign(Base):
             Campaign.thematics,
             Campaign.thematic_range
         ], distinct=Campaign.id).select_from(
-            join(Campaign, table('offer'), Campaign.id == text('offer.campaign'), isouter=True)
+            join(Campaign, table('offer'), Campaign.id == text('offer.id_cam'), isouter=True)
         )
         ,
         is_mat=True)
