@@ -55,6 +55,7 @@ class Loader(object):
         logger.info('Stopping VACUUM')
 
     def refresh_mat_view(self, name=None):
+        return
         session = self.session()
         with transaction.manager:
             session.flush()
@@ -349,15 +350,19 @@ class Loader(object):
             session = self.session()
             with transaction.manager:
                 upsert(session, Campaign, rows, cols)
+            session.flush()
+            session.close()
 
             # ------------------------regionTargeting-----------------------
             # ------------------------deviceTargeting-----------------------
             # ------------------------cron-----------------------
+            logger.info('Start Load Offer')
             for camp_id in camps:
-                self.load_offer(campaign_id=camp_id, **kwargs)
+                self.load_offer(id_campaign=camp_id, **kwargs)
             logger.info('Stop Load Offer')
 
             logger.info('Starting Create Recommended Offer')
+            session = self.session()
             with transaction.manager:
                 session.flush()
                 conn = session.connection()
@@ -392,30 +397,31 @@ class Loader(object):
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
 
-    def load_offer(self, id=None, campaign_id=None, *args, **kwargs):
+    def load_offer(self, id=None, id_campaign=None, *args, **kwargs):
         try:
+            print('load_offer', id_campaign)
             from uuid import uuid4
             limit = self.config.get('offer', {}).get('limit', 1000)
-            cols = ['id', 'guid', 'retid', 'id_cam', 'description', 'url', 'title', 'price']
+            cols = ['id', 'guid', 'campaign', 'retid', 'description', 'url', 'title', 'price', 'rating']
             rows = []
             parent_session = self.parent_session()
             offers = parent_session.query(ParentOffer)
-            if campaign_id:
-                offers = offers.filter(ParentOffer.id_campaign == campaign_id)
+            if id_campaign:
+                offers = offers.filter(ParentOffer.id_campaign == id_campaign)
             if id:
                 offers = offers.filter(ParentOffer.id == id)
             for x in offers.limit(limit).all():
-                print(x.id_campaign)
                 rows.append(
                     [
                         x.id,
                         uuid4(),
-                        x.body.id_retargeting,
                         x.id_campaign,
+                        x.body.id_retargeting,
                         x.body.description,
                         x.body.url,
                         x.body.title,
                         x.body.price,
+                        0
                     ]
                 )
             parent_session.close()

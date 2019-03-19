@@ -27,7 +27,7 @@ off_place = select([
 ]).select_from(join(
     Offer,
     Campaign,
-    and_(Offer.id_cam == Campaign.id, Campaign.retargeting == false(), Campaign.social == false())
+    and_(Offer.campaign == Campaign.id, Campaign.retargeting == false(), Campaign.social == false())
 )
 ).alias('off_social')
 
@@ -47,7 +47,7 @@ off_social = select([
 ]).select_from(join(
     Offer,
     Campaign,
-    and_(Offer.id_cam == Campaign.id, Campaign.retargeting == false(), Campaign.social == true())
+    and_(Offer.campaign == Campaign.id, Campaign.retargeting == false(), Campaign.social == true())
 )
 ).alias('off_social')
 

@@ -44,7 +44,6 @@ class Campaign(Base):
     geos = relationship('GeoLiteCity', secondary='geo', back_populates="campaigns", passive_deletes=True)
     devices = relationship('Device', secondary='campaign2device', back_populates="campaigns", passive_deletes=True)
     cron = relationship('Cron', back_populates="campaign", passive_deletes=True)
-    offers = relationship('Offer', back_populates="campaigns", passive_deletes=True)
 
     __table_args__ = (
         {'prefixes': ['UNLOGGED']}
@@ -79,7 +78,7 @@ class MVCampaign(Base):
             Campaign.thematics,
             Campaign.thematic_range
         ], distinct=Campaign.id).select_from(
-            join(Campaign, table('offer'), Campaign.id == text('offer.id_cam'), isouter=True)
+            join(Campaign, table('offer'), Campaign.id == text('offer.campaign'), isouter=True)
         )
         ,
         is_mat=True)

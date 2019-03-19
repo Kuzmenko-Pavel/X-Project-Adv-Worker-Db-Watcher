@@ -37,7 +37,6 @@ def upsert(session, model, rows, update_cols):
 def _upsert(session, model, rows, update_cols):
     table = model.__table__
     stmt = insert(table).values([dict(zip(update_cols, x)) for x in rows])
-
     update_cols = [c.name for c in table.c
                    if c not in list(table.primary_key.columns)
                    and c.name in update_cols]

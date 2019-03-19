@@ -21,4 +21,4 @@ class ParentOfferBody(ParentBase):
     currency = Column(String)
     url = Column(URLType)
     recommended = Column(ARRAY(String))
-    id_retargeting = Column(String, index=True)
+    id_retargeting = Column(String)
