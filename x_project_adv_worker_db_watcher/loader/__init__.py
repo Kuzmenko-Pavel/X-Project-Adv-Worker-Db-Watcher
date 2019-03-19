@@ -11,10 +11,8 @@ from x_project_adv_worker_db_watcher.parent_models import (ParentAccount, Parent
 from x_project_adv_worker_db_watcher.parent_models.choiceTypes import (CampaignType, BlockType,
                                                                        CampaignRemarketingType, CampaignStylingType,
                                                                        CampaignRecommendedAlgorithmType)
-from .adv_settings import AdvSetting
-from .block_settings import BlockSetting
 from .upsert import upsert
-from .utils import thematic_range, trim_by_words
+from .utils import thematic_range, trim_by_words, ad_style
 
 
 class Loader(object):
@@ -195,7 +193,7 @@ class Loader(object):
                 x.headerHtml,
                 x.footerHtml,
                 x.userCode,
-                x.ad_style,
+                None if x.block_type == BlockType.adaptive else ad_style(x.ad_style),
                 True if x.block_type == BlockType.adaptive else False,
                 x.place_branch,
                 x.retargeting_branch,
