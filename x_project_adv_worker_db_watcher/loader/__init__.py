@@ -29,21 +29,21 @@ class Loader(object):
         logger.info('Starting VACUUM')
         self.vacuum()
         logger.info('Stopping VACUUM')
-        # logger.info('Starting load Device')
-        # self.load_device(refresh_mat_view=False)
-        # logger.info('Stopping load Device')
-        # logger.info('Starting load Geo')
-        # self.load_geo(refresh_mat_view=False)
-        # logger.info('Stopping load Geo')
+        logger.info('Starting load Device')
+        self.load_device(refresh_mat_view=False)
+        logger.info('Stopping load Device')
+        logger.info('Starting load Geo')
+        self.load_geo(refresh_mat_view=False)
+        logger.info('Stopping load Geo')
         logger.info('Starting Load Account')
         self.load_account(refresh_mat_view=False)
         logger.info('Stopping Load Account')
-        # logger.info('Starting Load Sites')
-        # self.load_sites(refresh_mat_view=False)
-        # logger.info('Stopping Load Sites')
-        # logger.info('Starting Load Informer')
-        # self.load_informer(refresh_mat_view=False)
-        # logger.info('Stopping Load Informer')
+        logger.info('Starting Load Sites')
+        self.load_sites(refresh_mat_view=False)
+        logger.info('Stopping Load Sites')
+        logger.info('Starting Load Informer')
+        self.load_informer(refresh_mat_view=False)
+        logger.info('Stopping Load Informer')
         logger.info('Starting Load Campaign')
         self.load_campaign(refresh_mat_view=False)
         logger.info('Stopping Load Campaign')
@@ -55,7 +55,6 @@ class Loader(object):
         logger.info('Stopping VACUUM')
 
     def refresh_mat_view(self, name=None):
-        return
         session = self.session()
         with transaction.manager:
             session.flush()
@@ -114,7 +113,6 @@ class Loader(object):
     def load_geo(self, id=None, *args, **kwargs):
         try:
             cols = ['id', 'country', 'city']
-            rows = []
             parent_session = self.parent_session()
             geos = parent_session.query(ParentGeo)
             if id:
@@ -137,7 +135,6 @@ class Loader(object):
     def load_account(self, id=None, *args, **kwargs):
         try:
             cols = ['id', 'guid', 'blocked']
-            rows = []
             parent_session = self.parent_session()
             accounts = parent_session.query(ParentAccount)
             if id:
@@ -160,7 +157,6 @@ class Loader(object):
     def load_sites(self, id=None, *args, **kwargs):
         try:
             cols = ['id', 'account', 'guid', 'name']
-            rows = []
             parent_session = self.parent_session()
             sites = parent_session.query(ParentSite)
             if id:
@@ -186,7 +182,6 @@ class Loader(object):
             cols = ['id', 'guid', 'title', 'site', 'account', 'headerHtml', 'footerHtml', 'userCode', 'ad_style',
                     'dynamic', 'place_branch', 'retargeting_branch', 'social_branch', 'rating_division',
                     'rating_hard_limit', 'disable_filter']
-            rows = []
             parent_session = self.parent_session()
             blocks = parent_session.query(ParentBlock)
             if id:
@@ -231,7 +226,6 @@ class Loader(object):
                     'recomendet_count', 'offer_by_campaign_unique', 'unique_impression_lot',
                     'started_time', 'thematic',
                     'thematic_range', 'thematics', 'thematic_day_new_auditory', 'thematic_day_off_new_auditory']
-            rows = []
             camps = {}
             parent_session = self.parent_session()
             campaigns = parent_session.query(ParentCampaign)
@@ -401,33 +395,30 @@ class Loader(object):
         try:
             limit = self.config.get('offer', {}).get('limit', 1000)
             cols = ['id', 'guid', 'campaign',
-                    # 'retid', 'description', 'url', 'title', 'price', 'rating',
-                    # 'images', 'recommended_ids', 'recommended'
+                    'retid', 'description', 'url', 'title', 'price', 'rating',
+                    'images', 'recommended_ids', 'recommended'
                     ]
-            rows = []
             parent_session = self.parent_session()
             offers = parent_session.query(ParentOffer)
             if id_campaign:
                 offers = offers.filter(ParentOffer.id_campaign == id_campaign)
             if id:
                 offers = offers.filter(ParentOffer.id == id)
-            for x in offers.limit(limit).all():
-                rows.append(
-                    [
-                        x.id,
-                        x.guid,
-                        x.id_campaign,
-                        # x.body.id_retargeting,
-                        # trim_by_words(x.body.description, 70),
-                        # x.body.url,
-                        # trim_by_words(x.body.title, 35),
-                        # x.body.price,
-                        # 0,
-                        # [],
-                        # [],
-                        # []
-                    ]
-                )
+
+            rows = [[
+                x.id,
+                x.guid,
+                x.id_campaign,
+                x.body.id_retargeting,
+                trim_by_words(x.body.description, 70),
+                x.body.url,
+                trim_by_words(x.body.title, 35),
+                x.body.price,
+                0,
+                [],
+                [],
+                []
+            ] for x in offers.limit(limit).all()]
             parent_session.close()
 
             if rows:
