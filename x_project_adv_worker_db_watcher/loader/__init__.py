@@ -29,21 +29,21 @@ class Loader(object):
         logger.info('Starting VACUUM')
         self.vacuum()
         logger.info('Stopping VACUUM')
-        logger.info('Starting load Device')
-        self.load_device(refresh_mat_view=False)
-        logger.info('Stopping load Device')
-        logger.info('Starting load Geo')
-        self.load_geo(refresh_mat_view=False)
-        logger.info('Stopping load Geo')
+        # logger.info('Starting load Device')
+        # self.load_device(refresh_mat_view=False)
+        # logger.info('Stopping load Device')
+        # logger.info('Starting load Geo')
+        # self.load_geo(refresh_mat_view=False)
+        # logger.info('Stopping load Geo')
         logger.info('Starting Load Account')
         self.load_account(refresh_mat_view=False)
         logger.info('Stopping Load Account')
-        logger.info('Starting Load Sites')
-        self.load_sites(refresh_mat_view=False)
-        logger.info('Stopping Load Sites')
-        logger.info('Starting Load Informer')
-        self.load_informer(refresh_mat_view=False)
-        logger.info('Stopping Load Informer')
+        # logger.info('Starting Load Sites')
+        # self.load_sites(refresh_mat_view=False)
+        # logger.info('Stopping Load Sites')
+        # logger.info('Starting Load Informer')
+        # self.load_informer(refresh_mat_view=False)
+        # logger.info('Stopping Load Informer')
         logger.info('Starting Load Campaign')
         self.load_campaign(refresh_mat_view=False)
         logger.info('Stopping Load Campaign')
@@ -400,7 +400,10 @@ class Loader(object):
     def load_offer(self, id=None, id_campaign=None, *args, **kwargs):
         try:
             limit = self.config.get('offer', {}).get('limit', 1000)
-            cols = ['id', 'guid', 'campaign', 'retid', 'description', 'url', 'title', 'price', 'rating']
+            cols = ['id', 'guid', 'campaign',
+                    # 'retid', 'description', 'url', 'title', 'price', 'rating',
+                    # 'images', 'recommended_ids', 'recommended'
+                    ]
             rows = []
             parent_session = self.parent_session()
             offers = parent_session.query(ParentOffer)
@@ -414,19 +417,24 @@ class Loader(object):
                         x.id,
                         x.guid,
                         x.id_campaign,
-                        x.body.id_retargeting,
-                        trim_by_words(x.body.description, 70),
-                        x.body.url,
-                        trim_by_words(x.body.title, 35),
-                        x.body.price,
-                        0
+                        # x.body.id_retargeting,
+                        # trim_by_words(x.body.description, 70),
+                        # x.body.url,
+                        # trim_by_words(x.body.title, 35),
+                        # x.body.price,
+                        # 0,
+                        # [],
+                        # [],
+                        # []
                     ]
                 )
             parent_session.close()
 
-            session = self.session()
-            with transaction.manager:
-                upsert(session, Offer, rows, cols)
+            if rows:
+                session = self.session()
+                with transaction.manager:
+                    upsert(session, Offer, rows, cols)
+                session.close()
             if kwargs.get('refresh_mat_view', True):
                 self.refresh_mat_view('mv_informer')
         except Exception as e:

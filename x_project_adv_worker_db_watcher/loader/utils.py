@@ -14,9 +14,9 @@ def thematic_range(started_time, thematic_day_new_auditory, thematic_day_off_new
 
 
 def trim_by_words(text, max_len=None):
-    if max_len is None:
-        return text
-    if len(text) <= max_len:
+    if text is None:
+        return ''
+    if max_len is None or len(text) <= max_len:
         return text
     trimmed_simple = text[:max_len]
     trimmed_by_words = trimmed_simple.rpartition(' ')[0]

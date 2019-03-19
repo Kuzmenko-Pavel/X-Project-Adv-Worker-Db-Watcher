@@ -15,6 +15,8 @@ def split_list(a_list):
 
 
 def upsert(session, model, rows, update_cols):
+    if not rows or not update_cols:
+        return
     try:
         with session.begin_nested():
             _upsert(session, model, rows, update_cols)
@@ -35,7 +37,8 @@ def upsert(session, model, rows, update_cols):
 
 def _upsert(session, model, rows, update_cols):
     table = model.__table__
-    stmt = insert(table).values([dict(zip(update_cols, x)) for x in rows])
+    values = [dict(zip(update_cols, x)) for x in rows]
+    stmt = insert(table).values(values)
     update_cols = [c.name for c in table.c
                    if c not in list(table.primary_key.columns)
                    and c.name in update_cols]
