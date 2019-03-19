@@ -4,7 +4,6 @@ from datetime import datetime
 from sqlalchemy import (Column, BigInteger, String, Boolean, SmallInteger, select, Index, func, join, text, table,
                         DateTime, ForeignKey)
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY
-from sqlalchemy.orm import relationship
 from sqlalchemy_utils import UUIDType
 
 from .__libs__.sql_view import create_view
@@ -42,9 +41,6 @@ class Campaign(Base):
     thematics = Column(ARRAY(String), default=[])
     thematic_day_new_auditory = Column(SmallInteger, default=10)
     thematic_day_off_new_auditory = Column(SmallInteger, default=10)
-    geos = relationship('GeoLiteCity', secondary='geo', back_populates="campaigns", passive_deletes=True)
-    devices = relationship('Device', secondary='campaign2device', back_populates="campaigns", passive_deletes=True)
-    cron = relationship('Cron', back_populates="campaign", passive_deletes=True)
 
     __table_args__ = (
         {'prefixes': ['UNLOGGED']}

@@ -1,5 +1,4 @@
 from sqlalchemy import (Column, Integer, String, UniqueConstraint, select, Index)
-from sqlalchemy.orm import relationship
 
 from .__libs__.sql_view import create_view
 from .meta import Base
@@ -10,7 +9,6 @@ class GeoLiteCity(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     country = Column(String(length=9))
     city = Column(String(length=50))
-    campaigns = relationship('Campaign', secondary='geo', back_populates="geos", passive_deletes=True)
     __table_args__ = (
         UniqueConstraint('country', 'city', name='country_city_uc'),
         {'prefixes': ['UNLOGGED']}

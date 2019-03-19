@@ -1,5 +1,4 @@
 from sqlalchemy import Column, Integer, String, select, Index
-from sqlalchemy.orm import relationship
 
 from .__libs__.sql_view import create_view
 from .meta import Base
@@ -9,7 +8,6 @@ class Device(Base):
     __tablename__ = 'device'
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(length=2), unique=True)
-    campaigns = relationship('Campaign', secondary='campaign2device', back_populates="devices", passive_deletes=True)
 
     __table_args__ = (
         {'prefixes': ['UNLOGGED']}

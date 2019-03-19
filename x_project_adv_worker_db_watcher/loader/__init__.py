@@ -388,25 +388,24 @@ class Loader(object):
                 for k, v in camps.items():
                     session = self.session()
                     with transaction.manager:
+                        cols = ['id_cam', 'day', 'hour', 'min', 'range', 'start_stop']
+                        rows = []
                         for d, t in v['cron'].items():
                             id_cam = int(k)
                             day = int(d)
                             hour = to_hour(t[0])
                             min = to_min(t[0])
-                            c = Cron(id_cam=id_cam, day=day, hour=hour, min=min, start_stop=True)
-                            session.add(c)
+                            rows.append([id_cam, day, hour, min, 1, True])
                             hour = to_hour(t[1])
                             min = to_min(t[1])
-                            c = Cron(id_cam=id_cam, day=day, hour=hour, min=min, start_stop=False)
-                            session.add(c)
+                            rows.append([id_cam, day, hour, min, 1, False])
                             hour = to_hour(t[2])
                             min = to_min(t[2])
-                            c = Cron(id_cam=id_cam, day=day, hour=hour, min=min, start_stop=True)
-                            session.add(c)
+                            rows.append([id_cam, day, hour, min, 2, True])
                             hour = to_hour(t[3])
                             min = to_min(t[3])
-                            c = Cron(id_cam=id_cam, day=day, hour=hour, min=min, start_stop=False)
-                            session.add(c)
+                            rows.append([id_cam, day, hour, min, 2, False])
+                        upsert(session, Cron, rows, cols)
                     session.flush()
                     session.close()
             except Exception as e:
@@ -482,7 +481,7 @@ class Loader(object):
                 x.body.url,
                 trim_by_words(x.body.title, 35),
                 x.body.price,
-                0,
+                22500,
                 [],
                 [],
                 []
