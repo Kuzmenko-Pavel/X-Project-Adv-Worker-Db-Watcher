@@ -1,7 +1,7 @@
 from datetime import datetime
 
 import transaction
-from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT, ISOLATION_LEVEL_DEFAULT
 from zope.sqlalchemy import mark_changed
 
 from x_project_adv_worker_db_watcher.logger import *
@@ -81,9 +81,16 @@ class Loader(object):
         engine = self.session.bind
         connection = engine.raw_connection()
         connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-        cursor = connection.cursor()
-        logger.info('VACUUM')
-        cursor.execute("VACUUM VERBOSE ANALYZE;")
+        try:
+            connection.commit()
+            cursor = connection.cursor()
+            logger.info('VACUUM')
+            cursor.execute("VACUUM VERBOSE ANALYZE;")
+            cursor.close()
+        except Exception as e:
+            print(e)
+        connection.set_isolation_level(ISOLATION_LEVEL_DEFAULT)
+        connection.close()
 
     @staticmethod
     def __to_int(val):
