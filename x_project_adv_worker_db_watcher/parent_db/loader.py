@@ -694,9 +694,11 @@ class Loader(object):
                         data['thematic'] = conditions.get('thematic', False)
                         data['thematic_day_new_auditory'] = conditions.get('thematic_day_new_auditory', 10)
                         data['thematic_day_off_new_auditory'] = conditions.get('thematic_day_off_new_auditory', 10)
-                        data['thematic_range'] = self.thematic_range(data['started_time'],
-                                                                     data['thematic_day_new_auditory'],
-                                                                     data['thematic_day_off_new_auditory'])
+                        data['thematic_range'] = 0
+                        if data['thematic']:
+                            data['thematic_range'] = self.thematic_range(data['started_time'],
+                                                                         data['thematic_day_new_auditory'],
+                                                                         data['thematic_day_off_new_auditory'])
                         data['thematics'] = conditions.get('thematics', [])
 
                         if campaign.get('status') == 'working':
