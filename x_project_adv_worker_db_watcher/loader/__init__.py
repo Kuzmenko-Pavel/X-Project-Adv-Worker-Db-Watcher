@@ -399,8 +399,6 @@ class Loader(object):
 
     def load_offer(self, id=None, id_campaign=None, *args, **kwargs):
         try:
-            print('load_offer', id_campaign)
-            from uuid import uuid4
             limit = self.config.get('offer', {}).get('limit', 1000)
             cols = ['id', 'guid', 'campaign', 'retid', 'description', 'url', 'title', 'price', 'rating']
             rows = []

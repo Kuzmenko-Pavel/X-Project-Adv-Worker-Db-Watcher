@@ -18,8 +18,7 @@ def upsert(session, model, rows, update_cols):
     try:
         with session.begin_nested():
             _upsert(session, model, rows, update_cols)
-    except exc.IntegrityError as e:
-        print(e)
+    except exc.IntegrityError:
         if len(rows) > 1:
             a_rows, b_rows = split_list(rows)
             with session.begin_nested():
