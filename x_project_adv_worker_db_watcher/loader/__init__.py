@@ -6,7 +6,7 @@ from zope.sqlalchemy import mark_changed
 
 from x_project_adv_worker_db_watcher.logger import *
 from x_project_adv_worker_db_watcher.models import (Accounts, Device, GeoLiteCity, Site, Informer, Campaign, Offer,
-                                                    Cron, Campaign2Device)
+                                                    Cron, Campaign2Device, Geo)
 from x_project_adv_worker_db_watcher.parent_models import (ParentAccount, ParentDevice, ParentGeo, ParentSite,
                                                            ParentBlock, ParentCampaign, ParentOffer)
 from x_project_adv_worker_db_watcher.parent_models.choiceTypes import (CampaignType, BlockType,
@@ -312,6 +312,7 @@ class Loader(object):
                     '7': campaign.cron.sunday,
                 }
                 data['device'] = [x.id_device for x in campaign.devices]
+                data['geo'] = [x.id_geo for x in campaign.geos]
                 camps[str(campaign.id)] = data
                 if data['social']:
                     offer_social = True
@@ -357,45 +358,66 @@ class Loader(object):
             session.close()
 
             # ------------------------regionTargeting-----------------------
+            try:
+                for k, v in camps.items():
+                    session = self.session()
+                    with transaction.manager:
+                        for id_geo in v['geo']:
+                            id_cam = int(k)
+                            g = Geo(id_cam=id_cam, id_geo=id_geo)
+                            session.add(g)
+                    session.flush()
+                    session.close()
+            except Exception as e:
+                print(e)
             # ------------------------deviceTargeting-----------------------
-            for k, v in camps.items():
-                session = self.session()
-                with transaction.manager:
-                    for id_device in v['device']:
-                        id_cam = int(k)
-                        d = Campaign2Device(id_cam=id_cam, id_dev=id_device)
-                        session.add(d)
-                session.flush()
-                session.close()
+            try:
+                for k, v in camps.items():
+                    session = self.session()
+                    with transaction.manager:
+                        for id_device in v['device']:
+                            id_cam = int(k)
+                            d = Campaign2Device(id_cam=id_cam, id_dev=id_device)
+                            session.add(d)
+                    session.flush()
+                    session.close()
+            except Exception as e:
+                print(e)
             # ------------------------cron-----------------------
-            for k, v in camps.items():
-                session = self.session()
-                with transaction.manager:
-                    for d, t in v['cron'].items():
-                        id_cam = int(k)
-                        day = int(d)
-                        hour = to_hour(t[0])
-                        min = to_min(t[0])
-                        c = Cron(id_cam=id_cam, day=day, hour=hour, min=min, start_stop=True)
-                        session.add(c)
-                        hour = to_hour(t[1])
-                        min = to_min(t[1])
-                        c = Cron(id_cam=id_cam, day=day, hour=hour, min=min, start_stop=False)
-                        session.add(c)
-                        hour = to_hour(t[2])
-                        min = to_min(t[2])
-                        c = Cron(id_cam=id_cam, day=day, hour=hour, min=min, start_stop=True)
-                        session.add(c)
-                        hour = to_hour(t[3])
-                        min = to_min(t[3])
-                        c = Cron(id_cam=id_cam, day=day, hour=hour, min=min, start_stop=False)
-                        session.add(c)
-                session.flush()
-                session.close()
+            try:
+                for k, v in camps.items():
+                    session = self.session()
+                    with transaction.manager:
+                        for d, t in v['cron'].items():
+                            id_cam = int(k)
+                            day = int(d)
+                            hour = to_hour(t[0])
+                            min = to_min(t[0])
+                            c = Cron(id_cam=id_cam, day=day, hour=hour, min=min, start_stop=True)
+                            session.add(c)
+                            hour = to_hour(t[1])
+                            min = to_min(t[1])
+                            c = Cron(id_cam=id_cam, day=day, hour=hour, min=min, start_stop=False)
+                            session.add(c)
+                            hour = to_hour(t[2])
+                            min = to_min(t[2])
+                            c = Cron(id_cam=id_cam, day=day, hour=hour, min=min, start_stop=True)
+                            session.add(c)
+                            hour = to_hour(t[3])
+                            min = to_min(t[3])
+                            c = Cron(id_cam=id_cam, day=day, hour=hour, min=min, start_stop=False)
+                            session.add(c)
+                    session.flush()
+                    session.close()
+            except Exception as e:
+                print(e)
 
             logger.info('Start Load Offer')
             for camp_id in camps:
-                self.load_offer(id_campaign=camp_id, **kwargs)
+                try:
+                    self.load_offer(id_campaign=camp_id, **kwargs)
+                except Exception as e:
+                    print(e)
             logger.info('Stop Load Offer')
 
             logger.info('Starting Create Recommended Offer')
@@ -404,7 +426,10 @@ class Loader(object):
                 session.flush()
                 conn = session.connection()
                 for camp_id in camps:
-                    conn.execute('SELECT create_recommended(%s);' % camp_id)
+                    try:
+                        conn.execute('SELECT create_recommended(%s);' % camp_id)
+                    except Exception as e:
+                        print(e)
                 mark_changed(session)
                 session.flush()
             logger.info('Stop Create Recommended Offer')
