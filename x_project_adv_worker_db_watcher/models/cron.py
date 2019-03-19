@@ -37,5 +37,5 @@ class MVCron(Base):
 
 
 Index('ix_mv_cron_id', MVCron.id, unique=True)
-Index('ix_mv_categories_id_cam_day_start_stop', MVCron.id_cam, MVCron.day, MVCron.start_stop, unique=True)
-Index('ix_mv_categories_day_hour_min', MVCron.day, MVCron.hour, MVCron.min)
+Index('ix_mv_cron_id_cam_day_start_stop', MVCron.id_cam, MVCron.day, MVCron.start_stop)
+Index('ix_mv_cron_day_hour_min', MVCron.day, MVCron.hour, MVCron.min)
