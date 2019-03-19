@@ -13,7 +13,7 @@ from .meta import Base
 class Offer(Base):
     __tablename__ = 'offer'
     id = Column(BigInteger, primary_key=True)
-    guid = Column(UUIDType(binary=True), unique=True)
+    guid = Column(UUIDType(binary=True))
     retid = Column(String, default='')
     campaign = Column(BigInteger, ForeignKey('campaign.id', ondelete='CASCADE'), nullable=False)
     images = Column(ARRAY(String), default=[])

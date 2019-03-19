@@ -7,10 +7,10 @@ from .meta import Base
 
 class Site(Base):
     __tablename__ = 'site'
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id = Column(BigInteger, primary_key=True)
     account = Column(BigInteger, ForeignKey('accounts.id', ondelete='CASCADE'), nullable=False)
-    guid = Column(UUIDType(binary=True), unique=True)
-    name = Column(String(length=2048), unique=True)
+    guid = Column(UUIDType(binary=True))
+    name = Column(String(length=2048))
 
     __table_args__ = (
         {'prefixes': ['UNLOGGED']}

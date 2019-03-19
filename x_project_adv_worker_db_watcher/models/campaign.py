@@ -13,7 +13,7 @@ from .meta import Base
 class Campaign(Base):
     __tablename__ = 'campaign'
     id = Column(BigInteger, primary_key=True)
-    guid = Column(UUIDType(binary=True), unique=True)
+    guid = Column(UUIDType(binary=True))
     account = Column(BigInteger, ForeignKey('accounts.id', ondelete='CASCADE'), nullable=False)
     title = Column(String(length=100))
     social = Column(Boolean, default=False)

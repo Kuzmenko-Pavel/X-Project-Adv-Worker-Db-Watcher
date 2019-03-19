@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 
 __author__ = 'kuzmenko-pavel'
 
-from sqlalchemy_utils import ChoiceType
+from sqlalchemy_utils import UUIDType, ChoiceType
 from sqlalchemy import Column, Integer, ForeignKey, BigInteger
 from sqlalchemy.orm import relationship
 
@@ -14,6 +14,7 @@ from .meta import ParentBase
 class ParentOffer(ParentBase):
     __tablename__ = 'offers'
     id = Column(BigInteger, primary_key=True)
+    guid = Column(UUIDType(binary=True))
     id_account = Column(ForeignKey('accounts.id'), index=True)
     id_campaign = Column(ForeignKey('campaigns.id'), index=True)
 

@@ -9,8 +9,8 @@ from .meta import Base
 
 class Informer(Base):
     __tablename__ = 'informer'
-    id = Column(BigInteger, primary_key=True, unique=True)
-    guid = Column(UUIDType(binary=True), unique=True)
+    id = Column(BigInteger, primary_key=True)
+    guid = Column(UUIDType(binary=True))
     title = Column(String(length=100))
     site = Column(BigInteger, ForeignKey('site.id', ondelete='CASCADE'), nullable=False)
     account = Column(BigInteger, ForeignKey('accounts.id', ondelete='CASCADE'), nullable=False)

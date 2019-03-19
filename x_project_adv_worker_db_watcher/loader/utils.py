@@ -11,3 +11,13 @@ def thematic_range(started_time, thematic_day_new_auditory, thematic_day_off_new
             thematic_persent = 90
         range = int(thematic_persent)
     return range
+
+
+def trim_by_words(text, max_len=None):
+    if max_len is None:
+        return text
+    if len(text) <= max_len:
+        return text
+    trimmed_simple = text[:max_len]
+    trimmed_by_words = trimmed_simple.rpartition(' ')[0]
+    return u'%s…' % (trimmed_by_words or trimmed_simple)

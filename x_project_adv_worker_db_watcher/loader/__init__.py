@@ -14,7 +14,7 @@ from x_project_adv_worker_db_watcher.parent_models.choiceTypes import (CampaignT
 from .adv_settings import AdvSetting
 from .block_settings import BlockSetting
 from .upsert import upsert
-from .utils import thematic_range
+from .utils import thematic_range, trim_by_words
 
 
 class Loader(object):
@@ -414,12 +414,12 @@ class Loader(object):
                 rows.append(
                     [
                         x.id,
-                        uuid4(),
+                        x.guid,
                         x.id_campaign,
                         x.body.id_retargeting,
-                        x.body.description,
+                        trim_by_words(x.body.description, 70),
                         x.body.url,
-                        x.body.title,
+                        trim_by_words(x.body.title, 35),
                         x.body.price,
                         0
                     ]
