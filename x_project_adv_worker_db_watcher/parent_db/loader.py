@@ -1055,6 +1055,5 @@ class Loader(object):
                 self.refresh_mat_view('mv_offer_social')
                 self.refresh_mat_view('mv_offer_place2informer')
                 self.refresh_mat_view('mv_offer_social2informer')
-                self.vacuum()
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
