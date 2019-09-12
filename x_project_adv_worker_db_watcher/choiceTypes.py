@@ -3,24 +3,6 @@ from __future__ import absolute_import, unicode_literals
 
 __author__ = 'kuzmenko-pavel'
 from enum import Enum
-from enum import EnumMeta
-
-
-class DefaultEnumMeta(EnumMeta):
-    def __call__(cls, value, *args, **kwargs):
-        try:
-            return EnumMeta.__call__(cls, value, *args, **kwargs)
-        except Exception as e:
-            return next(iter(cls))
-
-    def __getitem__(cls, name):
-        return cls._member_map_[name]
-
-
-class Language(Enum):
-    ru = 1
-    uk = 2
-    en = 3
 
 
 class ProjectType(Enum):
@@ -39,26 +21,11 @@ class AccountType(Enum):
     Customer = 7
 
 
-class PermissionType(Enum):
-    full = 1
-    write = 2
-    read = 3
-
-
 class AccountRelationType(Enum):
     none = 1
     agential = 2
     superior = 3
     managerial = 4
-
-
-class FeedType(Enum):
-    auto = 1
-    yml = 2
-    prom = 3
-    price = 4
-    hotline = 5
-    satu = 6
 
 
 class CampaignStylingType(Enum):
@@ -69,6 +36,12 @@ class CampaignStylingType(Enum):
     style_1 = 5
     style_2 = 6
     style_3 = 7
+
+
+class CampaignPaymentModel(Enum):
+    ppc = 1
+    ppi = 2
+    auto = 3
 
 
 class CampaignType(Enum):
@@ -96,6 +69,12 @@ class OfferType(Enum):
     teaser = 2
 
 
+class BlockPatternOrient(Enum):
+    horizontal = 1
+    vertical = 2
+    square = 3
+
+
 class AMQPStatusType(Enum):
     new = 0
     start = 1
@@ -105,10 +84,51 @@ class AMQPStatusType(Enum):
     delete = 5
 
 
+class CampaignActionType(Enum):
+    new = 1
+    start = 2
+    stop = 3
+    edit = 4
+    delete = 5
+    freezing = 6
+    statistic = 7
+    offers = 8
+    blacklist = 9
+    cost = 10
+    copy = 11
+    limit = 12
+
+
+class OfferActionType(Enum):
+    new = 1
+    moderation = 2
+    invalid = 3
+    start = 4
+    stop = 5
+    edit = 6
+    delete = 7
+    statistic = 8
+    copy = 9
+
+
+class SiteActionType(Enum):
+    new = 1
+    moderation = 2
+    invalid = 3
+    start = 4
+    edit = 5
+    delete = 6
+    statistic = 7
+
+
+class BlockActionType(Enum):
+    new = 1
+    edit = 2
+    delete = 3
+    statistic = 4
+    copy = 5
+
+
 class BlockType(Enum):
     adaptive = 1
     static = 2
-
-
-BlockType.adaptive.label = 'Adaptive'
-BlockType.static.label = 'Static'
