@@ -14,7 +14,20 @@ parent_metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
 
 class ClsBase(object):
-    pass
+    def __iter__(self):
+        for key, value in self.__dict__.items():
+            if not key.startswith('_'):
+                yield (key, value)
+
+    def __repr__(self):
+        rep = u"<" + self.__class__.__name__ + u" %s >" % ' '.join(['%s=%s' % (
+            p, getattr(self, p)) for p in get_primary_keys(self)])
+        return rep.encode('utf-8')
+
+    def __str__(self):
+        rep = u"<" + self.__class__.__name__ + u" %s >" % ' '.join(['%s=%s' % (
+            p, getattr(self, p)) for p in get_primary_keys(self)])
+        return rep.encode('utf-8')
 
 
 ParentBase = declarative_base(cls=ClsBase, metadata=parent_metadata)
