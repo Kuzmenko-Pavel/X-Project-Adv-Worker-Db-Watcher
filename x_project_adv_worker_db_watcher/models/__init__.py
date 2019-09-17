@@ -2,23 +2,13 @@ import os
 
 import transaction
 from sqlalchemy import create_engine
-from sqlalchemy.schema import DropTable
 from sqlalchemy.ext.compiler import compiles
-
+from sqlalchemy.schema import DropTable
 from zope.sqlalchemy import mark_changed
 
 from x_project_adv_worker_db_watcher.logger import *
-from .accounts import *
-from .campaign import *
-from .site import Site
-from .cron import Cron, MVCron
-from .device import Device, MVDevice
-from .geo import Geo, MVGeo
-from .block import Block, MVBlock
-from .campaign2device import Campaign2Device, MVCampaign2Device
+from .advCategorie import AdvCategory
 from .meta import DBSession, metadata
-from .offer import *
-from .offer2informer import *
 
 
 def get_engine(config):

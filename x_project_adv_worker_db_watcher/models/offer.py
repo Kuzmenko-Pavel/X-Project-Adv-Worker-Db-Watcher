@@ -2,8 +2,8 @@ __all__ = ['Offer', 'MVOfferPlace', 'MVOfferSocial', 'MVOfferAccountRetargeting'
 from sqlalchemy import (Column, BigInteger, String, Float, ForeignKey, select, Index, cast)
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.sql.expression import func, join, true, false, and_
-from sqlalchemy_utils import UUIDType
 
+from x_project_adv_worker_db_watcher.choiceTypes import (CampaignType, )
 from .__libs__.sql_view import create_view
 from .campaign import Campaign
 from .meta import Base
@@ -12,20 +12,19 @@ from .meta import Base
 class Offer(Base):
     __tablename__ = 'offer'
     id = Column(BigInteger, primary_key=True)
-    guid = Column(UUIDType(binary=True))
-    retid = Column(String, default='')
     id_cam = Column(BigInteger, ForeignKey('campaign.id', ondelete='CASCADE'), nullable=False)
-    images = Column(ARRAY(String), default=[])
+    id_acc = Column(BigInteger, ForeignKey('accounts.id', ondelete='CASCADE'), nullable=False)
+    title = Column(String(length=35))
     description = Column(String(length=70))
     url = Column(String)
-    title = Column(String(length=35))
     price = Column(String(length=35))
+    currency = Column(String)
+    images = Column(ARRAY(String), default=[])
+    id_ret = Column(String, default='')
     rating = Column(Float)
-    recommended_ids = Column(ARRAY(String), default=[])
     recommended = Column(ARRAY(BigInteger), default=[])
     __table_args__ = (
         Index('ix_offer_rating', rating.desc().nullslast()),
-        Index('ix_offer_retid_id_cam', retid, id_cam.desc().nullslast()),
         {'prefixes': ['UNLOGGED']}
     )
 
@@ -33,7 +32,6 @@ class Offer(Base):
 place_sub = select([
     func.row_number().over(partition_by=Offer.id_cam).label('campaign_range_number'),
     Offer.id,
-    Offer.guid,
     Offer.id_cam,
     Offer.images,
     Offer.description,
@@ -43,8 +41,7 @@ place_sub = select([
     Offer.recommended
 ]).select_from(
     join(Offer, Campaign, and_(Offer.id_cam == Campaign.id,
-                               Campaign.social == false(),
-                               Campaign.retargeting == false()
+                               Campaign.campaign_type == CampaignType.new_auditory,
                                ), isouter=False)
 ).where(and_(Campaign.social == false(),
              Campaign.retargeting == false())
@@ -53,7 +50,6 @@ place_sub = select([
 social_sub = select([
     func.row_number().over(partition_by=Offer.id_cam).label('campaign_range_number'),
     Offer.id,
-    Offer.guid,
     Offer.id_cam,
     Offer.images,
     Offer.description,
@@ -74,7 +70,6 @@ social_sub = select([
 account_retargeting_sub = select([
     func.row_number().over(partition_by=Offer.id_cam).label('campaign_range_number'),
     Offer.id,
-    Offer.guid,
     Offer.id_cam,
     Offer.images,
     Offer.description,
@@ -96,7 +91,6 @@ class MVOfferPlace(Base):
         'mv_offer_place',
         select([
             place_sub.c.id,
-            place_sub.c.guid,
             place_sub.c.id_cam,
             place_sub.c.images,
             place_sub.c.description,
@@ -118,7 +112,6 @@ class MVOfferSocial(Base):
         'mv_offer_social',
         select([
             social_sub.c.id,
-            social_sub.c.guid,
             social_sub.c.id_cam,
             social_sub.c.images,
             social_sub.c.description,
@@ -140,7 +133,6 @@ class MVOfferAccountRetargeting(Base):
         'mv_offer_account_retargeting',
         select([
             account_retargeting_sub.c.id,
-            account_retargeting_sub.c.guid,
             account_retargeting_sub.c.id_cam,
             account_retargeting_sub.c.images,
             account_retargeting_sub.c.description,
@@ -163,8 +155,7 @@ class MVOfferDynamicRetargeting(Base):
         'mv_offer_dynamic_retargeting',
         select([
             Offer.id,
-            Offer.guid,
-            Offer.retid,
+            Offer.id_ret,
             Offer.id_cam,
             cast(Campaign.account, String).label('accounts_cam'),
             Offer.images,

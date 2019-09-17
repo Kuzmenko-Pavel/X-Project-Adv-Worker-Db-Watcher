@@ -15,7 +15,7 @@ class Campaign2AdvCategorie(Base):
     )
 
 
-class MVCampaign2Campaign2AdvCategorie(Base):
+class MVCampaign2AdvCategorie(Base):
     __table__ = create_view(
         Base.metadata,
         'mv_campaign2adv_category',
@@ -26,5 +26,5 @@ class MVCampaign2Campaign2AdvCategorie(Base):
         is_mat=True)
 
 
-Index('ix_mv_campaign2device__id_cam__id_dev', MVCampaign2Campaign2AdvCategorie.id_cam,
-      MVCampaign2Campaign2AdvCategorie.id_adv_category, unique=True)
+Index('ix_mv_campaign2device__id_cam__id_dev', MVCampaign2AdvCategorie.id_cam,
+      MVCampaign2AdvCategorie.id_adv_category, unique=True)

@@ -1,4 +1,4 @@
-from sqlalchemy import (Column, Integer, BigInteger, ForeignKey, select, Index, cast)
+from sqlalchemy import (Column, Integer, BigInteger, ForeignKey, select, Index)
 
 from .__libs__.sql_view import create_view
 from .meta import Base
