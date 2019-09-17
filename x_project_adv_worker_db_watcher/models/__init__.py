@@ -8,6 +8,7 @@ from zope.sqlalchemy import mark_changed
 
 from x_project_adv_worker_db_watcher.logger import *
 from .advCategorie import AdvCategory, MVAdvCategory
+from .block import Block, MVBlock
 from .device import Device, MVDevice
 from .geo import Geo, MVGeo
 from .meta import DBSession, metadata

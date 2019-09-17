@@ -2,10 +2,10 @@ import transaction
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT, ISOLATION_LEVEL_DEFAULT
 from zope.sqlalchemy import mark_changed
 
+from x_project_adv_worker_db_watcher.choiceTypes import BlockType
 from x_project_adv_worker_db_watcher.logger import *
-from x_project_adv_worker_db_watcher.models import (AdvCategory, Device, Geo)
-from x_project_adv_worker_db_watcher.parent_models import (ParentAdvCategory, ParentDevice,
-                                                           ParentGeo)
+from x_project_adv_worker_db_watcher.models import (AdvCategory, Device, Geo, Block)
+from x_project_adv_worker_db_watcher.parent_models import (ParentAdvCategory, ParentDevice, ParentGeo, ParentBlock)
 from .upsert import upsert
 from .utils import thematic_range, trim_by_words, ad_style, to_hour, to_min
 
@@ -31,6 +31,9 @@ class Loader(object):
         logger.info('Starting Load Geo')
         self.load_geo(refresh_mat_view=False)
         logger.info('Stopping Load Geo')
+        logger.info('Starting Load Block')
+        self.load_block(refresh_mat_view=False)
+        logger.info('Stopping Load Block')
         logger.info('Starting Reload Mat View')
         self.refresh_mat_view()
         logger.info('Stopping Reload Mat View')
@@ -79,7 +82,7 @@ class Loader(object):
             session = self.session()
             parent_session = self.parent_session()
             with transaction.manager:
-                adv_category = parent_session.query(ParentAdvCategory).all()
+                adv_category = parent_session.query(ParentAdvCategory).filter().all()
                 for category in adv_category:
                     rows.append([category.id, category.path])
                 upsert(session, AdvCategory, rows, cols)
@@ -97,7 +100,7 @@ class Loader(object):
             session = self.session()
             parent_session = self.parent_session()
             with transaction.manager:
-                devices = parent_session.query(ParentDevice).all()
+                devices = parent_session.query(ParentDevice).filter().all()
                 for device in devices:
                     rows.append([device.id, device.code])
                 upsert(session, Device, rows, cols)
@@ -115,13 +118,62 @@ class Loader(object):
             session = self.session()
             parent_session = self.parent_session()
             with transaction.manager:
-                geos = parent_session.query(ParentGeo).all()
+                geos = parent_session.query(ParentGeo).filter().all()
                 for geo in geos:
                     rows.append([geo.id, geo.country, geo.city])
                 upsert(session, Geo, rows, cols)
 
             if kwargs.get('refresh_mat_view', True):
                 self.refresh_mat_view('mv_geo_lite_city')
+            session.close()
+        except Exception as e:
+            logger.error(exception_message(exc=str(e)))
+
+    def load_block(self, *args, **kwargs):
+        try:
+            cols = ['id', 'guid', 'id_account', 'block_type', 'headerHtml', 'footerHtml', 'userCode', 'ad_style',
+                    'place_branch', 'retargeting_branch', 'social_branch', 'rating_division', 'rating_hard_limit',
+                    'name', 'block_adv_category', 'click_cost_min', 'click_cost_proportion', 'click_cost_max',
+                    'impression_cost_min', 'impression_cost_proportion', 'impression_cost_max', 'cost_percent',
+                    'disable_filter', 'time_filter']
+            rows = []
+            session = self.session()
+            parent_session = self.parent_session()
+            with transaction.manager:
+                blocks = parent_session.query(ParentBlock).filter().all()
+                for block in blocks:
+                    style = None
+                    if block.block_type == BlockType.adaptive:
+                        style = ad_style(block.ad_style)
+                    rows.append([block.id,
+                                 block.guid,
+                                 block.id_account,
+                                 block.block_type,
+                                 block.headerHtml,
+                                 block.footerHtml,
+                                 block.userCode,
+                                 style,
+                                 block.place_branch,
+                                 block.retargeting_branch,
+                                 block.social_branch,
+                                 block.rating_division,
+                                 block.rating_hard_limit,
+                                 block.name,
+                                 block.block_adv_category,
+                                 block.click_cost_min,
+                                 block.click_cost_proportion,
+                                 block.click_cost_max,
+                                 block.impression_cost_min,
+                                 block.impression_cost_proportion,
+                                 block.impression_cost_max,
+                                 block.cost_percent,
+                                 block.disable_filter,
+                                 block.time_filter
+                                 ])
+                upsert(session, Block, rows, cols)
+
+            if kwargs.get('refresh_mat_view', True):
+                self.refresh_mat_view('mv_block')
             session.close()
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
