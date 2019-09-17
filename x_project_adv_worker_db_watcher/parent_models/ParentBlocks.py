@@ -19,6 +19,7 @@ class ParentBlock(ParentBase):
     id = Column(BigInteger, primary_key=True)
     guid = Column(UUIDType(binary=True))
     id_account = Column(BigInteger)
+    id_site = Column('site_id', BigInteger)
     block_type = Column(ChoiceType(BlockType, impl=Integer()), nullable=False)
     headerHtml = Column(String)
     footerHtml = Column(String)

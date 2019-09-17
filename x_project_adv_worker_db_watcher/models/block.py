@@ -13,6 +13,7 @@ class Block(Base):
     id = Column(BigInteger, primary_key=True)
     guid = Column(UUIDType(binary=True))
     id_account = Column(BigInteger)
+    id_site = Column(BigInteger)
     block_type = Column(ChoiceType(BlockType, impl=Integer()), nullable=False)
     headerHtml = Column(String)
     footerHtml = Column(String)
@@ -48,6 +49,7 @@ class MVBlock(Base):
             Block.id,
             Block.guid,
             Block.id_account,
+            Block.id_site,
             Block.block_type,
             Block.headerHtml,
             Block.footerHtml,

@@ -79,10 +79,11 @@ class Loader(object):
         try:
             cols = ['id', 'path']
             rows = []
+            filter_data = {}
             session = self.session()
             parent_session = self.parent_session()
             with transaction.manager:
-                adv_category = parent_session.query(ParentAdvCategory).filter().all()
+                adv_category = parent_session.query(ParentAdvCategory).filter(**filter_data).all()
                 for category in adv_category:
                     rows.append([category.id, category.path])
                 upsert(session, AdvCategory, rows, cols)
@@ -97,10 +98,11 @@ class Loader(object):
         try:
             cols = ['id', 'code']
             rows = []
+            filter_data = {}
             session = self.session()
             parent_session = self.parent_session()
             with transaction.manager:
-                devices = parent_session.query(ParentDevice).filter().all()
+                devices = parent_session.query(ParentDevice).filter(**filter_data).all()
                 for device in devices:
                     rows.append([device.id, device.code])
                 upsert(session, Device, rows, cols)
@@ -115,10 +117,11 @@ class Loader(object):
         try:
             cols = ['id', 'country', 'city']
             rows = []
+            filter_data = {}
             session = self.session()
             parent_session = self.parent_session()
             with transaction.manager:
-                geos = parent_session.query(ParentGeo).filter().all()
+                geos = parent_session.query(ParentGeo).filter(**filter_data).all()
                 for geo in geos:
                     rows.append([geo.id, geo.country, geo.city])
                 upsert(session, Geo, rows, cols)
@@ -129,18 +132,26 @@ class Loader(object):
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
 
-    def load_block(self, *args, **kwargs):
+    def load_block(self, id=None, id_site=None, id_account=None, *args, **kwargs):
         try:
-            cols = ['id', 'guid', 'id_account', 'block_type', 'headerHtml', 'footerHtml', 'userCode', 'ad_style',
+            cols = ['id', 'guid', 'id_account', 'id_site', 'block_type', 'headerHtml', 'footerHtml', 'userCode',
+                    'ad_style',
                     'place_branch', 'retargeting_branch', 'social_branch', 'rating_division', 'rating_hard_limit',
                     'name', 'block_adv_category', 'click_cost_min', 'click_cost_proportion', 'click_cost_max',
                     'impression_cost_min', 'impression_cost_proportion', 'impression_cost_max', 'cost_percent',
                     'disable_filter', 'time_filter']
             rows = []
+            filter_data = {}
+            if id:
+                filter_data['id'] = id
+            if id_site:
+                filter_data['id_site'] = id_site
+            if id_account:
+                filter_data['id_account'] = id_account
             session = self.session()
             parent_session = self.parent_session()
             with transaction.manager:
-                blocks = parent_session.query(ParentBlock).filter().all()
+                blocks = parent_session.query(ParentBlock).filter(**filter_data).all()
                 for block in blocks:
                     style = None
                     if block.block_type == BlockType.adaptive:
@@ -148,6 +159,7 @@ class Loader(object):
                     rows.append([block.id,
                                  block.guid,
                                  block.id_account,
+                                 block.id_site,
                                  block.block_type,
                                  block.headerHtml,
                                  block.footerHtml,
@@ -177,3 +189,21 @@ class Loader(object):
             session.close()
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
+
+        def delete_block(self, id=None, id_site=None, id_account=None, *args, **kwargs):
+            try:
+                filter_data = {}
+                if id:
+                    filter_data['id'] = id
+                if id_site:
+                    filter_data['id_site'] = id_site
+                if id_account:
+                    filter_data['id_account'] = id_account
+                session = self.session()
+                with transaction.manager:
+                    session.query(Block).filter(**filter_data).delete(synchronize_session=False)
+                if kwargs.get('refresh_mat_view', True):
+                    self.refresh_mat_view('mv_block')
+                session.close()
+            except Exception as e:
+                logger.error(exception_message(exc=str(e)))
