@@ -15,7 +15,7 @@ force_auto_coercion()
 force_instant_defaults()
 
 
-class Offer(ParentBase):
+class ParentOffer(ParentBase):
     __tablename__ = 'v_worker_offers'
     id = Column(BigInteger, primary_key=True)
     id_campaign = Column(BigInteger)

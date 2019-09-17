@@ -6,7 +6,7 @@ from .meta import Base
 
 class Geo(Base):
     __tablename__ = 'geo_lite_city'
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(Integer, primary_key=True)
     country = Column(String(length=9))
     city = Column(String(length=50))
     __table_args__ = (

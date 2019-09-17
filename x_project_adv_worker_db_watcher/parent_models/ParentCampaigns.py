@@ -15,7 +15,7 @@ force_auto_coercion()
 force_instant_defaults()
 
 
-class Campaign(ParentBase):
+class ParentCampaign(ParentBase):
     __tablename__ = 'v_worker_campaigns'
     id = Column(BigInteger, primary_key=True)
     id_account = Column(BigInteger)

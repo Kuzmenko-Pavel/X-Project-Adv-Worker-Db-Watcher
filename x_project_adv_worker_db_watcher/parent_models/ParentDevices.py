@@ -11,7 +11,7 @@ force_auto_coercion()
 force_instant_defaults()
 
 
-class Device(ParentBase):
+class ParentDevice(ParentBase):
     __tablename__ = 'v_worker_devices'
     id = Column(BigInteger, primary_key=True)
     code = Column(String)

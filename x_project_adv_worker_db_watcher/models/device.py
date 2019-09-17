@@ -6,8 +6,8 @@ from .meta import Base
 
 class Device(Base):
     __tablename__ = 'device'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(length=2), unique=True)
+    id = Column(Integer, primary_key=True)
+    code = Column(String(length=2), unique=True)
 
     __table_args__ = (
         {'prefixes': ['UNLOGGED']}
@@ -20,10 +20,10 @@ class MVDevice(Base):
         'mv_device',
         select([
             Device.id,
-            Device.name
+            Device.code
         ]).select_from(Device),
         is_mat=True)
 
 
 Index('ix_mv_device_id', MVDevice.id, unique=True)
-Index('ix_mv_device_name', MVDevice.name, unique=True)
+Index('ix_mv_device_name', MVDevice.code, unique=True)

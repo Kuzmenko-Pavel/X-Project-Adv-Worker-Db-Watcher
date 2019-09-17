@@ -32,8 +32,8 @@ def upsert(session, model, rows, update_cols):
             try:
                 with session.begin_nested():
                     _upsert(session, model, rows, update_cols)
-            except exc.IntegrityError:
-                pass
+            except exc.IntegrityError as e:
+                print(e)
 
 
 def _upsert(session, model, rows, update_cols):

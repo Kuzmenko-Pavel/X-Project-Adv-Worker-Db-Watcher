@@ -1,6 +1,7 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.schema import MetaData
+from sqlalchemy_utils import get_primary_keys
 
 NAMING_CONVENTION = {
     "ix": 'ix_%(column_0_label)s',
@@ -18,6 +19,13 @@ class ClsBase(object):
         for key, value in self.__dict__.items():
             if not key.startswith('_'):
                 yield (key, value)
+
+    def __to_dict__(self, *args, **kwargs):
+        result = {}
+        for key, value in self.__dict__.items():
+            if not key.startswith('_'):
+                result[key] = value
+        return result
 
     def __repr__(self):
         rep = u"<" + self.__class__.__name__ + u" %s >" % ' '.join(['%s=%s' % (
