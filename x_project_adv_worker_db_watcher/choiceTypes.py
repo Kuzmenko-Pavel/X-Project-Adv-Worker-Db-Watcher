@@ -132,3 +132,25 @@ class BlockActionType(Enum):
 class BlockType(Enum):
     adaptive = 1
     static = 2
+
+
+class CurrencyType(Enum):
+    none = 0
+    uah = 1
+    usd = 2
+    rub = 3
+    eur = 3
+
+
+CurrencyType.none.label = ''
+CurrencyType.none.short_label = ''
+CurrencyType.none.sign = ''
+CurrencyType.none.symbol = ''
+CurrencyType.usd.sign = 'USD'
+CurrencyType.usd.symbol = '$'
+CurrencyType.uah.sign = 'UAH'
+CurrencyType.uah.symbol = '₴'
+CurrencyType.rub.sign = 'RUB'
+CurrencyType.rub.symbol = '₴'
+CurrencyType.eur.sign = 'EUR'
+CurrencyType.eur.symbol = '₴'

@@ -13,5 +13,5 @@ force_instant_defaults()
 
 class ParentAdvCategory(ParentBase):
     __tablename__ = 'v_worker_adv_categories'
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id = Column(BigInteger, primary_key=True)
     path = Column(LtreeType, nullable=False)
