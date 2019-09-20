@@ -24,7 +24,7 @@ class Block(Base):
     social_branch = Column(Boolean)
     rating_division = Column(Integer)
     rating_hard_limit = Column(Boolean)
-    name = Column(String)
+    site_name = Column(String)
     block_adv_category = Column(ARRAY(BigInteger))
     click_cost_min = Column(Float)
     click_cost_proportion = Column(Integer)
@@ -60,7 +60,7 @@ class MVBlock(Base):
             Block.social_branch,
             Block.rating_division,
             Block.rating_hard_limit,
-            Block.name,
+            Block.site_name,
             Block.block_adv_category,
             Block.click_cost_min,
             Block.click_cost_proportion,

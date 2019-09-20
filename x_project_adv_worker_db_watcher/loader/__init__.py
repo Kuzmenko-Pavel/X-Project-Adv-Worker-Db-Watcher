@@ -207,3 +207,15 @@ class Loader(object):
                 session.close()
             except Exception as e:
                 logger.error(exception_message(exc=str(e)))
+
+        def load_campaign(self, id=None, id_account=None, *args, **kwargs):
+            pass
+
+        def delete_campaign(self, id=None, id_account=None, *args, **kwargs):
+            pass
+
+        def load_offer(self, id=None, id_campaign=None, id_account=None, *args, **kwargs):
+            pass
+
+        def delete_offer(self, id=None, id_campaign=None, id_account=None, *args, **kwargs):
+            pass
