@@ -2,12 +2,14 @@ import os
 
 from sqlalchemy import create_engine
 
-from .ParentAdvCategories import ParentAdvCategory
 from .ParentBlocks import ParentBlock
+from .ParentCampaignBlockPrices import ParentCampaignBlockPrice
 from .ParentCampaigns import ParentCampaign
 from .ParentDevices import ParentDevice
 from .ParentGeoLite import ParentGeo
 from .ParentOffers import ParentOffer
+from .ParentRatingOffers import ParentRatingOffer
+from .ParentRatingSocialOffers import ParentRatingSocialOffer
 from .meta import ParentDBSession, parent_metadata
 
 

@@ -5,7 +5,7 @@ __author__ = 'kuzmenko-pavel'
 
 from sqlalchemy import Column, Integer, BigInteger, SmallInteger, String, Boolean, Float
 from sqlalchemy.dialects.postgresql import JSON, ARRAY
-from sqlalchemy_utils import force_auto_coercion, force_instant_defaults, ChoiceType, UUIDType
+from sqlalchemy_utils import force_auto_coercion, force_instant_defaults, ChoiceType, UUIDType, LtreeType
 from x_project_adv_worker_db_watcher.choiceTypes import (CampaignType, CampaignPaymentModel, CampaignRemarketingType,
                                                          CampaignRecommendedAlgorithmType, CampaignStylingType)
 
@@ -38,7 +38,7 @@ class ParentCampaign(ParentBase):
     thematic_day_off_new_auditory = Column(SmallInteger)
     offer_count = Column(ARRAY(BigInteger))
     blocking_block = Column(ARRAY(BigInteger))
-    thematic_categories = Column(ARRAY(BigInteger))
+    thematic_categories = Column(ARRAY(LtreeType))
     geo = Column(ARRAY(BigInteger))
     device = Column(ARRAY(BigInteger))
     cron = Column(JSON)
