@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 
 __author__ = 'kuzmenko-pavel'
 
-from sqlalchemy import Column, String, Integer, BigInteger, Text
+from sqlalchemy import Column, String, Integer, BigInteger, Text, SmallInteger
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy_utils import force_auto_coercion, force_instant_defaults, ChoiceType, URLType, LtreeType
 from x_project_adv_worker_db_watcher.choiceTypes import (CampaignType, CampaignRemarketingType,
@@ -32,3 +32,4 @@ class ParentOffer(ParentBase):
     campaign_type = Column(ChoiceType(CampaignType, impl=Integer()))
     campaign_style = Column(ChoiceType(CampaignStylingType, impl=Integer()))
     remarketing_type = Column(ChoiceType(CampaignRemarketingType, impl=Integer()))
+    campaign_range_number = Column(SmallInteger)

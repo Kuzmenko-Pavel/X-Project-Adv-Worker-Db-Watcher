@@ -1,88 +1,37 @@
 __all__ = ['Offer', 'MVOfferPlace', 'MVOfferSocial', 'MVOfferAccountRetargeting', 'MVOfferDynamicRetargeting']
-from sqlalchemy import (Column, BigInteger, String, Float, ForeignKey, select, Index, cast)
+from sqlalchemy import (Column, BigInteger, String, Text, ForeignKey, select, Index, Integer, SmallInteger)
 from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy.sql.expression import func, join, true, false, and_
+from sqlalchemy.sql.expression import and_
+from sqlalchemy_utils import force_auto_coercion, force_instant_defaults, ChoiceType, URLType
 
-from x_project_adv_worker_db_watcher.choiceTypes import (CampaignType, )
+from x_project_adv_worker_db_watcher.choiceTypes import (CampaignType, CampaignStylingType, CampaignRemarketingType)
 from .__libs__.sql_view import create_view
-from .campaign import Campaign
 from .meta import Base
+
+force_auto_coercion()
+force_instant_defaults()
 
 
 class Offer(Base):
     __tablename__ = 'offer'
     id = Column(BigInteger, primary_key=True)
     id_cam = Column(BigInteger, ForeignKey('campaign.id', ondelete='CASCADE'), nullable=False)
-    id_acc = Column(BigInteger, ForeignKey('accounts.id', ondelete='CASCADE'), nullable=False)
+    id_acc = Column(BigInteger, nullable=False)
     title = Column(String(length=35))
     description = Column(String(length=70))
     url = Column(String)
     price = Column(String(length=35))
     currency = Column(String)
-    images = Column(ARRAY(String), default=[])
-    id_ret = Column(String, default='')
-    rating = Column(Float)
-    recommended = Column(ARRAY(BigInteger), default=[])
+    id_ret = Column(Text)
+    recommended = Column(ARRAY(BigInteger))
+    images = Column(ARRAY(URLType))
+    campaign_type = Column(ChoiceType(CampaignType, impl=Integer()))
+    campaign_style = Column(ChoiceType(CampaignStylingType, impl=Integer()))
+    remarketing_type = Column(ChoiceType(CampaignRemarketingType, impl=Integer()))
+    campaign_range_number = Column(SmallInteger)
     __table_args__ = (
-        Index('ix_offer_rating', rating.desc().nullslast()),
         {'prefixes': ['UNLOGGED']}
     )
-
-
-place_sub = select([
-    func.row_number().over(partition_by=Offer.id_cam).label('campaign_range_number'),
-    Offer.id,
-    Offer.id_cam,
-    Offer.images,
-    Offer.description,
-    Offer.url,
-    Offer.title,
-    Offer.price,
-    Offer.recommended
-]).select_from(
-    join(Offer, Campaign, and_(Offer.id_cam == Campaign.id,
-                               Campaign.campaign_type == CampaignType.new_auditory,
-                               ), isouter=False)
-).where(and_(Campaign.social == false(),
-             Campaign.retargeting == false())
-        ).order_by(Offer.rating.desc().nullslast()).alias('place_sub')
-
-social_sub = select([
-    func.row_number().over(partition_by=Offer.id_cam).label('campaign_range_number'),
-    Offer.id,
-    Offer.id_cam,
-    Offer.images,
-    Offer.description,
-    Offer.url,
-    Offer.title,
-    Offer.price,
-    Offer.recommended
-]).select_from(
-    join(Offer, Campaign, and_(Offer.id_cam == Campaign.id,
-                               Campaign.social == true(),
-                               Campaign.retargeting == false()
-                               ), isouter=False)
-).where(and_(
-    Campaign.social == true(),
-    Campaign.retargeting == false())
-).order_by(Offer.rating.desc().nullslast()).alias('social_sub')
-
-account_retargeting_sub = select([
-    func.row_number().over(partition_by=Offer.id_cam).label('campaign_range_number'),
-    Offer.id,
-    Offer.id_cam,
-    Offer.images,
-    Offer.description,
-    Offer.url,
-    Offer.title,
-    Offer.price,
-    Offer.recommended
-]).select_from(
-    join(Offer, Campaign, and_(Offer.id_cam == Campaign.id,
-                               Campaign.retargeting == true(),
-                               Campaign.retargeting_type == 'account'
-                               ), isouter=False)
-).where(and_(Campaign.retargeting == true(), Campaign.retargeting_type == 'account')).alias('account_retargeting_sub')
 
 
 class MVOfferPlace(Base):
@@ -90,20 +39,26 @@ class MVOfferPlace(Base):
         Base.metadata,
         'mv_offer_place',
         select([
-            place_sub.c.id,
-            place_sub.c.id_cam,
-            place_sub.c.images,
-            place_sub.c.description,
-            place_sub.c.url,
-            place_sub.c.title,
-            place_sub.c.price,
-            place_sub.c.recommended,
-            place_sub.c.campaign_range_number
-        ]).select_from(place_sub), is_mat=True)
+            Offer.id,
+            Offer.id_cam,
+            Offer.id_acc,
+            Offer.title,
+            Offer.description,
+            Offer.price,
+            Offer.currency,
+            Offer.recommended,
+            Offer.images,
+            Offer.campaign_range_number,
+        ]).select_from(Offer).where(
+            and_(Offer.campaign_type.in_([CampaignType.new_auditory, CampaignType.thematic]))
+        ), is_mat=True)
 
 
 Index('ix_mv_offer_place_id', MVOfferPlace.id, unique=True)
-Index('ix_mv_offer_place_id_cam_range_number', MVOfferPlace.id_cam, MVOfferPlace.campaign_range_number)
+Index('ix_mv_offer_place_id_id_cam_range_number',
+      MVOfferPlace.id,
+      MVOfferPlace.id_cam,
+      MVOfferPlace.campaign_range_number)
 
 
 class MVOfferSocial(Base):
@@ -111,20 +66,26 @@ class MVOfferSocial(Base):
         Base.metadata,
         'mv_offer_social',
         select([
-            social_sub.c.id,
-            social_sub.c.id_cam,
-            social_sub.c.images,
-            social_sub.c.description,
-            social_sub.c.url,
-            social_sub.c.title,
-            social_sub.c.price,
-            social_sub.c.recommended,
-            social_sub.c.campaign_range_number
-        ]).select_from(social_sub), is_mat=True)
+            Offer.id,
+            Offer.id_cam,
+            Offer.id_acc,
+            Offer.title,
+            Offer.description,
+            Offer.price,
+            Offer.currency,
+            Offer.recommended,
+            Offer.images,
+            Offer.campaign_range_number,
+        ]).select_from(Offer).where(
+            and_(Offer.campaign_type == CampaignType.social)
+        ), is_mat=True)
 
 
 Index('ix_mv_offer_social_id', MVOfferSocial.id, unique=True)
-Index('ix_mv_offer_social_id_cam_range_number', MVOfferSocial.id_cam, MVOfferSocial.campaign_range_number)
+Index('ix_mv_offer_social_id_id_cam_range_number',
+      MVOfferSocial.id,
+      MVOfferSocial.id_cam,
+      MVOfferSocial.campaign_range_number)
 
 
 class MVOfferAccountRetargeting(Base):
@@ -132,20 +93,26 @@ class MVOfferAccountRetargeting(Base):
         Base.metadata,
         'mv_offer_account_retargeting',
         select([
-            account_retargeting_sub.c.id,
-            account_retargeting_sub.c.id_cam,
-            account_retargeting_sub.c.images,
-            account_retargeting_sub.c.description,
-            account_retargeting_sub.c.url,
-            account_retargeting_sub.c.title,
-            account_retargeting_sub.c.price,
-            account_retargeting_sub.c.recommended,
-            account_retargeting_sub.c.campaign_range_number
-        ]).select_from(account_retargeting_sub), is_mat=True)
+            Offer.id,
+            Offer.id_cam,
+            Offer.id_acc,
+            Offer.title,
+            Offer.description,
+            Offer.price,
+            Offer.currency,
+            Offer.recommended,
+            Offer.images,
+            Offer.campaign_range_number,
+        ]).select_from(Offer).where(
+            and_(Offer.campaign_type == CampaignType.social,
+                 Offer.remarketing_type == CampaignRemarketingType.account)
+        ), is_mat=True)
 
 
 Index('ix_mv_offer_account_retargeting_id', MVOfferAccountRetargeting.id, unique=True)
-Index('ix_mv_offer_account_retargeting_id_cam_range_number', MVOfferAccountRetargeting.id_cam,
+Index('ix_mv_offer_account_retargeting_id_id_cam_range_number',
+      MVOfferAccountRetargeting.id,
+      MVOfferAccountRetargeting.id_cam,
       MVOfferAccountRetargeting.campaign_range_number)
 
 
@@ -155,24 +122,21 @@ class MVOfferDynamicRetargeting(Base):
         'mv_offer_dynamic_retargeting',
         select([
             Offer.id,
-            Offer.id_ret,
             Offer.id_cam,
-            cast(Campaign.account, String).label('accounts_cam'),
-            Offer.images,
-            Offer.description,
-            Offer.url,
+            Offer.id_acc,
             Offer.title,
+            Offer.description,
             Offer.price,
-            Offer.recommended
-        ]).select_from(
-            join(Offer, Campaign, and_(Offer.id_cam == Campaign.id,
-                                       Campaign.retargeting == true(),
-                                       Campaign.retargeting_type == 'offer'
-                                       ), isouter=False)
-        ).where(and_(Campaign.retargeting == true(), Campaign.retargeting_type == 'offer')),
+            Offer.currency,
+            Offer.recommended,
+            Offer.images,
+            Offer.id_ret,
+        ]).select_from(Offer).where(
+            and_(Offer.campaign_type == CampaignType.social,
+                 Offer.remarketing_type == CampaignRemarketingType.offer)
+        ),
         is_mat=True)
 
 
 Index('ix_mv_offer_dynamic_retargeting_id', MVOfferDynamicRetargeting.id, unique=True)
-Index('ix_mv_offer_dynamic_retargeting_retid_accounts_cam', MVOfferDynamicRetargeting.retid,
-      MVOfferDynamicRetargeting.accounts_cam)
+Index('ix_mv_offer_dynamic_retargeting_id_ret', MVOfferDynamicRetargeting.id_ret)
