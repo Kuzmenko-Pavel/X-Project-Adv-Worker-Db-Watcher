@@ -7,11 +7,12 @@ from sqlalchemy.schema import DropTable
 from zope.sqlalchemy import mark_changed
 
 from x_project_adv_worker_db_watcher.logger import *
-from .advCategorie import AdvCategory, MVAdvCategory
 from .block import Block, MVBlock
+from .campaign import Campaign, MVCampaign
 from .device import Device, MVDevice
 from .geo import Geo, MVGeo
 from .meta import DBSession, metadata
+from .offer import Offer, MVOfferPlace, MVOfferSocial, MVOfferAccountRetargeting, MVOfferDynamicRetargeting
 
 
 def get_engine(config):

@@ -4,8 +4,8 @@ from zope.sqlalchemy import mark_changed
 
 from x_project_adv_worker_db_watcher.choiceTypes import BlockType
 from x_project_adv_worker_db_watcher.logger import *
-from x_project_adv_worker_db_watcher.models import (AdvCategory, Device, Geo, Block)
-from x_project_adv_worker_db_watcher.parent_models import (ParentAdvCategory, ParentDevice, ParentGeo, ParentBlock)
+from x_project_adv_worker_db_watcher.models import (Device, Geo, Block)
+from x_project_adv_worker_db_watcher.parent_models import (ParentDevice, ParentGeo, ParentBlock)
 from .upsert import upsert
 from .utils import thematic_range, trim_by_words, ad_style, to_hour, to_min
 
@@ -22,9 +22,6 @@ class Loader(object):
         logger.info('Starting VACUUM')
         self.vacuum()
         logger.info('Stopping VACUUM')
-        logger.info('Starting Load AdvCategory')
-        self.load_adv_category(refresh_mat_view=False)
-        logger.info('Stopping Load AdvCategory')
         logger.info('Starting Load Device')
         self.load_device(refresh_mat_view=False)
         logger.info('Stopping Load Device')
@@ -74,25 +71,6 @@ class Loader(object):
             print(e)
         connection.set_isolation_level(ISOLATION_LEVEL_DEFAULT)
         connection.close()
-
-    def load_adv_category(self, *args, **kwargs):
-        try:
-            cols = ['id', 'path']
-            rows = []
-            filter_data = {}
-            session = self.session()
-            parent_session = self.parent_session()
-            with transaction.manager:
-                adv_category = parent_session.query(ParentAdvCategory).filter(**filter_data).all()
-                for category in adv_category:
-                    rows.append([category.id, category.path])
-                upsert(session, AdvCategory, rows, cols)
-
-            if kwargs.get('refresh_mat_view', True):
-                self.refresh_mat_view('mv_adv_categories')
-            session.close()
-        except Exception as e:
-            logger.error(exception_message(exc=str(e)))
 
     def load_device(self, *args, **kwargs):
         try:
