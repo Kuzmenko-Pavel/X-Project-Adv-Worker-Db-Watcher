@@ -16,6 +16,7 @@ class Campaign(Base):
     id = Column(BigInteger, primary_key=True)
     id_account = Column(BigInteger, nullable=False)
     guid = Column(UUIDType(binary=True))
+    name = Column(String)
     campaign_type = Column(ChoiceType(CampaignType, impl=Integer()), nullable=False)
     campaign_style = Column(ChoiceType(CampaignStylingType, impl=Integer()), nullable=False)
     campaign_style_logo = Column(String, default="", server_default=text("''"))

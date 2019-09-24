@@ -9,9 +9,11 @@ from x_project_adv_worker_db_watcher.choiceTypes import (CampaignType, CampaignR
 from x_project_adv_worker_db_watcher.logger import *
 from x_project_adv_worker_db_watcher.models import (Device, Geo, Block, Campaign, Campaign2BlockingBlock,
                                                     Campaign2Device, Campaign2Geo, Offer, Cron, OfferCategories,
-                                                    Campaign2BlockPrice, CampaignThematic)
+                                                    Campaign2BlockPrice, CampaignThematic, Offer2BlockRating,
+                                                    OfferSocial2BlockRating)
 from x_project_adv_worker_db_watcher.parent_models import (ParentDevice, ParentGeo, ParentBlock, ParentCampaign,
-                                                           ParentOffer, ParentCampaignBlockPrice)
+                                                           ParentOffer, ParentCampaignBlockPrice, ParentRatingOffer,
+                                                           ParentRatingSocialOffer)
 from .upsert import upsert
 from .utils import thematic_range, trim_by_words, ad_style, to_hour, to_min
 
@@ -56,6 +58,9 @@ class Loader(object):
         logger.info('Starting Load Campaign')
         self.load_campaign(refresh_mat_view=False)
         logger.info('Stopping Load Campaign')
+        logger.info('Starting Load Rating')
+        self.load_rating(refresh_mat_view=False)
+        logger.info('Stopping Load Rating')
         logger.info('Starting Reload Mat View')
         self.refresh_mat_view()
         logger.info('Stopping Reload Mat View')
@@ -251,7 +256,7 @@ class Loader(object):
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
         try:
-            cols = ['id', 'id_account', 'guid', 'campaign_type', 'campaign_style', 'campaign_style_logo',
+            cols = ['id', 'id_account', 'guid', 'name', 'campaign_type', 'campaign_style', 'campaign_style_logo',
                     'campaign_style_head_title', 'campaign_style_button_title', 'utm', 'utm_human_data',
                     'disable_filter',
                     'time_filter', 'payment_model', 'lot_concurrency', 'remarketing_type', 'recommended_algorithm',
@@ -283,6 +288,7 @@ class Loader(object):
                             campaign.id,
                             campaign.id_account,
                             campaign.guid,
+                            campaign.name,
                             campaign.campaign_type,
                             campaign.campaign_style,
                             campaign.campaign_style_logo,
@@ -529,3 +535,55 @@ class Loader(object):
             self.refresh_mat_view('mv_offer_dynamic_retargeting')
 
         session.close()
+
+    def load_rating(self, *args, **kwargs):
+        cols = ['id_offer', 'id_block', 'is_deleted', 'rating']
+        rows = []
+        session = self.session()
+        with transaction.manager:
+            session.query(Offer2BlockRating).update({Offer2BlockRating.is_deleted: True})
+            session.query(OfferSocial2BlockRating).update({OfferSocial2BlockRating.is_deleted: True})
+            session.flush()
+        session.close()
+
+        session = self.session()
+        parent_session = self.parent_session()
+        with transaction.manager:
+            ratings = parent_session.query(ParentRatingOffer).all()
+            for rating in ratings:
+                rows.append([
+                    rating.id_offer,
+                    rating.id_block,
+                    False,
+                    rating.rating
+
+                ])
+            upsert(session, Offer2BlockRating, rows, cols)
+            rows = []
+            ratings = parent_session.query(ParentRatingSocialOffer).all()
+            for rating in ratings:
+                rows.append([
+                    rating.id_offer,
+                    rating.id_block,
+                    False,
+                    rating.rating
+
+                ])
+            upsert(session, OfferSocial2BlockRating, rows, cols)
+
+        session.close()
+
+        session = self.session()
+        with transaction.manager:
+            session.query(Offer2BlockRating).filter(
+                Offer2BlockRating.is_deleted == True
+            ).delete(synchronize_session=False)
+            session.query(OfferSocial2BlockRating).filter(
+                OfferSocial2BlockRating.is_deleted == True
+            ).delete(synchronize_session=False)
+
+        session.close()
+
+        if kwargs.get('refresh_mat_view', True):
+            self.refresh_mat_view('mv_offer2block_rating')
+            self.refresh_mat_view('mv_offer_social2block_rating')

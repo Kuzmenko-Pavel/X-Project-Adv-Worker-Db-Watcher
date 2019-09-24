@@ -22,6 +22,7 @@ class ParentCampaign(ParentBase):
     id = Column(BigInteger, primary_key=True)
     id_account = Column(BigInteger)
     guid = Column(UUIDType(binary=True))
+    name = Column(String)
     campaign_type = Column(ChoiceType(CampaignType, impl=Integer()))
     campaign_style = Column(ChoiceType(CampaignStylingType, impl=Integer()))
     campaign_style_logo = Column(String)
