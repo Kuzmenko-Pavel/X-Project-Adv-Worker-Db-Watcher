@@ -9,6 +9,10 @@ from zope.sqlalchemy import mark_changed
 from x_project_adv_worker_db_watcher.logger import *
 from .block import Block, MVBlock
 from .campaign import Campaign, MVCampaign
+from .campaign2BlockingBlock import Campaign2BlockingBlock, MVCampaign2BlockingBlock
+from .campaign2Device import Campaign2Device, MVCampaign2Device
+from .campaign2Geo import Campaign2Geo, MVCampaign2Geo
+from .campaign_thematic import CampaignThematic, MVCampaignThematic
 from .device import Device, MVDevice
 from .geo import Geo, MVGeo
 from .meta import DBSession, metadata

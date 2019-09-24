@@ -1,12 +1,15 @@
 import transaction
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT, ISOLATION_LEVEL_DEFAULT
+from sqlalchemy import func
 from sqlalchemy_utils import force_auto_coercion, force_instant_defaults
 from zope.sqlalchemy import mark_changed
 
 from x_project_adv_worker_db_watcher.choiceTypes import BlockType
 from x_project_adv_worker_db_watcher.choiceTypes import (CampaignType, CampaignRemarketingType)
 from x_project_adv_worker_db_watcher.logger import *
-from x_project_adv_worker_db_watcher.models import (Device, Geo, Block, Campaign)
+from x_project_adv_worker_db_watcher.models import (Device, Geo, Block, Campaign, Campaign2BlockingBlock,
+                                                    Campaign2Device, Campaign2Geo,
+                                                    )
 from x_project_adv_worker_db_watcher.parent_models import (ParentDevice, ParentGeo, ParentBlock, ParentCampaign)
 from .upsert import upsert
 from .utils import thematic_range, trim_by_words, ad_style, to_hour, to_min
@@ -16,12 +19,14 @@ force_instant_defaults()
 
 
 class Loader(object):
-    __slots__ = ['session', 'parent_session', 'config']
+    __slots__ = ['session', 'parent_session', 'config', 'default_geo', 'default_device']
 
     def __init__(self, db_session, parent_db_session, config):
         self.session = db_session
         self.parent_session = parent_db_session
         self.config = config
+        self.default_geo = None
+        self.default_device = None
 
     def all(self):
         logger.info('Starting VACUUM')
@@ -33,6 +38,9 @@ class Loader(object):
         logger.info('Starting Load Geo')
         self.load_geo(refresh_mat_view=False)
         logger.info('Stopping Load Geo')
+        logger.info('Starting Load Default')
+        self.load_default()
+        logger.info('Stopping Load Default')
         logger.info('Starting Load Block')
         self.load_block(refresh_mat_view=False)
         logger.info('Stopping Load Block')
@@ -80,6 +88,24 @@ class Loader(object):
         connection.set_isolation_level(ISOLATION_LEVEL_DEFAULT)
         connection.close()
 
+    def load_default(self):
+        session = self.session()
+        with transaction.manager:
+            all_device = session.query(Device).filter(Device.code == '**').one_or_none()
+            all_geo = session.query(Geo).filter(Geo.country == '*', Geo.city == '*').one_or_none()
+            if all_device is None:
+                all_device_id = session.query(func.max(Device.id).label("max")).one().max + 1
+                all_device = Device(id=all_device_id, code='**')
+                session.add(all_device)
+                session.flush()
+            if all_geo is None:
+                all_geo_id = session.query(func.max(Geo.id).label("max")).one().max + 1
+                all_geo = Geo(id=all_geo_id, country='*', city='*')
+                session.add(all_geo)
+                session.flush()
+            self.default_geo = all_geo.id
+            self.default_device = all_device.id
+
     def load_device(self, *args, **kwargs):
         try:
             cols = ['id', 'code']
@@ -119,6 +145,10 @@ class Loader(object):
             logger.error(exception_message(exc=str(e)))
 
     def load_block(self, id=None, id_site=None, id_account=None, *args, **kwargs):
+        try:
+            self.delete_block(id, id_site, id_account, refresh_mat_view=False)
+        except Exception as e:
+            logger.error(exception_message(exc=str(e)))
         try:
             cols = ['id', 'guid', 'id_account', 'id_site', 'block_type', 'headerHtml', 'footerHtml', 'userCode',
                     'ad_style',
@@ -179,25 +209,29 @@ class Loader(object):
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
 
-        def delete_block(self, id=None, id_site=None, id_account=None, *args, **kwargs):
-            try:
-                filter_data = {}
-                if id:
-                    filter_data['id'] = id
-                if id_site:
-                    filter_data['id_site'] = id_site
-                if id_account:
-                    filter_data['id_account'] = id_account
-                session = self.session()
-                with transaction.manager:
-                    session.query(Block).filter(**filter_data).delete(synchronize_session=False)
-                if kwargs.get('refresh_mat_view', True):
-                    self.refresh_mat_view('mv_block')
-                session.close()
-            except Exception as e:
-                logger.error(exception_message(exc=str(e)))
+    def delete_block(self, id=None, id_site=None, id_account=None, *args, **kwargs):
+        try:
+            filter_data = {}
+            if id:
+                filter_data['id'] = id
+            if id_site:
+                filter_data['id_site'] = id_site
+            if id_account:
+                filter_data['id_account'] = id_account
+            session = self.session()
+            with transaction.manager:
+                session.query(Block).filter(**filter_data).delete(synchronize_session=False)
+            if kwargs.get('refresh_mat_view', True):
+                self.refresh_mat_view('mv_block')
+            session.close()
+        except Exception as e:
+            logger.error(exception_message(exc=str(e)))
 
     def load_campaign(self, id=None, id_account=None, *args, **kwargs):
+        try:
+            self.delete_campaign(id, id_account, refresh_mat_view=False)
+        except Exception as e:
+            logger.error(exception_message(exc=str(e)))
         try:
             offer_place = False
             offer_social = False
@@ -209,7 +243,13 @@ class Loader(object):
                     'time_filter', 'payment_model', 'lot_concurrency', 'remarketing_type', 'recommended_algorithm',
                     'recommended_count', 'thematic_day_new_auditory', 'thematic_day_off_new_auditory', 'offer_count',
                     'click_cost', 'impression_cost']
+            blocking_block_cols = ['id_cam', 'id_block', 'change']
+            geo_cols = ['id_cam', 'id_geo', 'change']
+            device_cols = ['id_cam', 'id_dev', 'change']
             rows = []
+            blocking_block_rows = []
+            geo_rows = []
+            device_rows = []
             filter_data = {}
             if id:
                 filter_data['id'] = id
@@ -256,7 +296,30 @@ class Loader(object):
                         campaign.click_cost,
                         campaign.impression_cost,
                     ])
+
+                    for block_id in campaign.blocking_block:
+                        blocking_block_rows.append([campaign.id, block_id, True])
+
+                    if campaign.geo:
+                        for geo_id in campaign.geo:
+                            geo_rows.append([campaign.id, geo_id, True])
+                    else:
+                        if self.default_geo is None:
+                            self.load_default()
+                        geo_rows.append([campaign.id, self.default_geo, True])
+
+                    if campaign.device:
+                        for device_id in campaign.device:
+                            device_rows.append([campaign.id, device_id, True])
+                    else:
+                        if self.default_device is None:
+                            self.load_default()
+                        device_rows.append([campaign.id, self.default_device, True])
+
                 upsert(session, Campaign, rows, cols)
+                upsert(session, Campaign2BlockingBlock, blocking_block_rows, blocking_block_cols)
+                upsert(session, Campaign2Geo, geo_rows, geo_cols)
+                upsert(session, Campaign2Device, device_rows, device_cols)
             if kwargs.get('refresh_mat_view', True):
                 self.refresh_mat_view('mv_campaign')
                 # self.refresh_mat_view('mv_geo')
@@ -284,7 +347,17 @@ class Loader(object):
             logger.error(exception_message(exc=str(e)))
 
     def delete_campaign(self, id=None, id_account=None, *args, **kwargs):
-        pass
+        filter_data = {}
+        if id:
+            filter_data['id'] = id
+        if id_account:
+            filter_data['id_account'] = id_account
+        session = self.session()
+        with transaction.manager:
+            session.query(Campaign).filter(**filter_data).delete(synchronize_session=False)
+        if kwargs.get('refresh_mat_view', True):
+            self.refresh_mat_view('mv_campaign')
+        session.close()
 
     def load_offer(self, id=None, id_campaign=None, id_account=None, *args, **kwargs):
         pass

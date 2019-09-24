@@ -1,4 +1,4 @@
-from sqlalchemy import (Column, Integer, BigInteger, ForeignKey, select, Index)
+from sqlalchemy import (Column, Integer, BigInteger, ForeignKey, select, Index, Boolean)
 
 from .__libs__.sql_view import create_view
 from .meta import Base
@@ -8,6 +8,7 @@ class Campaign2Device(Base):
     __tablename__ = 'campaign2device'
     id_cam = Column(BigInteger, ForeignKey('campaign.id', ondelete='CASCADE'), primary_key=True, nullable=False)
     id_dev = Column(Integer, ForeignKey('device.id', ondelete='CASCADE'), primary_key=True, nullable=False)
+    change = Column(Boolean, default=False)
 
     __table_args__ = (
         {'prefixes': ['UNLOGGED']}
