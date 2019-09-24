@@ -9,6 +9,8 @@ from sqlalchemy_utils import force_auto_coercion, force_instant_defaults, Choice
 from x_project_adv_worker_db_watcher.choiceTypes import (CampaignType, CampaignPaymentModel, CampaignRemarketingType,
                                                          CampaignRecommendedAlgorithmType, CampaignStylingType)
 
+from .custom_arrays import ArrayOfCustomType
+
 from .meta import ParentBase
 
 force_auto_coercion()
@@ -36,9 +38,9 @@ class ParentCampaign(ParentBase):
     recommended_count = Column(SmallInteger)
     thematic_day_new_auditory = Column(SmallInteger)
     thematic_day_off_new_auditory = Column(SmallInteger)
-    offer_count = Column(ARRAY(BigInteger))
+    offer_count = Column(BigInteger)
     blocking_block = Column(ARRAY(BigInteger))
-    thematic_categories = Column(ARRAY(LtreeType))
+    thematic_categories = Column(ArrayOfCustomType(LtreeType))
     geo = Column(ARRAY(BigInteger))
     device = Column(ARRAY(BigInteger))
     cron = Column(JSON)

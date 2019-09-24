@@ -5,6 +5,7 @@ from sqlalchemy.sql.expression import and_
 from sqlalchemy_utils import force_auto_coercion, force_instant_defaults, ChoiceType, URLType
 
 from x_project_adv_worker_db_watcher.choiceTypes import (CampaignType, CampaignStylingType, CampaignRemarketingType)
+from .__libs__.custom_arrays import ArrayOfCustomType
 from .__libs__.sql_view import create_view
 from .meta import Base
 
@@ -24,7 +25,7 @@ class Offer(Base):
     currency = Column(String)
     id_ret = Column(Text)
     recommended = Column(ARRAY(BigInteger))
-    images = Column(ARRAY(URLType))
+    images = Column(ArrayOfCustomType(URLType))
     campaign_type = Column(ChoiceType(CampaignType, impl=Integer()))
     campaign_style = Column(ChoiceType(CampaignStylingType, impl=Integer()))
     remarketing_type = Column(ChoiceType(CampaignRemarketingType, impl=Integer()))

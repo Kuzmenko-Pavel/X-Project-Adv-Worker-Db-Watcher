@@ -9,6 +9,7 @@ from sqlalchemy_utils import force_auto_coercion, force_instant_defaults, Choice
 from x_project_adv_worker_db_watcher.choiceTypes import (CampaignType, CampaignRemarketingType,
                                                          CampaignStylingType, CurrencyType)
 
+from .custom_arrays import ArrayOfCustomType
 from .meta import ParentBase
 
 force_auto_coercion()
@@ -27,8 +28,8 @@ class ParentOffer(ParentBase):
     currency = Column(ChoiceType(CurrencyType, impl=Integer()))
     id_retargeting = Column(Text)
     recommended = Column(ARRAY(BigInteger))
-    images = Column(ARRAY(URLType))
-    categories = Column(ARRAY(LtreeType))
+    images = Column(ArrayOfCustomType(URLType))
+    categories = Column(ArrayOfCustomType(LtreeType))
     campaign_type = Column(ChoiceType(CampaignType, impl=Integer()))
     campaign_style = Column(ChoiceType(CampaignStylingType, impl=Integer()))
     remarketing_type = Column(ChoiceType(CampaignRemarketingType, impl=Integer()))

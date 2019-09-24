@@ -1,13 +1,18 @@
 import transaction
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT, ISOLATION_LEVEL_DEFAULT
+from sqlalchemy_utils import force_auto_coercion, force_instant_defaults
 from zope.sqlalchemy import mark_changed
 
 from x_project_adv_worker_db_watcher.choiceTypes import BlockType
+from x_project_adv_worker_db_watcher.choiceTypes import (CampaignType, CampaignRemarketingType)
 from x_project_adv_worker_db_watcher.logger import *
-from x_project_adv_worker_db_watcher.models import (Device, Geo, Block)
-from x_project_adv_worker_db_watcher.parent_models import (ParentDevice, ParentGeo, ParentBlock)
+from x_project_adv_worker_db_watcher.models import (Device, Geo, Block, Campaign)
+from x_project_adv_worker_db_watcher.parent_models import (ParentDevice, ParentGeo, ParentBlock, ParentCampaign)
 from .upsert import upsert
 from .utils import thematic_range, trim_by_words, ad_style, to_hour, to_min
+
+force_auto_coercion()
+force_instant_defaults()
 
 
 class Loader(object):
@@ -31,6 +36,9 @@ class Loader(object):
         logger.info('Starting Load Block')
         self.load_block(refresh_mat_view=False)
         logger.info('Stopping Load Block')
+        logger.info('Starting Load Campaign')
+        self.load_campaign(refresh_mat_view=False)
+        logger.info('Stopping Load Campaign')
         logger.info('Starting Reload Mat View')
         self.refresh_mat_view()
         logger.info('Stopping Reload Mat View')
@@ -115,7 +123,9 @@ class Loader(object):
             cols = ['id', 'guid', 'id_account', 'id_site', 'block_type', 'headerHtml', 'footerHtml', 'userCode',
                     'ad_style',
                     'place_branch', 'retargeting_branch', 'social_branch', 'rating_division', 'rating_hard_limit',
-                    'name', 'block_adv_category', 'click_cost_min', 'click_cost_proportion', 'click_cost_max',
+                    'site_name',
+                    'block_adv_category',
+                    'click_cost_min', 'click_cost_proportion', 'click_cost_max',
                     'impression_cost_min', 'impression_cost_proportion', 'impression_cost_max', 'cost_percent',
                     'disable_filter', 'time_filter']
             rows = []
@@ -129,7 +139,8 @@ class Loader(object):
             session = self.session()
             parent_session = self.parent_session()
             with transaction.manager:
-                blocks = parent_session.query(ParentBlock).filter(**filter_data).all()
+                blocks = parent_session.query(ParentBlock).filter(**filter_data)
+                blocks = blocks.all()
                 for block in blocks:
                     style = None
                     if block.block_type == BlockType.adaptive:
@@ -148,7 +159,7 @@ class Loader(object):
                                  block.social_branch,
                                  block.rating_division,
                                  block.rating_hard_limit,
-                                 block.name,
+                                 block.site_name,
                                  block.block_adv_category,
                                  block.click_cost_min,
                                  block.click_cost_proportion,
@@ -186,14 +197,97 @@ class Loader(object):
             except Exception as e:
                 logger.error(exception_message(exc=str(e)))
 
-        def load_campaign(self, id=None, id_account=None, *args, **kwargs):
-            pass
+    def load_campaign(self, id=None, id_account=None, *args, **kwargs):
+        try:
+            offer_place = False
+            offer_social = False
+            offer_account_retargeting = False
+            offer_dynamic_retargeting = False
+            cols = ['id', 'id_account', 'guid', 'campaign_type', 'campaign_style', 'campaign_style_logo',
+                    'campaign_style_head_title', 'campaign_style_button_title', 'utm', 'utm_human_data',
+                    'disable_filter',
+                    'time_filter', 'payment_model', 'lot_concurrency', 'remarketing_type', 'recommended_algorithm',
+                    'recommended_count', 'thematic_day_new_auditory', 'thematic_day_off_new_auditory', 'offer_count',
+                    'click_cost', 'impression_cost']
+            rows = []
+            filter_data = {}
+            if id:
+                filter_data['id'] = id
+            if id_account:
+                filter_data['id_account'] = id_account
+            session = self.session()
+            parent_session = self.parent_session()
+            with transaction.manager:
+                campaigns = parent_session.query(ParentCampaign).filter(**filter_data).all()
+                for campaign in campaigns:
+                    if campaign.campaign_type == CampaignType.new_auditory:
+                        offer_place = True
+                    elif campaign.campaign_type == CampaignType.thematic:
+                        offer_place = True
+                    elif campaign.campaign_type == CampaignType.social:
+                        offer_social = True
+                    elif campaign.campaign_type == CampaignType.remarketing:
+                        if campaign.remarketing_type == CampaignRemarketingType.account:
+                            offer_account_retargeting = True
+                        elif campaign.remarketing_type == CampaignRemarketingType.offer:
+                            offer_dynamic_retargeting = True
 
-        def delete_campaign(self, id=None, id_account=None, *args, **kwargs):
-            pass
+                    rows.append([
+                        campaign.id,
+                        campaign.id_account,
+                        campaign.guid,
+                        campaign.campaign_type,
+                        campaign.campaign_style,
+                        campaign.campaign_style_logo,
+                        campaign.campaign_style_head_title,
+                        campaign.campaign_style_button_title,
+                        campaign.utm,
+                        campaign.utm_human_data,
+                        campaign.disable_filter,
+                        campaign.time_filter,
+                        campaign.payment_model,
+                        campaign.lot_concurrency,
+                        campaign.remarketing_type,
+                        campaign.recommended_algorithm,
+                        campaign.recommended_count,
+                        campaign.thematic_day_new_auditory,
+                        campaign.thematic_day_off_new_auditory,
+                        campaign.offer_count,
+                        campaign.click_cost,
+                        campaign.impression_cost,
+                    ])
+                upsert(session, Campaign, rows, cols)
+            if kwargs.get('refresh_mat_view', True):
+                self.refresh_mat_view('mv_campaign')
+                # self.refresh_mat_view('mv_geo')
+                # self.refresh_mat_view('mv_campaign2device')
+                # self.refresh_mat_view('mv_campaign2accounts_allowed')
+                # self.refresh_mat_view('mv_campaign2accounts_disallowed')
+                # self.refresh_mat_view('mv_campaign2categories')
+                # self.refresh_mat_view('mv_campaign2domains_allowed')
+                # self.refresh_mat_view('mv_campaign2domains_disallowed')
+                # self.refresh_mat_view('mv_campaign2informer_allowed')
+                # self.refresh_mat_view('mv_campaign2informer_disallowed')
+                # self.refresh_mat_view('mv_cron')
+                if offer_place:
+                    self.refresh_mat_view('mv_offer_place')
+                    # self.refresh_mat_view('mv_offer_place2informer')
+                if offer_social:
+                    self.refresh_mat_view('mv_offer_social')
+                    # self.refresh_mat_view('mv_offer_social2informer')
+                if offer_account_retargeting:
+                    self.refresh_mat_view('mv_offer_account_retargeting')
+                if offer_dynamic_retargeting:
+                    self.refresh_mat_view('mv_offer_dynamic_retargeting')
+            session.close()
+        except Exception as e:
+            logger.error(exception_message(exc=str(e)))
 
-        def load_offer(self, id=None, id_campaign=None, id_account=None, *args, **kwargs):
-            pass
+    def delete_campaign(self, id=None, id_account=None, *args, **kwargs):
+        pass
 
-        def delete_offer(self, id=None, id_campaign=None, id_account=None, *args, **kwargs):
-            pass
+    def load_offer(self, id=None, id_campaign=None, id_account=None, *args, **kwargs):
+        pass
+
+    def delete_offer(self, id=None, id_campaign=None, id_account=None, *args, **kwargs):
+        pass

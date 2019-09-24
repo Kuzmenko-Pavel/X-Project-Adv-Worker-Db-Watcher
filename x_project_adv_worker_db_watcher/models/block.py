@@ -1,11 +1,14 @@
 from sqlalchemy import (Column, Integer, String, Boolean, BigInteger, select, Index, Float)
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY
-from sqlalchemy_utils import ChoiceType
-from sqlalchemy_utils import UUIDType
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy_utils import ChoiceType, LtreeType, UUIDType, force_auto_coercion, force_instant_defaults
 
 from x_project_adv_worker_db_watcher.choiceTypes import BlockType
+from .__libs__.custom_arrays import ArrayOfCustomType
 from .__libs__.sql_view import create_view
 from .meta import Base
+
+force_auto_coercion()
+force_instant_defaults()
 
 
 class Block(Base):
@@ -25,7 +28,7 @@ class Block(Base):
     rating_division = Column(Integer)
     rating_hard_limit = Column(Boolean)
     site_name = Column(String)
-    block_adv_category = Column(ARRAY(BigInteger))
+    block_adv_category = Column(ArrayOfCustomType(LtreeType))
     click_cost_min = Column(Float)
     click_cost_proportion = Column(Integer)
     click_cost_max = Column(Float)

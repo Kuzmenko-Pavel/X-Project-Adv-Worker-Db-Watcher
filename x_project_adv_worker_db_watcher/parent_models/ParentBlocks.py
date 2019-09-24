@@ -4,10 +4,11 @@ from __future__ import absolute_import, unicode_literals
 __author__ = 'kuzmenko-pavel'
 
 from sqlalchemy import Column, String, Integer, Boolean, Float, BigInteger
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy_utils import force_auto_coercion, force_instant_defaults, ChoiceType, UUIDType, LtreeType
 from x_project_adv_worker_db_watcher.choiceTypes import BlockType
 
+from .custom_arrays import ArrayOfCustomType
 from .meta import ParentBase
 
 force_auto_coercion()
@@ -31,7 +32,7 @@ class ParentBlock(ParentBase):
     rating_division = Column(Integer)
     rating_hard_limit = Column(Boolean)
     site_name = Column(String)
-    block_adv_category = Column(ARRAY(LtreeType))
+    block_adv_category = Column(ArrayOfCustomType(LtreeType))
     click_cost_min = Column(Float)
     click_cost_proportion = Column(Integer)
     click_cost_max = Column(Float)

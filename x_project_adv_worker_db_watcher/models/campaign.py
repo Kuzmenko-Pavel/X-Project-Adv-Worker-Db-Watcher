@@ -3,7 +3,6 @@ from datetime import datetime
 
 from sqlalchemy import (Column, BigInteger, String, Boolean, SmallInteger, select, Index, text,
                         DateTime, Integer, true, false, Float)
-from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy_utils import ChoiceType, UUIDType
 
 from x_project_adv_worker_db_watcher.choiceTypes import (CampaignType, CampaignPaymentModel, CampaignStylingType,
@@ -36,7 +35,7 @@ class Campaign(Base):
     thematic_day_new_auditory = Column(SmallInteger, default=10, server_default='10')
     thematic_day_off_new_auditory = Column(SmallInteger, default=10, server_default='10')
     thematic_range = Column(SmallInteger, default=1)
-    offer_count = Column(ARRAY(BigInteger))
+    offer_count = Column(BigInteger)
     click_cost = Column(Float, nullable=False)
     impression_cost = Column(Float, nullable=False)
     started_time = Column(DateTime, default=datetime.now)
