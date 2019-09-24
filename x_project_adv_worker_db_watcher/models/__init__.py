@@ -13,6 +13,7 @@ from .campaign2BlockingBlock import Campaign2BlockingBlock, MVCampaign2BlockingB
 from .campaign2Device import Campaign2Device, MVCampaign2Device
 from .campaign2Geo import Campaign2Geo, MVCampaign2Geo
 from .campaign_thematic import CampaignThematic, MVCampaignThematic
+from .cron import Cron, MVCron
 from .device import Device, MVDevice
 from .geo import Geo, MVGeo
 from .meta import DBSession, metadata

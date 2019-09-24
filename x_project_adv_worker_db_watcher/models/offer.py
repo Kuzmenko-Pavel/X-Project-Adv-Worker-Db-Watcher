@@ -4,7 +4,8 @@ from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.sql.expression import and_
 from sqlalchemy_utils import force_auto_coercion, force_instant_defaults, ChoiceType, URLType
 
-from x_project_adv_worker_db_watcher.choiceTypes import (CampaignType, CampaignStylingType, CampaignRemarketingType)
+from x_project_adv_worker_db_watcher.choiceTypes import (CampaignType, CampaignStylingType, CampaignRemarketingType,
+                                                         CurrencyType)
 from .__libs__.custom_arrays import ArrayOfCustomType
 from .__libs__.sql_view import create_view
 from .meta import Base
@@ -22,7 +23,7 @@ class Offer(Base):
     description = Column(String(length=70))
     url = Column(String)
     price = Column(String(length=35))
-    currency = Column(String)
+    currency = Column(ChoiceType(CurrencyType, impl=Integer()))
     id_ret = Column(Text)
     recommended = Column(ARRAY(BigInteger))
     images = Column(ArrayOfCustomType(URLType))
