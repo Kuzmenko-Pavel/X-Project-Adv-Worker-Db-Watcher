@@ -19,6 +19,8 @@ from .campaign_thematic import CampaignThematic, MVCampaignThematic
 from .campaign2BlockPrice import Campaign2BlockPrice, MVCampaign2BlockPrice
 from .offer import Offer, MVOfferPlace, MVOfferSocial, MVOfferAccountRetargeting, MVOfferDynamicRetargeting
 from .offer_categories import OfferCategories, MVOfferCategories
+from .offer2blockRating import (Offer2BlockRating, OfferSocial2BlockRating, MVOfferPlace2Informer,
+                                MVOfferSocialPlace2Informer)
 from .meta import DBSession, metadata
 
 
