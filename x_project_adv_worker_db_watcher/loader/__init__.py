@@ -303,10 +303,11 @@ class Loader(object):
                             campaign.click_cost,
                             campaign.impression_cost,
                         ])
-                        thematic_categories_rows.append([
-                            campaign.id,
-                            campaign.thematic_categories
-                        ])
+                        if campaign.thematic_categories:
+                            thematic_categories_rows.append([
+                                campaign.id,
+                                campaign.thematic_categories
+                            ])
 
                         for block_id in campaign.blocking_block:
                             blocking_block_rows.append([campaign.id, block_id, True])
@@ -482,10 +483,11 @@ class Loader(object):
                             offer.remarketing_type,
                             offer.campaign_range_number
                         ])
-                        rows_categories.append([
-                            offer.id,
-                            offer.categories
-                        ])
+                        if offer.categories:
+                            rows_categories.append([
+                                offer.id,
+                                offer.categories
+                            ])
                     except Exception as e:
                         logger.error(exception_message(exc=str(e)))
                     if len(rows) > 1000:

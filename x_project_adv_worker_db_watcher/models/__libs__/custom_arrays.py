@@ -13,8 +13,11 @@ class ArrayOfCustomType(ARRAY):
         super_rp = super(ArrayOfCustomType, self).result_processor(dialect, coltype)
 
         def handle_raw_string(value):
-            inner = re.match(r"^{(.*)}$", value).group(1)
-            return inner.split(",")
+            if isinstance(value, str):
+                inner = re.match(r"^{(.*)}$", value).group(1)
+                value = inner.split(",")
+                value = filter(None, value)
+            return value
 
         def process(value):
             return super_rp(handle_raw_string(value))
