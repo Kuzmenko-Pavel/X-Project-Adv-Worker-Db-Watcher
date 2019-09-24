@@ -7,17 +7,19 @@ from sqlalchemy.schema import DropTable
 from zope.sqlalchemy import mark_changed
 
 from x_project_adv_worker_db_watcher.logger import *
+from .cron import Cron, MVCron
+from .device import Device, MVDevice
+from .geo import Geo, MVGeo
 from .block import Block, MVBlock
 from .campaign import Campaign, MVCampaign
 from .campaign2BlockingBlock import Campaign2BlockingBlock, MVCampaign2BlockingBlock
 from .campaign2Device import Campaign2Device, MVCampaign2Device
 from .campaign2Geo import Campaign2Geo, MVCampaign2Geo
 from .campaign_thematic import CampaignThematic, MVCampaignThematic
-from .cron import Cron, MVCron
-from .device import Device, MVDevice
-from .geo import Geo, MVGeo
-from .meta import DBSession, metadata
+from .campaign2BlockPrice import Campaign2BlockPrice, MVCampaign2BlockPrice
 from .offer import Offer, MVOfferPlace, MVOfferSocial, MVOfferAccountRetargeting, MVOfferDynamicRetargeting
+from .offer_categories import OfferCategories, MVOfferCategories
+from .meta import DBSession, metadata
 
 
 def get_engine(config):

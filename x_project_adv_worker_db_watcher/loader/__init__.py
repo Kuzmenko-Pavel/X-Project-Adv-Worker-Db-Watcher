@@ -8,10 +8,10 @@ from x_project_adv_worker_db_watcher.choiceTypes import BlockType
 from x_project_adv_worker_db_watcher.choiceTypes import (CampaignType, CampaignRemarketingType)
 from x_project_adv_worker_db_watcher.logger import *
 from x_project_adv_worker_db_watcher.models import (Device, Geo, Block, Campaign, Campaign2BlockingBlock,
-                                                    Campaign2Device, Campaign2Geo, Offer, Cron
-                                                    )
+                                                    Campaign2Device, Campaign2Geo, Offer, Cron, OfferCategories,
+                                                    Campaign2BlockPrice, CampaignThematic)
 from x_project_adv_worker_db_watcher.parent_models import (ParentDevice, ParentGeo, ParentBlock, ParentCampaign,
-                                                           ParentOffer)
+                                                           ParentOffer, ParentCampaignBlockPrice)
 from .upsert import upsert
 from .utils import thematic_range, trim_by_words, ad_style, to_hour, to_min
 
@@ -261,11 +261,13 @@ class Loader(object):
             geo_cols = ['id_cam', 'id_geo', 'change']
             device_cols = ['id_cam', 'id_dev', 'change']
             cron_cols = ['id_cam', 'range', 'day', 'hour', 'min', 'start_stop']
+            thematic_categories_cols = ['id_cam', 'path', 'change']
             rows = []
             blocking_block_rows = []
             geo_rows = []
             device_rows = []
             cron_rows = []
+            thematic_categories_rows = []
             filter_data = {}
             if id:
                 filter_data['id'] = id
@@ -301,6 +303,10 @@ class Loader(object):
                             campaign.click_cost,
                             campaign.impression_cost,
                         ])
+                        thematic_categories_rows.append([
+                            campaign.id,
+                            campaign.thematic_categories
+                        ])
 
                         for block_id in campaign.blocking_block:
                             blocking_block_rows.append([campaign.id, block_id, True])
@@ -335,7 +341,9 @@ class Loader(object):
                 upsert(session, Campaign2Geo, geo_rows, geo_cols)
                 upsert(session, Campaign2Device, device_rows, device_cols)
                 upsert(session, Cron, cron_rows, cron_cols)
+                upsert(session, CampaignThematic, thematic_categories_rows, thematic_categories_cols)
 
+            self.load_campaign_price(id=id)
             self.load_offer(id_campaign=id, id_account=id_account)
 
             if kwargs.get('refresh_mat_view', True):
@@ -343,7 +351,7 @@ class Loader(object):
                 self.refresh_mat_view('mv_campaigns_by_blocking_block')
                 self.refresh_mat_view('mv_geo')
                 self.refresh_mat_view('mv_campaign2device')
-                # self.refresh_mat_view('mv_cron')
+                self.refresh_mat_view('mv_cron')
             session.close()
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
@@ -362,7 +370,54 @@ class Loader(object):
             self.refresh_mat_view('mv_campaigns_by_blocking_block')
             self.refresh_mat_view('mv_geo')
             self.refresh_mat_view('mv_campaign2device')
-            # self.refresh_mat_view('mv_cron')
+            self.refresh_mat_view('mv_cron')
+
+        session.close()
+
+    def load_campaign_price(self, id=None, *args, **kwargs):
+        try:
+            self.delete_campaign_price(id, refresh_mat_view=False)
+        except Exception as e:
+            logger.error(exception_message(exc=str(e)))
+        try:
+            cols = ['id_cam', 'id_block', 'click_cost', 'impression_cost']
+            rows = []
+            filter_data = {}
+            if id:
+                filter_data['id'] = id
+            session = self.session()
+            parent_session = self.parent_session()
+            with transaction.manager:
+                prices = parent_session.query(ParentCampaignBlockPrice).filter_by(**filter_data).all()
+                for price in prices:
+                    try:
+                        rows.append([
+                            price.id,
+                            price.id_block,
+                            price.click_cost,
+                            price.impression_cost,
+                        ])
+                    except Exception as e:
+                        logger.error(exception_message(exc=str(e)))
+
+                upsert(session, Campaign, rows, cols)
+
+            if kwargs.get('refresh_mat_view', True):
+                self.refresh_mat_view('mv_campaigns_by_block_price')
+
+            session.close()
+        except Exception as e:
+            logger.error(exception_message(exc=str(e)))
+
+    def delete_campaign_price(self, id=None, *args, **kwargs):
+        filter_data = {}
+        if id:
+            filter_data['id'] = id
+        session = self.session()
+        with transaction.manager:
+            session.query(Campaign2BlockPrice).filter_by(**filter_data).delete(synchronize_session=False)
+        if kwargs.get('refresh_mat_view', True):
+            self.refresh_mat_view('mv_campaigns_by_block_price')
 
         session.close()
 
@@ -379,7 +434,9 @@ class Loader(object):
             cols = ['id', 'id_cam', 'id_acc', 'title', 'description', 'url', 'price', 'currency', 'id_ret',
                     'recommended', 'images', 'campaign_type', 'campaign_style', 'remarketing_type',
                     'campaign_range_number']
+            cols_categories = ['id_offer', 'path']
             rows = []
+            rows_categories = []
             filter_data = {}
             if id:
                 filter_data['id'] = id
@@ -425,12 +482,20 @@ class Loader(object):
                             offer.remarketing_type,
                             offer.campaign_range_number
                         ])
+                        rows_categories.append([
+                            offer.id,
+                            offer.categories
+                        ])
                     except Exception as e:
                         logger.error(exception_message(exc=str(e)))
                     if len(rows) > 1000:
                         upsert(session, Offer, rows, cols)
+                        upsert(session, OfferCategories, rows_categories, cols_categories)
                         rows = []
+                        rows_categories = []
+
                 upsert(session, Offer, rows, cols)
+                upsert(session, OfferCategories, rows_categories, cols_categories)
             if kwargs.get('refresh_mat_view', True):
                 if offer_place:
                     self.refresh_mat_view('mv_offer_place')

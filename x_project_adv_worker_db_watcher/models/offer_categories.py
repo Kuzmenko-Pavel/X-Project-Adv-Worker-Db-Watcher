@@ -1,15 +1,15 @@
 from sqlalchemy import (Column, BigInteger, ForeignKey, select, Index)
-from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy_utils import LtreeType
 
 from .__libs__.sql_view import create_view
+from .__libs__.custom_arrays import ArrayOfCustomType
 from .meta import Base
 
 
 class OfferCategories(Base):
     __tablename__ = 'offer_categories'
     id_offer = Column(BigInteger, ForeignKey('offer.id', ondelete='CASCADE'), primary_key=True, nullable=False)
-    path = Column(ARRAY(LtreeType))
+    path = Column(ArrayOfCustomType(LtreeType))
 
     __table_args__ = (
         {'prefixes': ['UNLOGGED']}

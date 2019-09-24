@@ -1,15 +1,15 @@
 from sqlalchemy import (Column, BigInteger, ForeignKey, select, Index, Boolean)
-from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy_utils import LtreeType
 
 from .__libs__.sql_view import create_view
+from .__libs__.custom_arrays import ArrayOfCustomType
 from .meta import Base
 
 
 class CampaignThematic(Base):
     __tablename__ = 'campaign_thematics'
     id_cam = Column(BigInteger, ForeignKey('campaign.id', ondelete='CASCADE'), primary_key=True, nullable=False)
-    path = Column(ARRAY(LtreeType))
+    path = Column(ArrayOfCustomType(LtreeType))
     change = Column(Boolean, default=False)
 
     __table_args__ = (

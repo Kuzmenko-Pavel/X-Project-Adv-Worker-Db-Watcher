@@ -26,6 +26,6 @@ class MVCampaign2BlockingBlock(Base):
         is_mat=True)
 
 
-Index('ix_mv_campaigns_by_blocking_block_id_cam_id_geo',
+Index('ix_mv_campaigns_by_blocking_block_id_cam_id_block',
       MVCampaign2BlockingBlock.id_cam, MVCampaign2BlockingBlock.id_block,
       unique=True)
