@@ -268,8 +268,8 @@ class Loader(object):
             blocking_block_cols = ['id_cam', 'id_block', 'change']
             geo_cols = ['id_cam', 'id_geo', 'change']
             device_cols = ['id_cam', 'id_dev', 'change']
-            cron_cols = ['id_cam', 'range', 'day', 'hour', 'min', 'start_stop']
-            thematic_categories_cols = ['id_cam', 'path', 'change']
+            cron_cols = ['id_cam', 'range', 'day', 'time']
+            thematic_categories_cols = ['id_cam', 'path']
             rows = []
             blocking_block_rows = []
             geo_rows = []
@@ -358,10 +358,8 @@ class Loader(object):
 
                         for counter, cron in enumerate(campaign.cron, 1):
                             if len(cron) == 4:
-                                cron_rows.append([campaign.id, 0, counter, hour(cron[0]), minute(cron[0]), True])
-                                cron_rows.append([campaign.id, 0, counter, hour(cron[1]), minute(cron[1]), False])
-                                cron_rows.append([campaign.id, 1, counter, hour(cron[2]), minute(cron[2]), True])
-                                cron_rows.append([campaign.id, 1, counter, hour(cron[3]), minute(cron[3]), False])
+                                cron_rows.append([campaign.id, 0, counter, [cron[0], cron[1]]])
+                                cron_rows.append([campaign.id, 1, counter, [cron[2], cron[3]]])
 
                         if campaign.geo:
                             for geo_id in campaign.geo:

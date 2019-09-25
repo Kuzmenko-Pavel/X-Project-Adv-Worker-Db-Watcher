@@ -10,7 +10,6 @@ class CampaignThematic(Base):
     __tablename__ = 'campaign_thematics'
     id_cam = Column(BigInteger, ForeignKey('campaign.id', ondelete='CASCADE'), primary_key=True, nullable=False)
     path = Column(ArrayOfCustomType(LtreeType))
-    change = Column(Boolean, default=False)
 
     __table_args__ = (
         {'prefixes': ['UNLOGGED']}

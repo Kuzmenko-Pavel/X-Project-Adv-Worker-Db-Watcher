@@ -24,7 +24,8 @@ install_requires = ['pika',
                     'sqlalchemy-utils',
                     'zope.sqlalchemy',
                     'trafaret-config',
-                    'transaction'
+                    'transaction',
+                    'intervals'
                     ]
 
 setup(
