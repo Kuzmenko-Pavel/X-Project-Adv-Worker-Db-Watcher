@@ -5,7 +5,7 @@ from .adv_settings import AdvSetting
 from .block_settings import BlockSetting
 
 
-def thematic_range(started_time, thematic_day_new_auditory, thematic_day_off_new_auditory):
+def thematicRange(started_time, thematic_day_new_auditory, thematic_day_off_new_auditory):
     range = 0
     now = datetime.now()
     days = (now - started_time).days

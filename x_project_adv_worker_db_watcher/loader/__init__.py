@@ -1,11 +1,12 @@
 import transaction
+from datetime import datetime
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT, ISOLATION_LEVEL_DEFAULT
 from sqlalchemy import func
 from sqlalchemy_utils import force_auto_coercion, force_instant_defaults
 from zope.sqlalchemy import mark_changed
 
-from x_project_adv_worker_db_watcher.choiceTypes import BlockType
-from x_project_adv_worker_db_watcher.choiceTypes import (CampaignType, CampaignRemarketingType)
+from x_project_adv_worker_db_watcher.choiceTypes import (BlockType, CampaignType, CampaignRemarketingType,
+                                                         CampaignStylingType)
 from x_project_adv_worker_db_watcher.logger import *
 from x_project_adv_worker_db_watcher.models import (Device, Geo, Block, Campaign, Campaign2BlockingBlock,
                                                     Campaign2Device, Campaign2Geo, Offer, Cron, OfferCategories,
@@ -15,7 +16,7 @@ from x_project_adv_worker_db_watcher.parent_models import (ParentDevice, ParentG
                                                            ParentOffer, ParentCampaignBlockPrice, ParentRatingOffer,
                                                            ParentRatingSocialOffer)
 from .upsert import upsert
-from .utils import thematic_range, trim_by_words, ad_style, to_hour, to_min
+from .utils import thematicRange, trim_by_words, ad_style, to_hour, to_min
 
 force_auto_coercion()
 force_instant_defaults()
@@ -257,11 +258,13 @@ class Loader(object):
             logger.error(exception_message(exc=str(e)))
         try:
             cols = ['id', 'id_account', 'guid', 'name', 'campaign_type', 'campaign_style', 'campaign_style_logo',
-                    'campaign_style_head_title', 'campaign_style_button_title', 'utm', 'utm_human_data',
+                    'campaign_style_head_title', 'campaign_style_button_title',
+                    'campaign_style_class', 'campaign_style_class_recommendet', 'capacity', 'thematic_range',
+                    'utm', 'utm_human_data',
                     'disable_filter',
                     'time_filter', 'payment_model', 'lot_concurrency', 'remarketing_type', 'recommended_algorithm',
                     'recommended_count', 'thematic_day_new_auditory', 'thematic_day_off_new_auditory', 'offer_count',
-                    'click_cost', 'impression_cost']
+                    'click_cost', 'impression_cost', 'started_time']
             blocking_block_cols = ['id_cam', 'id_block', 'change']
             geo_cols = ['id_cam', 'id_geo', 'change']
             device_cols = ['id_cam', 'id_dev', 'change']
@@ -284,6 +287,36 @@ class Loader(object):
                 campaigns = parent_session.query(ParentCampaign).filter_by(**filter_data).all()
                 for campaign in campaigns:
                     try:
+                        capacity = 1
+                        thematic_range = 0
+                        started_time = campaign.started_time
+                        if started_time is None:
+                            started_time = datetime.now()
+                        lot_concurrency = campaign.lot_concurrency
+                        campaign_style_class = 'Block'
+                        campaign_style_class_recommendet = 'RecBlock'
+                        if campaign.campaign_style == CampaignStylingType.common:
+                            campaign_style_class = 'Block'
+                            campaign_style_class_recommendet = 'Block'
+                        elif campaign.campaign_style == CampaignStylingType.recommended:
+                            campaign_style_class = 'RecBlock'
+                            campaign_style_class_recommendet = 'RecBlock'
+                        elif campaign.campaign_style == CampaignStylingType.remarketing:
+                            campaign_style_class = 'RetBlock'
+                            campaign_style_class_recommendet = 'RetBlock'
+                        elif campaign.campaign_style in [CampaignStylingType.style_1, CampaignStylingType.style_2,
+                                                         CampaignStylingType.style_3]:
+                            campaign_style_class = str(campaign.id)
+                            campaign_style_class_recommendet = str(campaign.id)
+                            capacity = 2
+                            lot_concurrency = 1
+                        else:
+                            if campaign.campaign_type == CampaignType.remarketing:
+                                campaign_style_class = 'RetBlock'
+                        if campaign.campaign_type == CampaignType.thematic:
+                            thematic_range = thematicRange(started_time, campaign.thematic_day_new_auditory,
+                                                           campaign.thematic_day_off_new_auditory)
+
                         rows.append([
                             campaign.id,
                             campaign.id_account,
@@ -294,12 +327,16 @@ class Loader(object):
                             campaign.campaign_style_logo,
                             campaign.campaign_style_head_title,
                             campaign.campaign_style_button_title,
+                            campaign_style_class,
+                            campaign_style_class_recommendet,
+                            capacity,
+                            thematic_range,
                             campaign.utm,
                             campaign.utm_human_data,
                             campaign.disable_filter,
                             campaign.time_filter,
                             campaign.payment_model,
-                            campaign.lot_concurrency,
+                            lot_concurrency,
                             campaign.remarketing_type,
                             campaign.recommended_algorithm,
                             campaign.recommended_count,
@@ -308,6 +345,7 @@ class Loader(object):
                             campaign.offer_count,
                             campaign.click_cost,
                             campaign.impression_cost,
+                            started_time
                         ])
                         if campaign.thematic_categories:
                             thematic_categories_rows.append([

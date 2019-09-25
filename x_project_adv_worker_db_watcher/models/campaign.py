@@ -24,6 +24,7 @@ class Campaign(Base):
     campaign_style_button_title = Column(String, default="", server_default=text("''"))
     campaign_style_class = Column(String(length=50), default='Block')
     campaign_style_class_recommendet = Column(String(length=50), default='RecBlock')
+    capacity = Column(SmallInteger, default=1)
     utm = Column(Boolean, default=True, server_default=true())
     utm_human_data = Column(Boolean, default=False, server_default=false())
     disable_filter = Column(Boolean, default=False, server_default=false())
@@ -35,7 +36,7 @@ class Campaign(Base):
     recommended_count = Column(SmallInteger, default=1, server_default='1')
     thematic_day_new_auditory = Column(SmallInteger, default=10, server_default='10')
     thematic_day_off_new_auditory = Column(SmallInteger, default=10, server_default='10')
-    thematic_range = Column(SmallInteger, default=1)
+    thematic_range = Column(SmallInteger, default=0)
     offer_count = Column(BigInteger)
     click_cost = Column(Float, nullable=False)
     impression_cost = Column(Float, nullable=False)
@@ -54,6 +55,7 @@ class MVCampaign(Base):
             Campaign.id,
             Campaign.id_account,
             Campaign.guid,
+            Campaign.name,
             Campaign.campaign_type,
             Campaign.campaign_style,
             Campaign.campaign_style_logo,
@@ -62,6 +64,7 @@ class MVCampaign(Base):
             Campaign.campaign_style_class,
             Campaign.campaign_style_class_recommendet,
             Campaign.utm,
+            Campaign.capacity,
             Campaign.utm_human_data,
             Campaign.disable_filter,
             Campaign.time_filter,

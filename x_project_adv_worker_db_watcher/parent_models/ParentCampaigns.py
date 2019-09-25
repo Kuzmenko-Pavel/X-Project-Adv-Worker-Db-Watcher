@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 
 __author__ = 'kuzmenko-pavel'
 
-from sqlalchemy import Column, Integer, BigInteger, SmallInteger, String, Boolean, Float
+from sqlalchemy import Column, Integer, BigInteger, SmallInteger, String, Boolean, Float, DateTime
 from sqlalchemy.dialects.postgresql import JSON, ARRAY
 from sqlalchemy_utils import force_auto_coercion, force_instant_defaults, ChoiceType, UUIDType, LtreeType
 from x_project_adv_worker_db_watcher.choiceTypes import (CampaignType, CampaignPaymentModel, CampaignRemarketingType,
@@ -28,6 +28,7 @@ class ParentCampaign(ParentBase):
     campaign_style_logo = Column(String)
     campaign_style_head_title = Column(String)
     campaign_style_button_title = Column(String)
+    started_time = Column(DateTime, nullable=False)
     utm = Column(Boolean)
     utm_human_data = Column(Boolean)
     disable_filter = Column(Boolean)
