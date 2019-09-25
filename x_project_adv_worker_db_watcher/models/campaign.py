@@ -17,6 +17,7 @@ class Campaign(Base):
     id_account = Column(BigInteger, nullable=False)
     guid = Column(UUIDType(binary=True))
     name = Column(String)
+    styling = Column(Boolean, default=False)
     campaign_type = Column(ChoiceType(CampaignType, impl=Integer()), nullable=False)
     campaign_style = Column(ChoiceType(CampaignStylingType, impl=Integer()), nullable=False)
     campaign_style_logo = Column(String, default="", server_default=text("''"))
@@ -31,6 +32,7 @@ class Campaign(Base):
     time_filter = Column(Integer, default=0, server_default="0")
     payment_model = Column(ChoiceType(CampaignPaymentModel, impl=Integer()), nullable=False)
     lot_concurrency = Column(SmallInteger, default=1, server_default='1')
+    unique_impression_lot = Column(SmallInteger, default=1, server_default='1')
     remarketing_type = Column(ChoiceType(CampaignRemarketingType, impl=Integer()), nullable=False)
     recommended_algorithm = Column(ChoiceType(CampaignRecommendedAlgorithmType, impl=Integer()), nullable=False)
     recommended_count = Column(SmallInteger, default=1, server_default='1')
@@ -56,6 +58,7 @@ class MVCampaign(Base):
             Campaign.id_account,
             Campaign.guid,
             Campaign.name,
+            Campaign.styling,
             Campaign.campaign_type,
             Campaign.campaign_style,
             Campaign.campaign_style_logo,
@@ -70,6 +73,7 @@ class MVCampaign(Base):
             Campaign.time_filter,
             Campaign.payment_model,
             Campaign.lot_concurrency,
+            Campaign.unique_impression_lot,
             Campaign.remarketing_type,
             Campaign.recommended_algorithm,
             Campaign.recommended_count,

@@ -257,7 +257,8 @@ class Loader(object):
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
         try:
-            cols = ['id', 'id_account', 'guid', 'name', 'campaign_type', 'campaign_style', 'campaign_style_logo',
+            cols = ['id', 'id_account', 'guid', 'name', 'styling',
+                    'campaign_type', 'campaign_style', 'campaign_style_logo',
                     'campaign_style_head_title', 'campaign_style_button_title',
                     'campaign_style_class', 'campaign_style_class_recommendet', 'capacity', 'thematic_range',
                     'utm', 'utm_human_data',
@@ -289,6 +290,7 @@ class Loader(object):
                     try:
                         capacity = 1
                         thematic_range = 0
+                        styling = False
                         started_time = campaign.started_time
                         if started_time is None:
                             started_time = datetime.now()
@@ -310,6 +312,7 @@ class Loader(object):
                             campaign_style_class_recommendet = str(campaign.id)
                             capacity = 2
                             lot_concurrency = 1
+                            styling = True
                         else:
                             if campaign.campaign_type == CampaignType.remarketing:
                                 campaign_style_class = 'RetBlock'
@@ -322,6 +325,7 @@ class Loader(object):
                             campaign.id_account,
                             campaign.guid,
                             campaign.name,
+                            styling,
                             campaign.campaign_type,
                             campaign.campaign_style,
                             campaign.campaign_style_logo,

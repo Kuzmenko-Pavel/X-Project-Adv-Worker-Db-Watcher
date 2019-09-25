@@ -31,5 +31,6 @@ class MVCron(Base):
         is_mat=True)
 
 
-Index('ix_mv_cron_id_cam_day_start_stop', MVCron.id_cam, MVCron.day, MVCron.range, unique=True)
-Index('ix_mv_cron_day_hour_min', MVCron.time, postgresql_using="gist")
+Index('ix_mv_cron_id_cam_day_range', MVCron.id_cam, MVCron.day, MVCron.range, unique=True)
+Index('ix_mv_cron_day_time', MVCron.day, MVCron.time)
+Index('ix_mv_cron_time', MVCron.time, postgresql_using="gist")
