@@ -2,7 +2,7 @@ postgres:
   uri: postgresql://ad_worker:ad_worker@localhost:5432/ad_worker_v2?client_encoding=utf8
 
 parent_postgres:
-  uri: postgresql://x_project:x_project@localhost:5432/x_project?client_encoding=utf8
+  uri: postgresql://x_project:x_project@srv-13.yottos.com:5432/x_project?client_encoding=utf8
 
 amqp: amqp://worker:worker@amqp.yottos.com/worker?socket_timeout=1&heartbeat_interval=60
 
