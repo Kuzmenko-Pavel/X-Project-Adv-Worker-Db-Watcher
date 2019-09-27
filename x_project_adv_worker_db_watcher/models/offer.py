@@ -109,7 +109,7 @@ class MVOfferAccountRetargeting(Base):
             Offer.images,
             Offer.campaign_range_number,
         ]).select_from(Offer).where(
-            and_(Offer.campaign_type == CampaignType.social,
+            and_(Offer.campaign_type == CampaignType.remarketing,
                  Offer.remarketing_type == CampaignRemarketingType.account)
         ), is_mat=True)
 
@@ -138,7 +138,7 @@ class MVOfferDynamicRetargeting(Base):
             Offer.images,
             Offer.id_ret,
         ]).select_from(Offer).where(
-            and_(Offer.campaign_type == CampaignType.social,
+            and_(Offer.campaign_type == CampaignType.remarketing,
                  Offer.remarketing_type == CampaignRemarketingType.offer)
         ),
         is_mat=True)
