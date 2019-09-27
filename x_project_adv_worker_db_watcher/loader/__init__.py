@@ -60,7 +60,7 @@ class Loader(object):
         self.load_campaign(refresh_mat_view=False)
         logger.info('Stopping Load Campaign')
         logger.info('Starting Load Rating')
-        self.load_rating(refresh_mat_view=False)
+        # self.load_rating(refresh_mat_view=False)
         logger.info('Stopping Load Rating')
         logger.info('Starting Reload Mat View')
         self.refresh_mat_view()
@@ -512,14 +512,17 @@ class Loader(object):
                                 offer_account_retargeting = True
                             elif offer.remarketing_type == CampaignRemarketingType.offer:
                                 offer_dynamic_retargeting = True
+                        title = trim_by_words(offer.title, 35)
+                        description = trim_by_words(offer.description, 70)
+                        price = trim_by_words(offer.price, 35)
                         rows.append([
                             offer.id,
                             offer.id_campaign,
                             offer.id_account,
-                            offer.title,
-                            offer.description,
+                            title,
+                            description,
                             offer.url,
-                            offer.price,
+                            price,
                             offer.currency,
                             offer.id_retargeting,
                             offer.recommended,
