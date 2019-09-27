@@ -137,6 +137,7 @@ class MVOfferDynamicRetargeting(Base):
             Offer.recommended,
             Offer.images,
             Offer.id_ret,
+            Offer.campaign_range_number,
         ]).select_from(Offer).where(
             and_(Offer.campaign_type == CampaignType.remarketing,
                  Offer.remarketing_type == CampaignRemarketingType.offer)
