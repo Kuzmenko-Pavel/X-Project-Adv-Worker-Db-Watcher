@@ -60,7 +60,7 @@ class Loader(object):
         self.load_campaign(refresh_mat_view=False)
         logger.info('Stopping Load Campaign')
         logger.info('Starting Load Rating')
-        # self.load_rating(refresh_mat_view=False)
+        self.load_rating(refresh_mat_view=False)
         logger.info('Stopping Load Rating')
         logger.info('Starting Reload Mat View')
         self.refresh_mat_view()
