@@ -459,7 +459,7 @@ class Loader(object):
     def delete_campaign_price(self, id=None, *args, **kwargs):
         filter_data = {}
         if id:
-            filter_data['id'] = id
+            filter_data['id_cam'] = id
         session = self.session()
         with transaction.manager:
             session.query(Campaign2BlockPrice).filter_by(**filter_data).delete(synchronize_session=False)
@@ -565,9 +565,9 @@ class Loader(object):
         if id:
             filter_data['id'] = id
         if id_campaign:
-            filter_data['id_campaign'] = id_campaign
+            filter_data['id_cam'] = id_campaign
         if id_account:
-            filter_data['id_account'] = id_account
+            filter_data['id_acc'] = id_account
         session = self.session()
         with transaction.manager:
             session.query(Offer).filter_by(**filter_data).delete(synchronize_session=False)

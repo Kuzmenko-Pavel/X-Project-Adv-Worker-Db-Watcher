@@ -35,6 +35,23 @@ class Worker(Thread):
 
     def message_processing(self, key, body):
         try:
-            logger.debug('Received message # %s: %s', key, body)
+            logger.info('Received message # %s: %s', key, body)
+            if key == 'block.load':
+                self.loader.load_block(**body)
+            elif key == 'block.update':
+                self.loader.load_block(**body)
+            elif key == 'block.delete':
+                self.loader.delete_block(**body)
+            elif key == 'campaign.load':
+                self.loader.load_campaign(**body)
+            elif key == 'campaign.update':
+                self.loader.load_campaign(**body)
+            elif key == 'campaign.delete':
+                self.loader.delete_campaign(**body)
+            elif key == 'offer.update':
+                self.loader.load_offer(**body)
+            elif key == 'offer.delete':
+                self.loader.delete_offer(**body)
+
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
