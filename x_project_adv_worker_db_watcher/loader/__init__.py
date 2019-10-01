@@ -447,7 +447,7 @@ class Loader(object):
                     except Exception as e:
                         logger.error(exception_message(exc=str(e)))
 
-                upsert(session, Campaign, rows, cols)
+                upsert(session, Campaign2BlockPrice, rows, cols)
 
             if kwargs.get('refresh_mat_view', True):
                 self.refresh_mat_view('mv_campaigns_by_block_price')
