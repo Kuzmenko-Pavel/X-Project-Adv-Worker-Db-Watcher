@@ -244,9 +244,11 @@ class Loader(object):
                 filter_data['id_account'] = id_account
             session = self.session()
             with transaction.manager:
-                session.query(Block).filter_by(**filter_data).delete(synchronize_session=False)
+                count = session.query(Block).filter_by(**filter_data).delete(synchronize_session=False)
+                logger.info('Deleted %s blocks' % count)
             if kwargs.get('refresh_mat_view', True):
-                self.refresh_mat_view('mv_block')
+                if count > 0:
+                    self.refresh_mat_view('mv_block')
             session.close()
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
@@ -390,8 +392,8 @@ class Loader(object):
                 upsert(session, Cron, cron_rows, cron_cols)
                 upsert(session, CampaignThematic, thematic_categories_rows, thematic_categories_cols)
 
-            self.load_campaign_price(id=id)
-            self.load_offer(id_campaign=id, id_account=id_account)
+            self.load_campaign_price(id=id, **kwargs)
+            self.load_offer(id_campaign=id, id_account=id_account, **kwargs)
 
             if kwargs.get('refresh_mat_view', True):
                 self.refresh_mat_view('mv_campaign')
@@ -411,13 +413,15 @@ class Loader(object):
             filter_data['id_account'] = id_account
         session = self.session()
         with transaction.manager:
-            session.query(Campaign).filter_by(**filter_data).delete(synchronize_session=False)
+            count = session.query(Campaign).filter_by(**filter_data).delete(synchronize_session=False)
+            logger.info('Deleted %s campaigns' % count)
         if kwargs.get('refresh_mat_view', True):
-            self.refresh_mat_view('mv_campaign')
-            self.refresh_mat_view('mv_campaigns_by_blocking_block')
-            self.refresh_mat_view('mv_geo')
-            self.refresh_mat_view('mv_campaign2device')
-            self.refresh_mat_view('mv_cron')
+            if count > 0:
+                self.refresh_mat_view('mv_campaign')
+                self.refresh_mat_view('mv_campaigns_by_blocking_block')
+                self.refresh_mat_view('mv_geo')
+                self.refresh_mat_view('mv_campaign2device')
+                self.refresh_mat_view('mv_cron')
 
         session.close()
 
@@ -462,9 +466,11 @@ class Loader(object):
             filter_data['id_cam'] = id
         session = self.session()
         with transaction.manager:
-            session.query(Campaign2BlockPrice).filter_by(**filter_data).delete(synchronize_session=False)
+            count = session.query(Campaign2BlockPrice).filter_by(**filter_data).delete(synchronize_session=False)
+            logger.info('Deleted %s campaign prices' % count)
         if kwargs.get('refresh_mat_view', True):
-            self.refresh_mat_view('mv_campaigns_by_block_price')
+            if count > 0:
+                self.refresh_mat_view('mv_campaigns_by_block_price')
 
         session.close()
 
@@ -570,12 +576,14 @@ class Loader(object):
             filter_data['id_acc'] = id_account
         session = self.session()
         with transaction.manager:
-            session.query(Offer).filter_by(**filter_data).delete(synchronize_session=False)
+            count = session.query(Offer).filter_by(**filter_data).delete(synchronize_session=False)
+            logger.info('Deleted %s offers' % count)
         if kwargs.get('refresh_mat_view', True):
-            self.refresh_mat_view('mv_offer_place')
-            self.refresh_mat_view('mv_offer_social')
-            self.refresh_mat_view('mv_offer_account_retargeting')
-            self.refresh_mat_view('mv_offer_dynamic_retargeting')
+            if count > 0:
+                self.refresh_mat_view('mv_offer_place')
+                self.refresh_mat_view('mv_offer_social')
+                self.refresh_mat_view('mv_offer_account_retargeting')
+                self.refresh_mat_view('mv_offer_dynamic_retargeting')
 
         session.close()
 
