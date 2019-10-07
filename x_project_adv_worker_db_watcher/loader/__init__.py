@@ -195,7 +195,7 @@ class Loader(object):
                 for block in blocks:
                     try:
                         style = None
-                        if block.block_type == BlockType.adaptive:
+                        if block.block_type == BlockType.static:
                             style = ad_style(block.ad_style)
                         rows.append([block.id,
                                      block.guid,
