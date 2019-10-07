@@ -180,6 +180,7 @@ class Loader(object):
                     'impression_cost_min', 'impression_cost_proportion', 'impression_cost_max', 'cost_percent',
                     'disable_filter', 'time_filter']
             rows = []
+            rows_count = 0
             filter_data = {}
             if id:
                 filter_data['id'] = id
@@ -223,11 +224,12 @@ class Loader(object):
                                      block.disable_filter,
                                      block.time_filter
                                      ])
+                        rows_count += 1
                     except Exception as e:
                         logger.error(exception_message(exc=str(e)))
                 upsert(session, Block, rows, cols)
 
-            if kwargs.get('refresh_mat_view', True):
+            if kwargs.get('refresh_mat_view', True) and rows_count > 0:
                 self.refresh_mat_view('mv_block')
             session.close()
         except Exception as e:
@@ -249,6 +251,7 @@ class Loader(object):
             if kwargs.get('refresh_mat_view', True):
                 if count > 0:
                     self.refresh_mat_view('mv_block')
+            transaction.commit()
             session.close()
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
@@ -274,6 +277,7 @@ class Loader(object):
             cron_cols = ['id_cam', 'range', 'day', 'time']
             thematic_categories_cols = ['id_cam', 'path']
             rows = []
+            rows_count = 0
             blocking_block_rows = []
             geo_rows = []
             device_rows = []
@@ -353,6 +357,7 @@ class Loader(object):
                             campaign.impression_cost,
                             started_time
                         ])
+                        rows_count += 1
                         if campaign.thematic_categories:
                             thematic_categories_rows.append([
                                 campaign.id,
@@ -392,16 +397,18 @@ class Loader(object):
                 upsert(session, Cron, cron_rows, cron_cols)
                 upsert(session, CampaignThematic, thematic_categories_rows, thematic_categories_cols)
 
+            transaction.commit()
+            session.close()
+
             self.load_campaign_price(id=id, **kwargs)
             self.load_offer(id_campaign=id, id_account=id_account, **kwargs)
 
-            if kwargs.get('refresh_mat_view', True):
+            if kwargs.get('refresh_mat_view', True) and rows_count > 0:
                 self.refresh_mat_view('mv_campaign')
                 self.refresh_mat_view('mv_campaigns_by_blocking_block')
                 self.refresh_mat_view('mv_geo')
                 self.refresh_mat_view('mv_campaign2device')
                 self.refresh_mat_view('mv_cron')
-            session.close()
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
 
@@ -415,6 +422,8 @@ class Loader(object):
         with transaction.manager:
             count = session.query(Campaign).filter_by(**filter_data).delete(synchronize_session=False)
             logger.info('Deleted %s campaigns' % count)
+        transaction.commit()
+        session.close()
         if kwargs.get('refresh_mat_view', True):
             if count > 0:
                 self.refresh_mat_view('mv_campaign')
@@ -422,8 +431,6 @@ class Loader(object):
                 self.refresh_mat_view('mv_geo')
                 self.refresh_mat_view('mv_campaign2device')
                 self.refresh_mat_view('mv_cron')
-
-        session.close()
 
     def load_campaign_price(self, id=None, *args, **kwargs):
         try:
@@ -433,6 +440,7 @@ class Loader(object):
         try:
             cols = ['id_cam', 'id_block', 'click_cost', 'impression_cost']
             rows = []
+            rows_count = 0
             filter_data = {}
             if id:
                 filter_data['id'] = id
@@ -448,12 +456,13 @@ class Loader(object):
                             price.click_cost,
                             price.impression_cost,
                         ])
+                        rows_count += 1
                     except Exception as e:
                         logger.error(exception_message(exc=str(e)))
 
                 upsert(session, Campaign2BlockPrice, rows, cols)
 
-            if kwargs.get('refresh_mat_view', True):
+            if kwargs.get('refresh_mat_view', True) and rows_count > 0:
                 self.refresh_mat_view('mv_campaigns_by_block_price')
 
             session.close()
@@ -468,11 +477,11 @@ class Loader(object):
         with transaction.manager:
             count = session.query(Campaign2BlockPrice).filter_by(**filter_data).delete(synchronize_session=False)
             logger.info('Deleted %s campaign prices' % count)
+        transaction.commit()
+        session.close()
         if kwargs.get('refresh_mat_view', True):
             if count > 0:
                 self.refresh_mat_view('mv_campaigns_by_block_price')
-
-        session.close()
 
     def load_offer(self, id=None, id_campaign=None, id_account=None, *args, **kwargs):
         try:
@@ -494,7 +503,7 @@ class Loader(object):
             if id:
                 filter_data['id'] = id
             if id_campaign:
-                filter_data['id_campaign'] = id
+                filter_data['id_campaign'] = id_campaign
             if id_account:
                 filter_data['id_account'] = id_account
 
@@ -562,6 +571,10 @@ class Loader(object):
                     self.refresh_mat_view('mv_offer_account_retargeting')
                 if offer_dynamic_retargeting:
                     self.refresh_mat_view('mv_offer_dynamic_retargeting')
+                if offer_place or offer_social:
+                    self.refresh_mat_view('mv_offer_categories')
+                    self.refresh_mat_view('mv_offer2block_rating')
+                    self.refresh_mat_view('mv_offer_social2block_rating')
             session.close()
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
@@ -578,14 +591,14 @@ class Loader(object):
         with transaction.manager:
             count = session.query(Offer).filter_by(**filter_data).delete(synchronize_session=False)
             logger.info('Deleted %s offers' % count)
+        transaction.commit()
+        session.close()
         if kwargs.get('refresh_mat_view', True):
             if count > 0:
                 self.refresh_mat_view('mv_offer_place')
                 self.refresh_mat_view('mv_offer_social')
                 self.refresh_mat_view('mv_offer_account_retargeting')
                 self.refresh_mat_view('mv_offer_dynamic_retargeting')
-
-        session.close()
 
     def load_rating(self, *args, **kwargs):
         cols = ['id_offer', 'id_block', 'is_deleted', 'rating']
@@ -632,7 +645,7 @@ class Loader(object):
             session.query(OfferSocial2BlockRating).filter(
                 OfferSocial2BlockRating.is_deleted == True
             ).delete(synchronize_session=False)
-
+        transaction.commit()
         session.close()
 
         if kwargs.get('refresh_mat_view', True):
