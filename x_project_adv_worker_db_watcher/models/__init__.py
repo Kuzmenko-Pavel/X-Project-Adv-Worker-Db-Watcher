@@ -1,4 +1,5 @@
 import os
+import socket
 
 import transaction
 from sqlalchemy import create_engine
@@ -23,9 +24,11 @@ from .offer2blockRating import (Offer2BlockRating, OfferSocial2BlockRating, MVOf
                                 MVOfferSocialPlace2Informer)
 from .meta import DBSession, metadata
 
+server_name = socket.gethostname()
+
 
 def get_engine(config):
-    application_name = 'AdvWorkerDbWatcher pid=%s' % os.getpid()
+    application_name = 'AdvWorkerDbWatcher on %s pid=%s' % (server_name, os.getpid())
     engine = create_engine(config['postgres']['uri'], echo=False, pool_recycle=300, pool_pre_ping=True, max_overflow=5,
                            connect_args={"application_name": application_name})
     DBSession.configure(bind=engine)
