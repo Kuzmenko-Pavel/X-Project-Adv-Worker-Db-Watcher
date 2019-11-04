@@ -5,8 +5,8 @@ parent_postgres:
   uri: postgresql://x_project:x_project@srv-13.yottos.com:5432/x_project?client_encoding=utf8
 #  uri: postgresql://x_project:x_project@localhost:5432/x_project?client_encoding=utf8
 
-amqp: amqp://x-project-adv-worker:x-project-adv-worker@localhost/x-project-adv-worker?socket_timeout=1&heartbeat_interval=60
-#amqp: amqp://x-project-adv-worker:x-project-adv-worker@amqp.yottos.com/x-project-adv-worker?socket_timeout=1&heartbeat_interval=60
+#amqp: amqp://x-project-adv-worker:x-project-adv-worker@localhost/x-project-adv-worker?socket_timeout=1&heartbeat_interval=60
+amqp: amqp://x-project-adv-worker:x-project-adv-worker@amqp.yottos.com/x-project-adv-worker?socket_timeout=1&heartbeat_interval=60
 
 loader:
   offer:

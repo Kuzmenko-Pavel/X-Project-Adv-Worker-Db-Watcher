@@ -55,6 +55,8 @@ class Worker(Thread):
             elif key == 'reload.all':
                 self.loader.truncate()
                 self.loader.all()
+            elif key == 'rating.update':
+                self.loader.load_rating()
 
         except Exception as e:
             logger.error(exception_message(exc=str(e)))

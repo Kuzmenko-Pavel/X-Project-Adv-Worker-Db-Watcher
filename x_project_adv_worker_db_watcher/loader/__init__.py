@@ -119,12 +119,20 @@ class Loader(object):
             all_device = session.query(Device).filter(Device.code == '**').one_or_none()
             all_geo = session.query(Geo).filter(Geo.country == '*', Geo.city == '*').one_or_none()
             if all_device is None:
-                all_device_id = session.query(func.max(Device.id).label("max")).one().max + 1
+                try:
+                    all_device_id = session.query(func.max(Device.id).label("max")).one().max + 1
+                except Exception as e:
+                    print(e)
+                    all_device_id = 1
                 all_device = Device(id=all_device_id, code='**')
                 session.add(all_device)
                 session.flush()
             if all_geo is None:
-                all_geo_id = session.query(func.max(Geo.id).label("max")).one().max + 1
+                try:
+                    all_geo_id = session.query(func.max(Geo.id).label("max")).one().max + 1
+                except Exception as e:
+                    print(e)
+                    all_geo_id = 1
                 all_geo = Geo(id=all_geo_id, country='*', city='*')
                 session.add(all_geo)
                 session.flush()
