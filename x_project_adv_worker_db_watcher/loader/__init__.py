@@ -8,7 +8,7 @@ from zope.sqlalchemy import mark_changed
 from x_project_adv_worker_db_watcher.choiceTypes import (BlockType, CampaignType, CampaignRemarketingType,
                                                          CampaignStylingType)
 from x_project_adv_worker_db_watcher.logger import *
-from x_project_adv_worker_db_watcher.models import (Device, Geo, Block, Campaign, Campaign2BlockingBlock,
+from x_project_adv_worker_db_watcher.models import (metadata, Device, Geo, Block, Campaign, Campaign2BlockingBlock,
                                                     Campaign2Device, Campaign2Geo, Offer, Cron, OfferCategories,
                                                     Campaign2BlockPrice, CampaignThematic, Offer2BlockRating,
                                                     OfferSocial2BlockRating)
@@ -68,6 +68,16 @@ class Loader(object):
         logger.info('Starting VACUUM')
         self.vacuum()
         logger.info('Stopping VACUUM')
+
+    def truncate(self):
+        session = self.session()
+        with transaction.manager:
+            logger.info('Truncate DB')
+            session.execute('TRUNCATE {} RESTART IDENTITY CASCADE;'.format(
+                ', '.join([table.name for table in reversed(metadata.sorted_tables)])))
+            mark_changed(session)
+            session.flush()
+        session.close()
 
     def refresh_mat_view(self, name=None):
         session = self.session()

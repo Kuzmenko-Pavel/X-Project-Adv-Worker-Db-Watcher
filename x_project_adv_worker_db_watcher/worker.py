@@ -52,6 +52,9 @@ class Worker(Thread):
                 self.loader.load_offer(**body)
             elif key == 'offer.delete':
                 self.loader.delete_offer(**body)
+            elif key == 'reload.all':
+                self.loader.truncate()
+                self.loader.all()
 
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
