@@ -20,6 +20,9 @@ def thematicRange(started_time, thematic_day_new_auditory, thematic_day_off_new_
 def trim_by_words(text, max_len=None):
     if text is None:
         return ''
+    text = text.replace('&nbsp;', ' ')
+    text = text.replace('&ndash;', '-')
+    text = text.strip()
     if max_len is None or len(text) <= max_len:
         return text
     trimmed_simple = text[:max_len]
