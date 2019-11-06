@@ -443,6 +443,7 @@ class Loader(object):
                     self.refresh_mat_view('mv_geo')
                     self.refresh_mat_view('mv_campaign2device')
                     self.refresh_mat_view('mv_cron')
+                    self.refresh_mat_view('mv_campaign_thematics')
                 else:
                     self.refresh_mat_view('mv_campaign')
         except Exception as e:
