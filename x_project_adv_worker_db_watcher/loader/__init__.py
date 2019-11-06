@@ -1,5 +1,6 @@
-import transaction
 from datetime import datetime
+
+import transaction
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT, ISOLATION_LEVEL_DEFAULT
 from sqlalchemy import func
 from sqlalchemy_utils import force_auto_coercion, force_instant_defaults
@@ -39,6 +40,12 @@ class Loader(object):
         self.config = config
         self.default_geo = None
         self.default_device = None
+
+    @staticmethod
+    def __get_count(q):
+        count_q = q.statement.with_only_columns([func.count()]).order_by(None)
+        count = q.session.execute(count_q).scalar()
+        return count
 
     def all(self):
         logger.info('Starting VACUUM')
@@ -141,6 +148,7 @@ class Loader(object):
 
     def load_device(self, *args, **kwargs):
         try:
+            count = 0
             cols = ['id', 'code']
             rows = []
             filter_data = {}
@@ -151,10 +159,11 @@ class Loader(object):
                 for device in devices:
                     try:
                         rows.append([device.id, device.code])
+                        count += 1
                     except Exception as e:
                         logger.error(exception_message(exc=str(e)))
                 upsert(session, Device, rows, cols)
-
+            logger.info('Start %s devices' % count)
             if kwargs.get('refresh_mat_view', True):
                 self.refresh_mat_view('mv_device')
             session.close()
@@ -163,6 +172,7 @@ class Loader(object):
 
     def load_geo(self, *args, **kwargs):
         try:
+            count = 0
             cols = ['id', 'country', 'city']
             rows = []
             filter_data = {}
@@ -173,10 +183,12 @@ class Loader(object):
                 for geo in geos:
                     try:
                         rows.append([geo.id, geo.country, geo.city])
+                        count += 1
                     except Exception as e:
                         logger.error(exception_message(exc=str(e)))
                 upsert(session, Geo, rows, cols)
 
+            logger.info('Start %s geos' % count)
             if kwargs.get('refresh_mat_view', True):
                 self.refresh_mat_view('mv_geo_lite_city')
             session.close()
@@ -247,6 +259,7 @@ class Loader(object):
                         logger.error(exception_message(exc=str(e)))
                 upsert(session, Block, rows, cols)
 
+            logger.info('Start %s blocks' % rows_count)
             if kwargs.get('refresh_mat_view', True) and rows_count > 0:
                 self.refresh_mat_view('mv_block')
             session.close()
@@ -419,14 +432,19 @@ class Loader(object):
             session.close()
 
             self.load_campaign_price(id=id, **kwargs)
-            self.load_offer(id_campaign=id, id_account=id_account, **kwargs)
+            logger.info('Start %s campaigns' % rows_count)
+            if kwargs.get('with_offer', True):
+                self.load_offer(id_campaign=id, id_account=id_account, **kwargs)
 
-            if kwargs.get('refresh_mat_view', True) and rows_count > 0:
-                self.refresh_mat_view('mv_campaign')
-                self.refresh_mat_view('mv_campaigns_by_blocking_block')
-                self.refresh_mat_view('mv_geo')
-                self.refresh_mat_view('mv_campaign2device')
-                self.refresh_mat_view('mv_cron')
+            if kwargs.get('refresh_mat_view', True):
+                if rows_count > 0:
+                    self.refresh_mat_view('mv_campaign')
+                    self.refresh_mat_view('mv_campaigns_by_blocking_block')
+                    self.refresh_mat_view('mv_geo')
+                    self.refresh_mat_view('mv_campaign2device')
+                    self.refresh_mat_view('mv_cron')
+                else:
+                    self.refresh_mat_view('mv_campaign')
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
 
@@ -479,7 +497,7 @@ class Loader(object):
                         logger.error(exception_message(exc=str(e)))
 
                 upsert(session, Campaign2BlockPrice, rows, cols)
-
+            logger.info('Start %s campaign_prices' % rows_count)
             if kwargs.get('refresh_mat_view', True) and rows_count > 0:
                 self.refresh_mat_view('mv_campaigns_by_block_price')
 
@@ -502,6 +520,7 @@ class Loader(object):
                 self.refresh_mat_view('mv_campaigns_by_block_price')
 
     def load_offer(self, id=None, id_campaign=None, id_account=None, *args, **kwargs):
+        rows_count = 0
         try:
             self.delete_offer(id, id_campaign, id_account, refresh_mat_view=False)
         except Exception as e:
@@ -525,6 +544,12 @@ class Loader(object):
             if id_account:
                 filter_data['id_account'] = id_account
 
+            reload_id_campaign, reload_id_account, reload = self.check_reload_campaign(id, id_campaign, id_account,
+                                                                                       *args,
+                                                                                       **kwargs)
+            if reload:
+                self.load_campaign(id=reload_id_campaign, id_account=reload_id_account, with_offer=False, *args,
+                                   **kwargs)
             limit = self.config.get('offer', {}).get('limit', 1000)
             session = self.session()
             parent_session = self.parent_session()
@@ -565,6 +590,7 @@ class Loader(object):
                             offer.remarketing_type,
                             offer.campaign_range_number
                         ])
+                        rows_count += 1
                         if offer.categories:
                             rows_categories.append([
                                 offer.id,
@@ -580,6 +606,7 @@ class Loader(object):
 
                 upsert(session, Offer, rows, cols)
                 upsert(session, OfferCategories, rows_categories, cols_categories)
+            logger.info('Start %s offers' % rows_count)
             if kwargs.get('refresh_mat_view', True):
                 if offer_place:
                     self.refresh_mat_view('mv_offer_place')
@@ -617,6 +644,42 @@ class Loader(object):
                 self.refresh_mat_view('mv_offer_social')
                 self.refresh_mat_view('mv_offer_account_retargeting')
                 self.refresh_mat_view('mv_offer_dynamic_retargeting')
+
+    def check_reload_campaign(self, id=None, id_campaign=None, id_account=None, *args, **kwargs):
+        reload = None
+        session = self.session()
+        parent_session = self.parent_session()
+
+        if id and reload is None:
+            with transaction.manager:
+                offer = parent_session.query(ParentOffer).get(id)
+                if offer:
+                    id_campaign = offer.id_campaign
+                else:
+                    reload = False
+
+        if id_campaign and reload is None:
+            with transaction.manager:
+                count = self.__get_count(session.query(Campaign).filter(Campaign.id == id_campaign))
+                if count:
+                    reload = False
+                else:
+                    reload = True
+
+        if id_account and reload is None:
+            with transaction.manager:
+                count = self.__get_count(session.query(Campaign).filter(Campaign.id_account == id_account))
+                if count:
+                    reload = False
+                else:
+                    reload = True
+
+        if id is None and id_campaign is None and id_account is None and reload is None:
+            reload = False
+
+        parent_session.close()
+        session.close()
+        return id_campaign, id_account, reload
 
     def load_rating(self, *args, **kwargs):
         cols = ['id_offer', 'id_block', 'is_deleted', 'rating']

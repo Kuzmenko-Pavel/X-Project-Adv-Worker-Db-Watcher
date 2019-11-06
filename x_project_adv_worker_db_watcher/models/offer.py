@@ -1,5 +1,5 @@
 __all__ = ['Offer', 'MVOfferPlace', 'MVOfferSocial', 'MVOfferAccountRetargeting', 'MVOfferDynamicRetargeting']
-from sqlalchemy import (Column, BigInteger, String, Text, ForeignKey, select, Index, Integer, SmallInteger)
+from sqlalchemy import (Column, BigInteger, String, Text, ForeignKey, select, Index, Integer)
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.sql.expression import and_
 from sqlalchemy_utils import force_auto_coercion, force_instant_defaults, ChoiceType, URLType
@@ -17,8 +17,8 @@ force_instant_defaults()
 class Offer(Base):
     __tablename__ = 'offer'
     id = Column(BigInteger, primary_key=True)
-    id_cam = Column(BigInteger, ForeignKey('campaign.id', ondelete='CASCADE'), nullable=False)
-    id_acc = Column(BigInteger, nullable=False)
+    id_cam = Column(BigInteger, ForeignKey('campaign.id', ondelete='CASCADE'), nullable=False, index=True)
+    id_acc = Column(BigInteger, nullable=False, index=True)
     title = Column(String(length=35))
     description = Column(String(length=70))
     url = Column(String)
@@ -30,7 +30,7 @@ class Offer(Base):
     campaign_type = Column(ChoiceType(CampaignType, impl=Integer()))
     campaign_style = Column(ChoiceType(CampaignStylingType, impl=Integer()))
     remarketing_type = Column(ChoiceType(CampaignRemarketingType, impl=Integer()))
-    campaign_range_number = Column(SmallInteger)
+    campaign_range_number = Column(Integer)
     __table_args__ = (
         {'prefixes': ['UNLOGGED']}
     )

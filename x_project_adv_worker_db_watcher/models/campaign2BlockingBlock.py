@@ -29,3 +29,5 @@ class MVCampaign2BlockingBlock(Base):
 Index('ix_mv_campaigns_by_blocking_block_id_cam_id_block',
       MVCampaign2BlockingBlock.id_cam, MVCampaign2BlockingBlock.id_block,
       unique=True)
+
+Index('ix_mv_campaigns_by_blocking_block_id_block', MVCampaign2BlockingBlock.id_block)

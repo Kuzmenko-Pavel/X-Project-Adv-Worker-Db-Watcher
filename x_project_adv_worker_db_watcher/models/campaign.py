@@ -14,7 +14,7 @@ from .meta import Base
 class Campaign(Base):
     __tablename__ = 'campaign'
     id = Column(BigInteger, primary_key=True)
-    id_account = Column(BigInteger, nullable=False)
+    id_account = Column(BigInteger, nullable=False, index=True)
     guid = Column(UUIDType(binary=True))
     name = Column(String)
     styling = Column(Boolean, default=False)

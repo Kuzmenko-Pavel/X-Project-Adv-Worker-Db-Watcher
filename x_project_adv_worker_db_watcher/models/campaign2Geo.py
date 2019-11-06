@@ -26,4 +26,5 @@ class MVCampaign2Geo(Base):
         is_mat=True)
 
 
-Index('ix_mv_geo_id_cam_pk_id_geo', MVCampaign2Geo.id_cam, MVCampaign2Geo.id_geo, unique=True)
+Index('ix_mv_geo_id_cam_id_geo', MVCampaign2Geo.id_cam, MVCampaign2Geo.id_geo, unique=True)
+Index('ix_mv_geo_id_geo', MVCampaign2Geo.id_geo)
