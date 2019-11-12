@@ -28,6 +28,7 @@ class MVOfferPlace2Informer(Base):
 
 Index('ix_mv_offer2block_rating_id_offer_id_block',
       MVOfferPlace2Informer.id_offer, MVOfferPlace2Informer.id_block, unique=True)
+Index('ix_mv_offer2block_rating_id_block', MVOfferPlace2Informer.id_block)
 Index('ix_mv_offer2block_rating_rating', MVOfferPlace2Informer.rating.desc().nullslast(),
       postgresql_using='btree', postgresql_with={"fillfactor": 50})
 
@@ -57,5 +58,6 @@ class MVOfferSocialPlace2Informer(Base):
 
 Index('ix_mv_offer_social2block_rating_id_offer_id_block',
       MVOfferSocialPlace2Informer.id_offer, MVOfferSocialPlace2Informer.id_block, unique=True)
+Index('ix_mv_offer_social2block_rating_id_block', MVOfferSocialPlace2Informer.id_block)
 Index('ix_mv_offer_social2block_rating_rating', MVOfferSocialPlace2Informer.rating.desc().nullslast(),
       postgresql_using='btree', postgresql_with={"fillfactor": 50})

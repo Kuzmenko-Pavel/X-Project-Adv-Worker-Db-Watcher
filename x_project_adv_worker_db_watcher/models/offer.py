@@ -63,6 +63,7 @@ Index('ix_mv_offer_place_id_id_cam_range_number',
       MVOfferPlace.id_cam,
       MVOfferPlace.campaign_range_number)
 
+Index('ix_mv_offer_place_id_cam', MVOfferPlace.id_cam, )
 
 class MVOfferSocial(Base):
     __table__ = create_view(
@@ -90,6 +91,8 @@ Index('ix_mv_offer_social_id_id_cam_range_number',
       MVOfferSocial.id,
       MVOfferSocial.id_cam,
       MVOfferSocial.campaign_range_number)
+
+Index('ix_mv_offer_social_id_cam', MVOfferSocial.id_cam)
 
 
 class MVOfferAccountRetargeting(Base):
@@ -119,6 +122,8 @@ Index('ix_mv_offer_account_retargeting_id_id_cam_range_number',
       MVOfferAccountRetargeting.id,
       MVOfferAccountRetargeting.id_cam,
       MVOfferAccountRetargeting.campaign_range_number)
+
+Index('ix_mv_offer_account_retargeting_id_cam', MVOfferAccountRetargeting.id_cam)
 
 
 class MVOfferDynamicRetargeting(Base):
