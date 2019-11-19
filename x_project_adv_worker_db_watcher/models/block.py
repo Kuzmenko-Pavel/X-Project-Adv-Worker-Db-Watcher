@@ -14,7 +14,7 @@ force_instant_defaults()
 class Block(Base):
     __tablename__ = 'block'
     id = Column(BigInteger, primary_key=True)
-    guid = Column(UUIDType(binary=True))
+    guid = Column(UUIDType(binary=True), unique=True)
     id_account = Column(BigInteger, index=True)
     id_site = Column(BigInteger, index=True)
     block_type = Column(ChoiceType(BlockType, impl=Integer()), nullable=False)
