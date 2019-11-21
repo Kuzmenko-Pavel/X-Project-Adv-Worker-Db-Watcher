@@ -1,175 +1,52 @@
 __all__ = ['Campaign', 'MVCampaign']
-from sqlalchemy import (Column, BigInteger, String, Boolean, SmallInteger, select, Index, func, join, text, table,
-                        DateTime)
-from sqlalchemy.dialects.postgresql import insert, JSON, ARRAY
-from sqlalchemy.orm import relationship
-from zope.sqlalchemy import mark_changed
 from datetime import datetime
 
+from sqlalchemy import (Column, BigInteger, String, Boolean, SmallInteger, select, Index, text,
+                        DateTime, Integer, true, false, Float)
+from sqlalchemy_utils import ChoiceType, UUIDType
+
+from x_project_adv_worker_db_watcher.choiceTypes import (CampaignType, CampaignPaymentModel, CampaignStylingType,
+                                                         CampaignRemarketingType, CampaignRecommendedAlgorithmType)
 from .__libs__.sql_view import create_view
 from .meta import Base
 
 
 class Campaign(Base):
     __tablename__ = 'campaign'
-    id = Column(BigInteger, primary_key=True, unique=True)
-    guid = Column(String(length=64), index=True)
-    title = Column(String(length=100))
-    social = Column(Boolean, default=False)
-    showCoverage = Column(String(length=70))
-    retargeting = Column(Boolean, default=False)
-    capacity = Column(SmallInteger, default=1)
-    cost = Column(SmallInteger, default=0)
-    gender = Column(SmallInteger, default=0)
-    retargeting_type = Column(String(length=10), default='offer')
-    brending = Column(Boolean, default=False)
+    id = Column(BigInteger, primary_key=True)
+    id_account = Column(BigInteger, nullable=False, index=True)
+    guid = Column(UUIDType(binary=True))
+    name = Column(String)
     styling = Column(Boolean, default=False)
-    style_data = Column(JSON, default=lambda: {'img': '', 'head_title': '', 'button_title': ''})
-    style_type = Column(String(length=50), default='default')
-    style_class = Column(String(length=50), default='Block')
-    style_class_recommendet = Column(String(length=50), default='RecBlock')
-    recomendet_type = Column(String(length=3))
-    recomendet_count = Column(SmallInteger)
-    account = Column(String(length=64), default='')
-    target = Column(String(length=100), default='')
-    offer_by_campaign_unique = Column(SmallInteger, default=1)
-    unique_impression_lot = Column(SmallInteger, default=1)
-    html_notification = Column(Boolean, default=True)
-    disabled_retargiting_style = Column(Boolean, default=False)
-    disabled_recomendet_style = Column(Boolean, default=False)
+    campaign_type = Column(ChoiceType(CampaignType, impl=Integer()), nullable=False)
+    campaign_style = Column(ChoiceType(CampaignStylingType, impl=Integer()), nullable=False)
+    campaign_style_logo = Column(String, default="", server_default=text("''"))
+    campaign_style_head_title = Column(String, default="", server_default=text("''"))
+    campaign_style_button_title = Column(String, default="", server_default=text("''"))
+    campaign_style_class = Column(String(length=50), default='Block')
+    campaign_style_class_recommendet = Column(String(length=50), default='RecBlock')
+    capacity = Column(SmallInteger, default=1)
+    utm = Column(Boolean, default=True, server_default=true())
+    utm_human_data = Column(Boolean, default=False, server_default=false())
+    disable_filter = Column(Boolean, default=False, server_default=false())
+    time_filter = Column(Integer, default=0, server_default="0")
+    payment_model = Column(ChoiceType(CampaignPaymentModel, impl=Integer()), nullable=False)
+    lot_concurrency = Column(SmallInteger, default=1, server_default='1')
+    unique_impression_lot = Column(SmallInteger, default=1, server_default='1')
+    remarketing_type = Column(ChoiceType(CampaignRemarketingType, impl=Integer()), nullable=False)
+    recommended_algorithm = Column(ChoiceType(CampaignRecommendedAlgorithmType, impl=Integer()), nullable=False)
+    recommended_count = Column(SmallInteger, default=1, server_default='1')
+    thematic_day_new_auditory = Column(SmallInteger, default=10, server_default='10')
+    thematic_day_off_new_auditory = Column(SmallInteger, default=10, server_default='10')
+    thematic_range = Column(SmallInteger, default=0)
+    offer_count = Column(BigInteger)
+    click_cost = Column(Float, nullable=False)
+    impression_cost = Column(Float, nullable=False)
     started_time = Column(DateTime, default=datetime.now)
-    thematic = Column(Boolean, default=False)
-    thematic_range = Column(SmallInteger, default=1)
-    thematics = Column(ARRAY(String), default=[])
-    thematic_day_new_auditory = Column(SmallInteger, default=10)
-    thematic_day_off_new_auditory = Column(SmallInteger, default=10)
-    geos = relationship('GeoLiteCity', secondary='geo', back_populates="campaigns", passive_deletes=True)
-    devices = relationship('Device', secondary='campaign2device', back_populates="campaigns", passive_deletes=True)
-    cron = relationship('Cron', back_populates="campaign", passive_deletes=True)
-    accounts_allowed = relationship('Accounts', secondary='campaign2accounts_allowed',
-                                    back_populates="campaigns_allowed", passive_deletes=True)
-    accounts_disallowed = relationship('Accounts', secondary='campaign2accounts_disallowed',
-                                       back_populates="campaigns_disallowed",
-                                       passive_deletes=True)
-    informers_allowed = relationship('Informer', secondary='campaign2informer_allowed',
-                                     back_populates="campaigns_allowed",
-                                     passive_deletes=True)
-    informers_disallowed = relationship('Informer', secondary='campaign2informer_disallowed',
-                                        back_populates="campaigns_disallowed",
-                                        passive_deletes=True)
-    domains_allowed = relationship('Domains', secondary='campaign2domains_allowed', back_populates="campaigns_allowed",
-                                   passive_deletes=True)
-    domains_disallowed = relationship('Domains', secondary='campaign2domains_disallowed',
-                                      back_populates="campaigns_disallowed", passive_deletes=True)
-    categories = relationship('Categories', secondary='campaign2categories', back_populates="campaigns",
-                              passive_deletes=True)
-    offers = relationship('Offer', back_populates="campaigns", passive_deletes=True)
 
     __table_args__ = (
         {'prefixes': ['UNLOGGED']}
     )
-
-    @classmethod
-    def upsert(cls, session, data):
-        acc = session.execute(
-            insert(cls.__table__).on_conflict_do_update(
-                index_elements=['id'],
-                set_=dict(
-                    guid=data['guid'],
-                    title=data['title'],
-                    social=data['social'],
-                    showCoverage=data['showCoverage'],
-                    retargeting=data['retargeting'],
-                    capacity=data['capacity'],
-                    cost=data['cost'],
-                    gender=data['gender'],
-                    retargeting_type=data['retargeting_type'],
-                    brending=data['brending'],
-                    styling=data['styling'],
-                    style_data=data['style_data'],
-                    style_type=data['style_type'],
-                    style_class=data['style_class'],
-                    style_class_recommendet=data['style_class_recommendet'],
-                    recomendet_type=data['recomendet_type'],
-                    recomendet_count=data['recomendet_count'],
-                    account=data['account'],
-                    target=data['target'],
-                    offer_by_campaign_unique=data['offer_by_campaign_unique'],
-                    unique_impression_lot=data['unique_impression_lot'],
-                    html_notification=data['html_notification'],
-                    started_time=data['started_time'],
-                    thematic=data['thematic'],
-                    thematic_range=data['thematic'],
-                    thematics=data['thematics'],
-                    thematic_day_new_auditory=data['thematic_day_new_auditory'],
-                    thematic_day_off_new_auditory=data['thematic_day_off_new_auditory']
-                )
-            ).values(dict(
-                id=data['id'],
-                guid=data['guid'],
-                title=data['title'],
-                social=data['social'],
-                showCoverage=data['showCoverage'],
-                retargeting=data['retargeting'],
-                capacity=data['capacity'],
-                cost=data['cost'],
-                gender=data['gender'],
-                retargeting_type=data['retargeting_type'],
-                brending=data['brending'],
-                styling=data['styling'],
-                style_data=data['style_data'],
-                style_type=data['style_type'],
-                style_class=data['style_class'],
-                style_class_recommendet=data['style_class_recommendet'],
-                recomendet_type=data['recomendet_type'],
-                recomendet_count=data['recomendet_count'],
-                account=data['account'],
-                target=data['target'],
-                offer_by_campaign_unique=data['offer_by_campaign_unique'],
-                unique_impression_lot=data['unique_impression_lot'],
-                html_notification=data['html_notification'],
-                started_time=data['started_time'],
-                thematic=data['thematic'],
-                thematic_range=data['thematic'],
-                thematics=data['thematics'],
-                thematic_day_new_auditory=data['thematic_day_new_auditory'],
-                thematic_day_off_new_auditory=data['thematic_day_off_new_auditory']
-
-            )).returning()
-        )
-        mark_changed(session)
-        session.flush()
-        return dict(
-            id=acc.inserted_primary_key[0],
-            guid=data['guid'],
-            title=data['title'],
-            social=data['social'],
-            showCoverage=data['showCoverage'],
-            retargeting=data['retargeting'],
-            capacity=data['capacity'],
-            cost=data['cost'],
-            gender=data['gender'],
-            retargeting_type=data['retargeting_type'],
-            brending=data['brending'],
-            styling=data['styling'],
-            style_data=data['style_data'],
-            style_type=data['style_type'],
-            style_class=data['style_class'],
-            style_class_recommendet=data['style_class_recommendet'],
-            recomendet_type=data['recomendet_type'],
-            recomendet_count=data['recomendet_count'],
-            account=data['account'],
-            target=data['target'],
-            offer_by_campaign_unique=data['offer_by_campaign_unique'],
-            unique_impression_lot=data['unique_impression_lot'],
-            html_notification=data['html_notification'],
-            started_time=data['started_time'],
-            thematic=data['thematic'],
-            thematic_range=data['thematic'],
-            thematics=data['thematics'],
-            thematic_day_new_auditory=data['thematic_day_new_auditory'],
-            thematic_day_off_new_auditory=data['thematic_day_off_new_auditory']
-        )
 
 
 class MVCampaign(Base):
@@ -177,36 +54,34 @@ class MVCampaign(Base):
         Base.metadata,
         'mv_campaign',
         select([
-            func.count('offer.id').over(partition_by=Campaign.id).label('offer_count'),
             Campaign.id,
+            Campaign.id_account,
             Campaign.guid,
-            Campaign.social,
-            Campaign.retargeting,
-            Campaign.capacity,
-            Campaign.cost,
-            Campaign.gender,
-            Campaign.retargeting_type,
-            Campaign.brending,
+            Campaign.name,
             Campaign.styling,
-            Campaign.style_data,
-            Campaign.style_type,
-            Campaign.style_class,
-            Campaign.style_class_recommendet,
-            Campaign.recomendet_type,
-            Campaign.recomendet_count,
-            Campaign.account,
-            Campaign.target,
-            Campaign.offer_by_campaign_unique,
+            Campaign.campaign_type,
+            Campaign.campaign_style,
+            Campaign.campaign_style_logo,
+            Campaign.campaign_style_head_title,
+            Campaign.campaign_style_button_title,
+            Campaign.campaign_style_class,
+            Campaign.campaign_style_class_recommendet,
+            Campaign.utm,
+            Campaign.capacity,
+            Campaign.utm_human_data,
+            Campaign.disable_filter,
+            Campaign.time_filter,
+            Campaign.payment_model,
+            Campaign.lot_concurrency,
             Campaign.unique_impression_lot,
-            Campaign.html_notification,
-            Campaign.thematic,
-            Campaign.thematics,
-            Campaign.thematic_range
-        ], distinct=Campaign.id).select_from(
-            join(Campaign, table('offer'), Campaign.id == text('offer.id_cam'), isouter=True)
-        )
-        ,
-        is_mat=True)
+            Campaign.remarketing_type,
+            Campaign.recommended_algorithm,
+            Campaign.recommended_count,
+            Campaign.thematic_range,
+            Campaign.offer_count,
+            Campaign.click_cost,
+            Campaign.impression_cost
+        ]).select_from(Campaign), is_mat=True)
 
 
 Index('ix_mv_campaign_id', MVCampaign.id, unique=True)

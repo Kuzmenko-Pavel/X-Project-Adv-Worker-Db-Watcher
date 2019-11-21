@@ -2,6 +2,7 @@ import socket
 from datetime import datetime
 from queue import Queue
 import pika
+import json
 
 from x_project_adv_worker_db_watcher.logger import logger, exception_message
 from x_project_adv_worker_db_watcher.worker import Worker
@@ -13,16 +14,12 @@ server_time = datetime.now()
 
 class Watcher(object):
     __slots__ = ['_connection', '_channel', '_closing', '_consumer_tag', '_url', '_messages', '_worker']
-    EXCHANGE = 'getmyad'
+    EXCHANGE = 'adv_worker'
     EXCHANGE_TYPE = 'topic'
     DURABLE = False
     AUTO_DELETE = True
-    QUEUES = [x % (server_name, server_time.strftime("%d-%m-%Y_%H:%M:%S:%f")) for x in ['campaign:%s_%s',
-                                                                                        'informer:%s_%s',
-                                                                                        'account:%s_%s',
-                                                                                        'rating:%s_%s',
-                                                                                        'domain:%s_%s']]
-    ROUTING_KEYS = ['campaign.#', 'informer.#', 'account.#', 'rating.#', 'domain.#']
+    QUEUE = 'adv_worker:%s_%s' % (server_name, server_time.strftime("%d-%m-%Y_%H:%M:%S:%f"))
+    ROUTING_KEY = '*.*'
 
     def __init__(self, config, db_session, parent_db_session):
         self._connection = None
@@ -102,34 +99,26 @@ class Watcher(object):
     def on_exchange_declareok(self, unused_frame):
 
         logger.debug('Exchange declared')
-        for queue in self.QUEUES:
-            self.setup_queue(queue)
+        self.setup_queue(self.QUEUE)
         self.start_consuming()
 
     def dummy(self, *args, **kwargs):
         pass
 
     def setup_queue(self, queue):
-        routing = ''
         logger.debug('Declaring queue %s', queue)
         self._channel.queue_declare(callback=self.dummy, queue=queue, durable=self.DURABLE,
                                     auto_delete=self.AUTO_DELETE, nowait=False)
-        for routing_key in self.ROUTING_KEYS:
-            queue_name = queue.split(':')[0]
-            routing_key_name = routing_key.split('.')[0]
-            if queue_name == routing_key_name:
-                routing = routing_key
-        if len(routing) > 0:
-            logger.debug('Binding %s to %s with %s ', self.EXCHANGE, queue, routing)
-            self._channel.queue_bind(callback=self.dummy, queue=queue, exchange=self.EXCHANGE, routing_key=routing,
-                                     nowait=False)
+
+        logger.debug('Binding %s to %s with %s ', self.EXCHANGE, queue, self.ROUTING_KEY)
+        self._channel.queue_bind(callback=self.dummy, queue=queue, exchange=self.EXCHANGE, routing_key=self.ROUTING_KEY,
+                                 nowait=False)
 
     def start_consuming(self):
 
         logger.debug('Issuing consumer related RPC commands')
         self.add_on_cancel_callback()
-        for queue in self.QUEUES:
-            self._consumer_tag = self._channel.basic_consume(self.on_message, queue)
+        self._consumer_tag = self._channel.basic_consume(self.on_message, self.QUEUE)
 
     def add_on_cancel_callback(self):
 
@@ -146,9 +135,9 @@ class Watcher(object):
     def on_message(self, unused_channel, basic_deliver, properties, body):
         date = datetime.now().strftime("%d-%m-%Y %H:%M:%S:%f")
         try:
-            if basic_deliver.exchange == 'getmyad':
+            if basic_deliver.exchange == 'adv_worker':
                 key = basic_deliver.routing_key
-                msg = body.decode(encoding='UTF-8')
+                msg = json.loads(body.decode(encoding='UTF-8'))
                 self._messages.put([key, msg])
                 logger.debug('%s Saved message # %s from %s - %s: %s %s', date, basic_deliver.delivery_tag,
                              basic_deliver.exchange, basic_deliver.routing_key, properties.app_id, body)

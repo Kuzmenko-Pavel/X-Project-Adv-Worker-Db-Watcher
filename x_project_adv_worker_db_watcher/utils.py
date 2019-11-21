@@ -4,7 +4,7 @@ TRAFARET_CONF = t.Dict({
     t.Key('postgres'): t.Dict({
         t.Key('uri'): t.String(),
     }),
-    t.Key('mongo'): t.Dict({
+    t.Key('parent_postgres'): t.Dict({
         t.Key('uri'): t.String(),
     }),
     t.Key('amqp'): t.String(),

@@ -1,10 +1,12 @@
 postgres:
-  uri: postgresql://ad_worker:ad_worker@localhost:5432/ad_worker
+  uri: postgresql://ad_worker:ad_worker@localhost:5432/ad_worker_v2?client_encoding=utf8
 
-mongo:
-  uri: mongodb://srv-5.yottos.com:27018,srv-5.yottos.com:27019,srv-5.yottos.com:27020/getmyad_db?replicaSet=vsrv&readPreference=secondaryPreferred
+parent_postgres:
+  uri: postgresql://x_project:x_project@srv-13.yottos.com:5432/x_project?client_encoding=utf8
+#  uri: postgresql://x_project:x_project@localhost:5432/x_project?client_encoding=utf8
 
-amqp: amqp://worker:worker@amqp.yottos.com/worker?socket_timeout=1&heartbeat_interval=60
+#amqp: amqp://x-project-adv-worker:x-project-adv-worker@localhost/x-project-adv-worker?socket_timeout=1&heartbeat_interval=60
+amqp: amqp://x-project-adv-worker:x-project-adv-worker@amqp.yottos.com/x-project-adv-worker?socket_timeout=1&heartbeat_interval=60
 
 loader:
   offer:
