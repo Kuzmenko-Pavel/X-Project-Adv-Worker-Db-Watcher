@@ -58,5 +58,11 @@ class Worker(Thread):
             elif key == 'rating.update':
                 self.loader.load_rating()
 
+            # Принудительная очистка памяти замнимаевая postgresql через пересоздание подключения
+            session = self.session()
+            parent_session = self.parent_session()
+            session.close()
+            parent_session.close()
+
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
