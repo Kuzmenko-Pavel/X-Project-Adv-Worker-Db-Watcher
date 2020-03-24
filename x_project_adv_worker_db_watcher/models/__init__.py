@@ -29,7 +29,13 @@ server_name = socket.gethostname()
 
 def get_engine(config):
     application_name = 'AdvWorkerDbWatcher on %s pid=%s' % (server_name, os.getpid())
-    engine = create_engine(config['postgres']['uri'], echo=False, pool_recycle=300, pool_pre_ping=True, max_overflow=5,
+    engine = create_engine(config['postgres']['uri'],
+                           echo=False,
+                           pool_size=2,
+                           max_overflow=5,
+                           pool_recycle=300,
+                           pool_use_lifo=False,
+                           pool_pre_ping=True,
                            connect_args={"application_name": application_name})
     DBSession.configure(bind=engine)
     metadata.bind = engine

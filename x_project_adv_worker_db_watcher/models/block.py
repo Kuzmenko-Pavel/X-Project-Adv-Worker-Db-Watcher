@@ -1,6 +1,9 @@
-from sqlalchemy import (Column, Integer, String, Boolean, BigInteger, select, Index, Float)
+from sqlalchemy import (Column, Integer, String, Boolean, BigInteger, select, Index, Float, DateTime)
 from sqlalchemy.dialects.postgresql import JSONB
+# from sqlalchemy.sql import func
 from sqlalchemy_utils import ChoiceType, LtreeType, UUIDType, force_auto_coercion, force_instant_defaults
+# from datetime import datetime
+# from pytz import timezone
 
 from x_project_adv_worker_db_watcher.choiceTypes import BlockType
 from .__libs__.custom_arrays import ArrayOfCustomType
@@ -9,6 +12,10 @@ from .meta import Base
 
 force_auto_coercion()
 force_instant_defaults()
+
+
+# def default_time():
+#     return datetime.now(timezone('Europe/Kiev'))
 
 
 class Block(Base):
@@ -38,6 +45,9 @@ class Block(Base):
     cost_percent = Column(Integer)
     disable_filter = Column(Boolean)
     time_filter = Column(Integer)
+    # width = Column(String)
+    # height = Column(String)
+    # updated = Column(DateTime(timezone=True), server_default=func.now(), default=default_time, nullable=False)
 
     __table_args__ = (
         {'prefixes': ['UNLOGGED']}

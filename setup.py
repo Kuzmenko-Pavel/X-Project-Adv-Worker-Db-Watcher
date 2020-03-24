@@ -19,6 +19,7 @@ def read_version():
 
 
 install_requires = ['pika==0.13.1',
+                    'pytz',
                     'sqlalchemy',
                     'psycopg2',
                     'sqlalchemy-utils',

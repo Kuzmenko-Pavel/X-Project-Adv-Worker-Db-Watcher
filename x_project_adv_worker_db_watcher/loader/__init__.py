@@ -145,6 +145,7 @@ class Loader(object):
                 session.flush()
             self.default_geo = all_geo.id
             self.default_device = all_device.id
+        session.close()
 
     def load_device(self, *args, **kwargs):
         try:
@@ -167,6 +168,7 @@ class Loader(object):
             if kwargs.get('refresh_mat_view', True):
                 self.refresh_mat_view('mv_device')
             session.close()
+            parent_session.close()
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
 
@@ -192,6 +194,7 @@ class Loader(object):
             if kwargs.get('refresh_mat_view', True):
                 self.refresh_mat_view('mv_geo_lite_city')
             session.close()
+            parent_session.close()
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
 
@@ -263,6 +266,7 @@ class Loader(object):
             if kwargs.get('refresh_mat_view', True) and rows_count > 0:
                 self.refresh_mat_view('mv_block')
             session.close()
+            parent_session.close()
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
 
@@ -430,6 +434,7 @@ class Loader(object):
 
             transaction.commit()
             session.close()
+            parent_session.close()
 
             self.load_campaign_price(id=id, **kwargs)
             logger.info('Start %s campaigns' % rows_count)
@@ -503,6 +508,7 @@ class Loader(object):
                 self.refresh_mat_view('mv_campaigns_by_block_price')
 
             session.close()
+            parent_session.close()
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
 
@@ -555,9 +561,9 @@ class Loader(object):
             session = self.session()
             parent_session = self.parent_session()
             with transaction.manager:
-                offers = parent_session.query(ParentOffer).filter(
+                offers = parent_session.query(ParentOffer).yield_per(10000).filter(
                     ParentOffer.campaign_range_number < limit
-                ).filter_by(**filter_data).all()
+                ).filter_by(**filter_data)
                 for offer in offers:
                     try:
                         if offer.campaign_type == CampaignType.new_auditory:
@@ -622,6 +628,7 @@ class Loader(object):
                     self.refresh_mat_view('mv_offer2block_rating')
                     self.refresh_mat_view('mv_offer_social2block_rating')
             session.close()
+            parent_session.close()
         except Exception as e:
             logger.error(exception_message(exc=str(e)))
 
@@ -695,7 +702,7 @@ class Loader(object):
         session = self.session()
         parent_session = self.parent_session()
         with transaction.manager:
-            ratings = parent_session.query(ParentRatingOffer).all()
+            ratings = parent_session.query(ParentRatingOffer).yield_per(10000)
             for rating in ratings:
                 rows.append([
                     rating.id_offer,
@@ -704,9 +711,13 @@ class Loader(object):
                     rating.rating
 
                 ])
+                if len(rows) > 1000:
+                    upsert(session, Offer2BlockRating, rows, cols)
+                    rows = []
+
             upsert(session, Offer2BlockRating, rows, cols)
             rows = []
-            ratings = parent_session.query(ParentRatingSocialOffer).all()
+            ratings = parent_session.query(ParentRatingSocialOffer).yield_per(10000)
             for rating in ratings:
                 rows.append([
                     rating.id_offer,
@@ -715,9 +726,14 @@ class Loader(object):
                     rating.rating
 
                 ])
+                if len(rows) > 1000:
+                    upsert(session, OfferSocial2BlockRating, rows, cols)
+                    rows = []
             upsert(session, OfferSocial2BlockRating, rows, cols)
 
+        transaction.commit()
         session.close()
+        parent_session.close()
 
         session = self.session()
         with transaction.manager:
