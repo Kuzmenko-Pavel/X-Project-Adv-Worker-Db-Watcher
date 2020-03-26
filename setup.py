@@ -19,15 +19,16 @@ def read_version():
 
 
 install_requires = ['pika==0.13.1',
-                    'pytz',
-                    'sqlalchemy',
-                    'psycopg2',
-                    'psycopg2-binary',
-                    'sqlalchemy-utils',
-                    'zope.sqlalchemy',
-                    'trafaret-config',
-                    'transaction',
-                    'intervals'
+                    'pytz==2019.3',
+                    'sqlalchemy==1.3.15',
+                    'psycopg2==2.8.4',
+                    'psycopg2-binary==2.8.4',
+                    'sqlalchemy-utils==0.36.3',
+                    'zope.sqlalchemy==1.1',
+                    'trafaret==2.0.2',
+                    'trafaret-config==2.0.2',
+                    'transaction==3.0.0',
+                    'intervals==0.8.1'
                     ]
 
 setup(
