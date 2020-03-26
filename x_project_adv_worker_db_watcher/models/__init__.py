@@ -49,9 +49,9 @@ def check_table(engine):
 def clear_table(engine):
     session = DBSession()
     with transaction.manager:
-        # metadata.drop_all(engine, checkfirst=True)
-        # logger.info('Check and Create DB')
-        # metadata.create_all(engine, checkfirst=True)
+        metadata.drop_all(engine, checkfirst=True)
+        logger.info('Check and Create DB')
+        metadata.create_all(engine, checkfirst=True)
         logger.info('Truncate DB')
         session.execute('TRUNCATE {} RESTART IDENTITY CASCADE;'.format(
             ', '.join([table.name for table in reversed(metadata.sorted_tables)])))

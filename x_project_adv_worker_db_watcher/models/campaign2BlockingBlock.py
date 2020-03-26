@@ -7,7 +7,7 @@ from .meta import Base
 class Campaign2BlockingBlock(Base):
     __tablename__ = 'campaigns_by_blocking_block'
     id_cam = Column(BigInteger, ForeignKey('campaign.id', ondelete='CASCADE'), primary_key=True, nullable=False)
-    id_block = Column(BigInteger, ForeignKey('block.id', ondelete='CASCADE'), primary_key=True, nullable=False)
+    id_block = Column(BigInteger, primary_key=True, nullable=False)
     change = Column(Boolean, default=False)
 
     __table_args__ = (

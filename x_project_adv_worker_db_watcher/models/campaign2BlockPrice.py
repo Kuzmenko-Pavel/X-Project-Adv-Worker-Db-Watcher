@@ -7,7 +7,7 @@ from .meta import Base
 class Campaign2BlockPrice(Base):
     __tablename__ = 'campaigns_by_block_price'
     id_cam = Column(BigInteger, ForeignKey('campaign.id', ondelete='CASCADE'), primary_key=True, nullable=False)
-    id_block = Column(BigInteger, ForeignKey('block.id', ondelete='CASCADE'), primary_key=True, nullable=False)
+    id_block = Column(BigInteger, primary_key=True, nullable=False)
     click_cost = Column(Float)
     impression_cost = Column(Float)
 

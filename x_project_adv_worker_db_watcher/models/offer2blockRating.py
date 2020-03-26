@@ -6,7 +6,7 @@ from .meta import Base
 class Offer2BlockRating(Base):
     __tablename__ = 'offer2block_rating'
     id_offer = Column(BigInteger, ForeignKey('offer.id', ondelete='CASCADE'), nullable=False, primary_key=True)
-    id_block = Column(BigInteger, ForeignKey('block.id', ondelete='CASCADE'), nullable=False, primary_key=True)
+    id_block = Column(BigInteger, nullable=False, primary_key=True)
     is_deleted = Column(Boolean, default=False)
     rating = Column(Float)
     __table_args__ = (
@@ -36,7 +36,7 @@ Index('ix_mv_offer2block_rating_rating', MVOfferPlace2Informer.rating.desc().nul
 class OfferSocial2BlockRating(Base):
     __tablename__ = 'offer_social2block_rating'
     id_offer = Column(BigInteger, ForeignKey('offer.id', ondelete='CASCADE'), nullable=False, primary_key=True)
-    id_block = Column(BigInteger, ForeignKey('block.id', ondelete='CASCADE'), nullable=False, primary_key=True)
+    id_block = Column(BigInteger, nullable=False, primary_key=True)
     is_deleted = Column(Boolean, default=False)
     rating = Column(Float)
     __table_args__ = (

@@ -10,4 +10,4 @@ amqp: amqp://x-project-adv-worker:x-project-adv-worker@amqp.yottos.com/x-project
 
 loader:
   offer:
-    limit: 2000000
+    limit: 100
